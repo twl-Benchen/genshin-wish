@@ -51,11 +51,13 @@
 
   // 通用：依「每次出五星時的狀態轉移」算出拿到第 1..target 隻目標的抽數分布
   // step(state) => [{p, hit:boolean, next:state}]
-  function chain(target, firstDraw, freshDraw, initState, step, keyOf) {
+  // 回傳 milestones[k-1][m] = 拿到第 k 隻、途中歪了 m 次的抽數分布 (trackMiss 為 false 時全部記在 m = 0)
+  function chain(target, firstDraw, freshDraw, initState, step, keyOf, trackMiss) {
     const milestones = [];
     if (target <= 0) return milestones;
     let active = new Map();
-    active.set(keyOf(initState), { s: initState, d: Float64Array.of(1), first: true });
+    const init = Object.assign({}, initState, { m: 0 });
+    active.set(keyOf(init) + '|0', { s: init, d: Float64Array.of(1), first: true });
     // 每輪讓所有狀態各出一隻五星
     for (let round = 0; active.size && round < 10 * target + 10; round++) {
       const next = new Map();
@@ -63,13 +65,14 @@
         const nd = conv(d, first ? firstDraw : freshDraw);
         for (const o of step(s)) {
           if (o.p <= 0) continue;
-          const ns = Object.assign({}, o.next, { got: s.got + (o.hit ? 1 : 0) });
+          const ns = Object.assign({}, o.next, { got: s.got + (o.hit ? 1 : 0), m: s.m + (o.hit || !trackMiss ? 0 : 1) });
           if (o.hit) {
             const k = ns.got;
-            milestones[k - 1] = addInto(milestones[k - 1] || new Float64Array(0), nd, o.p);
+            const row = milestones[k - 1] || (milestones[k - 1] = []);
+            row[ns.m] = addInto(row[ns.m] || new Float64Array(0), nd, o.p);
             if (k >= target) continue;
           }
-          const key = keyOf(ns);
+          const key = keyOf(ns) + '|' + ns.m;
           const cur = next.get(key);
           if (cur) cur.d = addInto(cur.d, nd, o.p);
           else next.set(key, { s: ns, d: Float64Array.from(nd, (x) => x * o.p), first: false });
@@ -80,6 +83,11 @@
     return milestones;
   }
 
+  // 把「依歪的次數分開」的里程碑合併成單一分布
+  function mergeMiss(milestones) {
+    return milestones.map((row) => row.reduce((acc, d) => (d ? addInto(acc, d, 1) : acc), new Float64Array(0)));
+  }
+
   // 捕獲明光：cr[c] = 計數為 c 時「本來會歪」轉為命中的機率
   const CR_PRESETS = {
     conservative: { cr: [0, 0, 0, 1], label: '保守：連歪 3 次後必中' },
@@ -87,7 +95,7 @@
     none: { cr: [0, 0, 0, 0], label: '關閉 (5.0 前舊規則 50/50)' },
   };
 
-  function characterMilestones(opt) {
+  function characterMilestonesByMiss(opt, trackMiss) {
     const cr = opt.cr || CR_PRESETS.conservative.cr;
     const init = { got: 0, g: !!opt.guaranteed, c: Math.max(0, Math.min(3, opt.radiance | 0)) };
     return chain(
@@ -104,12 +112,14 @@
           { p: 0.5 * (1 - pc), hit: false, next: { g: true, c: Math.min(3, s.c + 1) } },
         ];
       },
-      (s) => s.got + '|' + (s.g ? 1 : 0) + '|' + s.c
+      (s) => s.got + '|' + (s.g ? 1 : 0) + '|' + s.c,
+      trackMiss
     );
   }
+  const characterMilestones = (opt) => mergeMiss(characterMilestonesByMiss(opt, false));
 
   // 武器池 (5.0 後命定值上限 1)：75% 為兩把 UP 之一，定軌那把 37.5%
-  function weaponMilestones(opt) {
+  function weaponMilestonesByMiss(opt, trackMiss) {
     const init = { got: 0, f: opt.fate ? 1 : 0 };
     return chain(
       opt.target | 0,
@@ -122,9 +132,11 @@
             { p: 0.375, hit: true, next: { f: 0 } },
             { p: 0.625, hit: false, next: { f: 1 } },
           ],
-      (s) => s.got + '|' + s.f
+      (s) => s.got + '|' + s.f,
+      trackMiss
     );
   }
+  const weaponMilestones = (opt) => mergeMiss(weaponMilestonesByMiss(opt, false));
 
   function stats(d) {
     let mean = 0, total = 0;
@@ -144,19 +156,120 @@
     };
   }
 
-  // 先抽角色、再抽武器；回傳各里程碑的累計分布
-  function plan(opt) {
-    const ch = characterMilestones(opt.character);
-    const wp = weaponMilestones(opt.weapon);
-    const charFinal = ch.length ? ch[ch.length - 1] : Float64Array.of(1);
-    const rows = [];
-    ch.forEach((d, i) => rows.push({ kind: 'char', n: i + 1, dist: d }));
-    wp.forEach((d, i) => rows.push({ kind: 'weapon', n: i + 1, dist: conv(charFinal, d) }));
-    const total = rows.length ? rows[rows.length - 1].dist : Float64Array.of(1);
-    return { rows, total };
+  // ---- 星輝返還 ----
+  // 官方：同一角色第 2~7 次獲得給命星與星輝 (四星 2、五星 10)，第 8 次起給 (四星 5、五星 25)
+  // 四星、五星武器固定 2、10。第一次獲得角色不給星輝。
+  const FOUR_RATE = { char: 0.13, weapon: 0.145 }; // 四星綜合機率
+  // 四星組成：角色池 50% UP 角色 + 50% 常駐 (角色/武器約各半)；武器池 75% UP 武器 + 25% 常駐
+  const FOUR_CHAR_SHARE = { char: 0.75, weapon: 0.125 };
+  const STANDARD_5 = ['提納里', '夢見月瑞希', '琴', '莫娜', '刻晴', '迪希雅', '迪盧克', '七七'];
+
+  // 第 q 次獲得同一隻五星角色返還的星輝
+  function copyGlitter5(q) { return q <= 1 ? 0 : q <= 7 ? 10 : 25; }
+
+  // 每抽平均從四星拿到的星輝 (c6 = 四星角色中已滿命的比例)
+  function fourStarGlitterPerPull(pool, c6) {
+    const share = FOUR_CHAR_SHARE[pool];
+    return FOUR_RATE[pool] * (share * (2 + 3 * c6) + (1 - share) * 2);
   }
 
-  const api = { charHazard, weaponHazard, nextFiveStar, conv, characterMilestones, weaponMilestones, stats, plan, CR_PRESETS };
+  // 第 l 次歪 (l 從 1 起) 的平均返還：常駐角色等機率出現，前 l-1 次歪會讓各角色的持有數增加
+  // cons[i] = 目前命座 (-1 未持有，0~6)
+  function lossGlitter(cons, l) {
+    const K = cons.length;
+    if (!K) return 0;
+    const p = 1 / K;
+    let total = 0;
+    for (const c of cons) {
+      const owned = Math.max(-1, Math.min(6, c | 0)) + 1; // 已持有的份數
+      let binom = Math.pow(1 - p, l - 1); // h = 0
+      for (let h = 0; h <= l - 1; h++) {
+        total += p * binom * copyGlitter5(owned + h + 1);
+        binom *= ((l - 1 - h) / (h + 1)) * (p / (1 - p));
+      }
+    }
+    return total;
+  }
+
+  // 把抽數分布 (index = n) 換成實付抽數 a*n - b 的分布，非整數位置按距離拆給左右兩格，平均值不變
+  function remapInto(out, d, a, b) {
+    for (let n = 0; n < d.length; n++) {
+      if (!d[n]) continue;
+      const x = Math.max(0, a * n - b);
+      const i = Math.floor(x), f = x - i;
+      out[i] += d[n] * (1 - f);
+      if (f > 0) out[i + 1] += d[n] * f;
+    }
+    return out;
+  }
+  function remapRow(row, a, bOf) {
+    let len = 2;
+    row.forEach((d) => { if (d) len = Math.max(len, d.length + 2); });
+    const out = new Float64Array(len);
+    row.forEach((d, m) => { if (d) remapInto(out, d, a, bOf(m)); });
+    return out;
+  }
+
+  // 依抽的順序回傳各里程碑的累計分布
+  // opt.order = 'c'/'w' 組成的字串或陣列 (例如 'cccwc')，省略時先抽完角色再抽武器
+  // 兩個卡池的保底互不影響，所以「拿到 a 隻角色、b 把武器」的總抽數 = 角色 a 隻的抽數 + 武器 b 把的抽數，直接卷積
+  // opt.refund = { c6: 0~1, standard: [命座...] } 時，另外算出扣掉星輝返還後的實付抽數分布 (net)
+  function normalizeOrder(order, A, B) {
+    const seq = [];
+    let a = 0, b = 0;
+    for (const k of order || []) {
+      if (k === 'c' && a < A) { seq.push('c'); a++; }
+      else if (k === 'w' && b < B) { seq.push('w'); b++; }
+    }
+    while (a < A) { seq.push('c'); a++; }
+    while (b < B) { seq.push('w'); b++; }
+    return seq;
+  }
+
+  function plan(opt) {
+    const rf = opt.refund;
+    const chM = characterMilestonesByMiss(opt.character, !!rf);
+    const wpM = weaponMilestonesByMiss(opt.weapon, !!rf);
+    const one = Float64Array.of(1);
+    const chRaw = [one].concat(mergeMiss(chM)), wpRaw = [one].concat(mergeMiss(wpM));
+    const order = normalizeOrder(opt.order, chM.length, wpM.length);
+
+    let chExcl, chFull, wpExcl, wpFull;
+    if (rf) {
+      const c6 = Math.max(0, Math.min(1, +rf.c6 || 0));
+      const cons = Array.isArray(rf.standard) ? rf.standard : [];
+      const aC = 1 - fourStarGlitterPerPull('char', c6) / 5;
+      const aW = 1 - fourStarGlitterPerPull('weapon', c6) / 5;
+      const lossCum = [0];
+      for (let l = 1; l <= 8; l++) lossCum[l] = lossCum[l - 1] + lossGlitter(cons, l);
+      // 拿到第 k 隻 UP 前已入帳的 UP 返還 (UP 角色從未持有開始算)
+      const upBefore = (k) => { let s = 0; for (let q = 1; q < k; q++) s += copyGlitter5(q); return s; };
+      // excl：達成當下那顆五星的返還還沒拿到，不能付自己這一抽；full：已入帳，可以拿去抽另一個卡池
+      chExcl = [one].concat(chM.map((row, i) => remapRow(row, aC, (m) => (upBefore(i + 1) + lossCum[m]) / 5)));
+      chFull = [one].concat(chM.map((row, i) => remapRow(row, aC, (m) => (upBefore(i + 2) + lossCum[m]) / 5)));
+      wpExcl = [one].concat(wpM.map((row, i) => remapRow(row, aW, (m) => (10 * (i + m)) / 5)));
+      wpFull = [one].concat(wpM.map((row, i) => remapRow(row, aW, (m) => (10 * (i + 1 + m)) / 5)));
+    }
+
+    const rows = [];
+    let a = 0, b = 0;
+    for (const k of order) {
+      if (k === 'c') a++; else b++;
+      const row = { kind: k === 'c' ? 'char' : 'weapon', n: k === 'c' ? a : b, chars: a, weapons: b };
+      row.dist = a && b ? conv(chRaw[a], wpRaw[b]) : a ? chRaw[a] : wpRaw[b];
+      if (rf) row.net = k === 'c' ? conv(chExcl[a], wpFull[b]) : conv(chFull[a], wpExcl[b]);
+      rows.push(row);
+    }
+    const last = rows[rows.length - 1];
+    const total = last ? last.dist : one;
+    if (!rf) return { rows, total, order: order.join('') };
+    return { rows, total, totalNet: last ? last.net : one, order: order.join('') };
+  }
+
+  const api = {
+    charHazard, weaponHazard, nextFiveStar, conv, characterMilestones, weaponMilestones, characterMilestonesByMiss, weaponMilestonesByMiss,
+    stats, plan, normalizeOrder, CR_PRESETS, STANDARD_5, FOUR_RATE, fourStarGlitterPerPull, lossGlitter, copyGlitter5,
+  };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.GachaEngine = api;
 })(typeof window !== 'undefined' ? window : globalThis);
