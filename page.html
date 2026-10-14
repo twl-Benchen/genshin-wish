@@ -120,9 +120,11 @@ input:focus-visible, select:focus-visible, button:focus-visible, .check input:fo
 /* 改成直接輸入總抽數時，三個資源欄位顯示 0 並變淡，點了就恢復原本的數字 */
 .row3 input.inactive { opacity: .5; background: transparent; border-style: dashed; cursor: pointer; }
 .row3 .field:has(input.inactive) > label { opacity: .6; }
+/* 逐項填寫時，可抽那格是算出來的，用虛線框表示；點了會恢復剛才直接輸入的總抽數 */
+.budget-total input.derived { border-style: dashed; background: transparent; }
 hr { border: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--frame), transparent); margin: 0; }
 .ex { display: inline-block; font-family: var(--f-body); font-size: .72rem; letter-spacing: .06em; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; font-weight: 400; }
-.inline { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+.inline { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px; }
 
 /* 按鈕：遊戲裡的深石板色膠囊鈕 */
 .gbtn {
@@ -264,11 +266,29 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .hist-result b { font-family: var(--f-num); color: var(--gold); font-size: 1.1rem; }
 .hist-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
 .hist-actions .gbtn { min-width: 130px; }
+/* 小拉桿 (明光計數、命定值)，沿用頁數拉桿的樣式 */
+.page-slide.mini { --thumb: 20px; padding-inline: 2px; }
+.page-slide.mini input[type=range] { height: 24px; }
+.page-slide.mini input[type=range]::-webkit-slider-thumb { margin-top: -8px; }
+.page-slide.mini .page-ticks { height: 18px; }
+.page-slide.mini .page-ticks button { font-size: .74rem; padding: 2px 3px; }
+
+/* 圓框驚嘆號說明 */
+.lab-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.lab-row > label { font-size: .82rem; color: var(--muted); letter-spacing: .03em; }
+.info-wrap { position: relative; display: inline-flex; flex: none; }
+.info { width: 18px; height: 18px; padding: 0; border-radius: 50%; border: 1.5px solid var(--frame); background: var(--surface); color: var(--gold); font: 700 .7rem/1 var(--f-num); cursor: pointer; display: inline-grid; place-items: center; }
+.info:hover, .info[aria-expanded="true"] { background: var(--gold); border-color: var(--gold); color: var(--surface); }
+.info-pop { display: none; position: absolute; top: calc(100% + 8px); left: 0; z-index: 30; width: min(290px, calc(100vw - 32px)); padding: 10px 12px; border: 1px solid var(--frame); border-radius: 6px; background: var(--surface); color: var(--ink); font-size: .8rem; font-weight: 400; line-height: 1.6; letter-spacing: 0; box-shadow: 0 8px 24px rgba(30, 40, 70, .22); text-align: left; white-space: normal; font-family: var(--f-body); }
+.info-wrap.open .info-pop { display: block; }
+.check-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+legend.legend-row { width: 100%; justify-content: space-between; }
+
 /* 分頁 */
 .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
 .tabs button { font: inherit; font-size: .92rem; font-weight: 500; padding: 7px 18px; border-radius: 999px; border: 1px solid var(--frame); background: var(--surface); color: var(--ink); cursor: pointer; }
 .tabs button[aria-selected="true"] { background: var(--btn); color: var(--btn-ink); border-color: var(--btn); font-weight: 700; }
-.rules-page { max-width: 980px; }
+.rules-page { max-width: 980px; display: grid; gap: 20px; }
 
 /* 里程碑拖動排序 */
 .row-head { display: inline-flex; align-items: center; gap: 8px; }
@@ -313,22 +333,19 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
           <div class="field">
             <label for="chPity">已墊抽數</label>
             <div class="inline">
-              <input type="number" id="chPity" min="0" max="89" value="20" inputmode="numeric">
               <button type="button" class="gbtn small" data-hist="char" aria-label="從祈願紀錄推算角色池墊抽"><span class="ic">≡</span>看紀錄</button>
+              <input type="number" id="chPity" min="0" max="89" value="20" inputmode="numeric">
             </div>
           </div>
           <div class="field">
-            <label for="chC">明光計數</label>
-            <select id="chC">
-              <option value="0">0</option>
-              <option value="1" selected>1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-            </select>
+            <span class="lab-row"><label for="chC">明光計數</label><span class="info-wrap"><button type="button" class="info" aria-label="明光計數說明" aria-expanded="false">!</button><span class="info-pop" role="tooltip">明光計數是推測模型裡的狀態：小保底歪一次加 1，贏一次減 1，最多 3。官方只確認連續三輪「先歪，再靠大保底拿到 UP」之後，下一顆五星必定觸發捕獲明光。不確定就選 0。</span></span></span>
+            <div class="page-slide mini">
+              <input type="range" id="chC" min="0" max="3" step="1" value="1">
+              <div class="page-ticks" data-for="chC"><button type="button" data-v="0" style="left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * 0)" aria-label="0">0</button><button type="button" data-v="1" style="left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * 0.333333)" aria-label="1">1</button><button type="button" data-v="2" style="left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * 0.666667)" aria-label="2">2</button><button type="button" data-v="3" style="left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * 1)" aria-label="3">3</button></div>
+            </div>
           </div>
         </div>
         <label class="check"><input type="checkbox" id="chG"> 目前是大保底 (上次五星歪了)</label>
-        <p class="hint">懶得數墊抽的話，按「看紀錄」照遊戲裡的祈願歷史紀錄點上一顆五星的位置就好。明光計數是推測模型裡的狀態：小保底歪一次加 1，贏一次減 1，最多 3。官方只確認連續三輪「先歪，再靠大保底拿到 UP」之後，下一顆五星必定觸發捕獲明光。不確定就填 0。</p>
       </fieldset>
 
       <hr>
@@ -350,16 +367,16 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
           <div class="field">
             <label for="wpPity">已墊抽數</label>
             <div class="inline">
-              <input type="number" id="wpPity" min="0" max="79" value="0" inputmode="numeric">
               <button type="button" class="gbtn small" data-hist="weapon" aria-label="從祈願紀錄推算武器池墊抽"><span class="ic">≡</span>看紀錄</button>
+              <input type="number" id="wpPity" min="0" max="79" value="0" inputmode="numeric">
             </div>
           </div>
           <div class="field">
-            <label for="wpF">命定值</label>
-            <select id="wpF">
-              <option value="0" selected>0</option>
-              <option value="1">1 (下把必定是定軌)</option>
-            </select>
+            <span class="lab-row"><label for="wpF">命定值</label><span class="info-wrap"><button type="button" class="info" aria-label="命定值說明" aria-expanded="false">!</button><span class="info-pop" role="tooltip">5.0 起命定值上限是 1。抽到五星武器但不是定軌的那把，命定值變成 1，下一把五星必定是定軌；抽到定軌就歸 0。</span></span></span>
+            <div class="page-slide mini">
+              <input type="range" id="wpF" min="0" max="1" step="1" value="0">
+              <div class="page-ticks" data-for="wpF"><button type="button" data-v="0" style="left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * 0)" aria-label="0">0</button><button type="button" data-v="1" style="left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * 1)" aria-label="1">1</button></div>
+            </div>
           </div>
         </div>
       </fieldset>
@@ -389,12 +406,15 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
           <span class="eq" id="budgetEq"></span>
           <button type="button" class="linkbtn" id="bRevert" hidden>改回逐項填寫</button>
         </div>
-        <p class="hint" id="budgetHint">160 原石換 1 抽，5 顆星輝換 1 抽。已經算好總抽數的話，直接改「可抽」那格就好。</p>
+        <p class="hint" id="budgetHint">160 原石換 1 抽，5 顆星輝換 1 抽。已經算好總抽數的話，直接改「可抽」那格就好。兩種填法都會記住，點回另一邊就恢復剛才的數字。</p>
         <button type="button" class="toggle" id="rfToggle" aria-expanded="false" aria-controls="rfBox">
           <span>星輝返還 <span class="st" id="rfState">未計入</span></span><span class="chev" aria-hidden="true">▾</span>
         </button>
         <div class="sub" id="rfBox" hidden>
-          <label class="check"><input type="checkbox" id="rfOn"> 計入抽卡過程中返還的星輝</label>
+          <div class="check-row">
+            <label class="check"><input type="checkbox" id="rfOn"> 計入抽卡過程中返還的星輝</label>
+            <span class="info-wrap"><button type="button" class="info" aria-label="星輝返還說明" aria-expanded="false">!</button><span class="info-pop" role="tooltip">按第幾顆星就是幾命，再按同一顆退回一命。重複的四星角色返還 2 顆星輝，滿命後 5 顆；重複的五星角色 10 顆，滿命後 25 顆；四星武器 2 顆，五星武器 10 顆；第一次抽到的角色不返還。開啟後結果改用「實付抽數」，也就是扣掉抽卡途中返還、再換成抽數的部分。</span></span>
+          </div>
           <div class="field">
             <span class="lab" id="rfC6Lab">四星角色大約有幾成已經滿命</span>
             <div class="seg full" id="rfC6Seg" role="group" aria-labelledby="rfC6Lab">
@@ -412,23 +432,20 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
             <input type="hidden" id="rfCons" value="">
             <input type="hidden" id="order" value="">
           </div>
-          <p class="hint">按第幾顆星就是幾命，再按同一顆退回一命。重複的四星角色返還 2 顆星輝，滿命後 5 顆；重複的五星角色 10 顆，滿命後 25 顆；四星武器 2 顆，五星武器 10 顆；第一次抽到的角色不返還。開啟後結果改用「實付抽數」，也就是扣掉抽卡途中返還、再換成抽數的部分。</p>
         </div>
       </fieldset>
 
       <hr>
 
       <fieldset>
-        <legend>進階</legend>
+        <legend class="legend-row">進階<span class="info-wrap"><button type="button" class="info" aria-label="進階說明" aria-expanded="false">!</button><span class="info-pop" role="tooltip">官方公布小保底抽到 UP 的綜合機率是 55%，但沒有公開中間各階段的機率。保守模型算出的長期勝率約 55.6%，最接近官方，社群推測模型約 57.9%，所以預設用保守模型。</span></span></legend>
         <div class="field">
           <label for="crModel">捕獲明光模型</label>
           <select id="crModel">
             <option value="conservative" selected>保守：連續三輪歪後必中</option>
             <option value="community">社群推測：連歪 2 次後 75% 不歪</option>
-            <option value="none">關閉 (5.0 前的純 50/50)</option>
           </select>
         </div>
-        <p class="hint">官方公布小保底抽到 UP 的綜合機率是 55%，但沒有公開中間各階段的機率。保守模型算出的長期勝率約 55.6%，最接近官方，社群推測模型約 57.9%，所以預設用保守模型。</p>
       </fieldset>
     </form>
 
@@ -462,34 +479,32 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
           </table>
         </div>
       </section>
-
-      <section class="card frame">
-        <div class="card-head">
-          <h2>下一顆五星的等待</h2>
-          <div class="ctrls">
-            <div class="seg" id="waitPool" aria-label="卡池">
-              <button type="button" data-v="char" aria-pressed="true">角色池</button>
-              <button type="button" data-v="weapon" aria-pressed="false">武器池</button>
-            </div>
-            <div class="seg" id="waitView" aria-label="圖表類型">
-              <button type="button" data-v="hazard" aria-pressed="false">條件機率</button>
-              <button type="button" data-v="pmf" aria-pressed="true">首金分布</button>
-              <button type="button" data-v="cdf" aria-pressed="false">累計出金率</button>
-            </div>
-          </div>
-        </div>
-        <p class="note" id="waitDesc"></p>
-        <div class="chart-box" id="waitBox">
-          <svg id="wait" viewBox="0 0 800 260" role="img" aria-label="下一顆五星的等待分布"></svg>
-          <div class="tip" id="tip2" hidden></div>
-        </div>
-        <div class="wait-facts" id="waitFacts"></div>
-      </section>
-
     </div>
   </div>
 
   <div class="rules-page" id="tabRules" role="tabpanel" aria-labelledby="tabBtnRules" hidden>
+    <section class="card frame">
+      <div class="card-head">
+        <h2>下一顆五星的等待</h2>
+        <div class="ctrls">
+          <div class="seg" id="waitPool" aria-label="卡池">
+            <button type="button" data-v="char" aria-pressed="true">角色池</button>
+            <button type="button" data-v="weapon" aria-pressed="false">武器池</button>
+          </div>
+          <div class="seg" id="waitView" aria-label="圖表類型">
+            <button type="button" data-v="hazard" aria-pressed="false">條件機率</button>
+            <button type="button" data-v="pmf" aria-pressed="true">首金分布</button>
+            <button type="button" data-v="cdf" aria-pressed="false">累計出金率</button>
+          </div>
+        </div>
+      </div>
+      <p class="note" id="waitDesc"></p>
+      <div class="chart-box" id="waitBox">
+        <svg id="wait" viewBox="0 0 800 260" role="img" aria-label="下一顆五星的等待分布"></svg>
+        <div class="tip" id="tip2" hidden></div>
+      </div>
+      <div class="wait-facts" id="waitFacts"></div>
+    </section>
     <section class="card frame">
       <h2>計算用的抽卡規則</h2>
       <div class="rules">
@@ -639,6 +654,9 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     });
     $('budgetBox').classList.toggle('manual', manual);
     $('bRevert').hidden = !manual;
+    const canRestore = !manual && String(bm.total || '').trim() !== '';
+    $('bTotal').classList.toggle('derived', !manual);
+    if (canRestore) $('bTotal').title = '點一下恢復剛才輸入的 ' + bm.total + ' 抽'; else $('bTotal').removeAttribute('title');
     if (manual) $('bTotal').value = bm.total;
   }
   function toManual() {
@@ -657,6 +675,14 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     saveBm(); paintBudgetMode(); schedule();
   }
   $('bTotal').addEventListener('input', toManual);
+  $('bTotal').addEventListener('focus', () => {
+    if (bm.mode === 'total' || String(bm.total || '').trim() === '') return;
+    bm.items = {};
+    ITEMS.forEach((id) => { bm.items[id] = $(id).value; });
+    bm.mode = 'total';
+    saveBm(); paintBudgetMode(); schedule();
+    setTimeout(() => { try { $('bTotal').select(); } catch (e) {} }, 0);
+  });
   $('bTotal').addEventListener('blur', () => { if (bm.mode === 'total' && $('bTotal').value.trim() === '') toItems(); });
   $('bRevert').addEventListener('click', toItems);
   ITEMS.forEach((id) => $(id).addEventListener('focus', () => {
@@ -664,10 +690,65 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     toItems();
     setTimeout(() => { try { $(id).select(); } catch (e) {} }, 0);
   }));
-  if (bm.mode === 'total') {
-    if (!bm.items) { bm.items = {}; ITEMS.forEach((id) => { bm.items[id] = $(id).value; }); }
-    paintBudgetMode();
+  if (bm.mode === 'total' && !bm.items) { bm.items = {}; ITEMS.forEach((id) => { bm.items[id] = $(id).value; }); }
+  paintBudgetMode();
+
+  // ---- 明光計數、命定值拉桿：拖動或點刻度 ----
+  function paintMini(id) {
+    const v = $(id).value;
+    document.querySelectorAll(`.page-ticks[data-for="${id}"] button`).forEach((b) => b.classList.toggle('on', b.dataset.v === v));
   }
+  document.querySelectorAll('.page-ticks[data-for]').forEach((box) => {
+    const id = box.dataset.for;
+    if (!/^\d+$/.test($(id).value)) $(id).value = $(id).min; // 舊版存的值不合法時退回最小值
+    paintMini(id);
+    $(id).addEventListener('input', () => paintMini(id));
+    box.addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      $(id).value = b.dataset.v; paintMini(id); schedule();
+    });
+  });
+  // 舊版存過「關閉」明光模型，選項已移除
+  if ($('crModel').selectedIndex < 0) $('crModel').value = 'conservative';
+
+  // ---- 圓框驚嘆號說明：點一下開關，滑鼠移上去也會顯示 ----
+  const canHover = window.matchMedia && window.matchMedia('(hover: hover)').matches;
+  function placeInfo(wrap) {
+    const pop = wrap.querySelector('.info-pop');
+    pop.style.left = '0px';
+    const vw = document.documentElement.clientWidth;
+    const br = wrap.querySelector('.info').getBoundingClientRect();
+    const wr = wrap.getBoundingClientRect();
+    let left = br.left + br.width / 2 - pop.offsetWidth / 2;
+    left = Math.max(8, Math.min(vw - pop.offsetWidth - 8, left));
+    pop.style.left = left - wr.left + 'px';
+  }
+  function setInfo(wrap, open, pinned) {
+    document.querySelectorAll('.info-wrap.open').forEach((w) => { if (w !== wrap) { w.classList.remove('open'); w.dataset.pinned = ''; w.querySelector('.info').setAttribute('aria-expanded', 'false'); } });
+    wrap.classList.toggle('open', open);
+    wrap.dataset.pinned = open && pinned ? '1' : '';
+    wrap.querySelector('.info').setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) placeInfo(wrap);
+  }
+  document.querySelectorAll('.info-wrap').forEach((wrap) => {
+    const btn = wrap.querySelector('.info');
+    btn.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      setInfo(wrap, !(wrap.classList.contains('open') && wrap.dataset.pinned), true);
+    });
+    if (canHover) {
+      wrap.addEventListener('mouseenter', () => { if (!wrap.classList.contains('open')) setInfo(wrap, true, false); });
+      wrap.addEventListener('mouseleave', () => { if (!wrap.dataset.pinned) setInfo(wrap, false, false); });
+    }
+  });
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.info-wrap')) return;
+    document.querySelectorAll('.info-wrap.open').forEach((w) => setInfo(w, false, false));
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') document.querySelectorAll('.info-wrap.open').forEach((w) => setInfo(w, false, false));
+  });
 
   // ---- 抽的順序：c = 角色、w = 武器，數量改變時保留使用者排好的順序 ----
   function reconcileOrder(txt, A, B) {
@@ -855,7 +936,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     if ($('hist').returnValue !== 'apply') return;
     const pity = Math.min(selPity(), HIST[hs.pool].max);
     if (hs.pool === 'char') { $('chPity').value = pity; $('chG').checked = hs.what === 'std'; }
-    else { $('wpPity').value = pity; $('wpF').value = hs.what === 'other' ? '1' : '0'; }
+    else { $('wpPity').value = pity; $('wpF').value = hs.what === 'other' ? '1' : '0'; paintMini('wpF'); }
     schedule();
   });
 
@@ -917,7 +998,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     $('tabBtnCalc').setAttribute('aria-selected', rules ? 'false' : 'true');
     $('tabBtnRules').setAttribute('aria-selected', rules ? 'true' : 'false');
     try { history.replaceState(null, '', rules ? '#rules' : location.pathname + location.search); } catch (e) {}
-    if (!rules) setTimeout(() => { drawChart(); drawWait(); }, 0);
+    setTimeout(() => { if (rules) drawWait(); else drawChart(); }, 0);
   }
   $('tabBtnCalc').addEventListener('click', () => showTab('calc'));
   $('tabBtnRules').addEventListener('click', () => showTab('rules'));
