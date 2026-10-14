@@ -1,0 +1,692 @@
+<title>原神期望抽數計算</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;800&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* 版面：左側為祈願設定欄，右側為結果 (摘要數字 → 累積機率曲線 → 里程碑表 → 規則)；手機時改為單欄 */
+:root {
+  --bg: #eef1f7;
+  --surface: #ffffff;
+  --sunken: #f5f7fb;
+  --ink: #1d2340;
+  --muted: #5b6386;
+  --line: #d5dae8;
+  --gold: #a96c12;
+  --gold-soft: #f5e6c6;
+  --violet: #6e4bb0;
+  --violet-soft: #e9e1f7;
+  --good: #2f7d55;
+  --warn: #9a620f;
+  --bad: #b2433a;
+  --focus: #3b5bdb;
+  --f-display: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+  --f-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --f-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1326; --surface: #171c35; --sunken: #121730; --ink: #e7e9f5; --muted: #9aa1c4; --line: #2a3156;
+    --gold: #e9b862; --gold-soft: #3a3020; --violet: #ad8ee6; --violet-soft: #2c2448;
+    --good: #5cc08a; --warn: #e0a64a; --bad: #ec8378; --focus: #8ea6ff; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1326; --surface: #171c35; --sunken: #121730; --ink: #e7e9f5; --muted: #9aa1c4; --line: #2a3156;
+  --gold: #e9b862; --gold-soft: #3a3020; --violet: #ad8ee6; --violet-soft: #2c2448;
+  --good: #5cc08a; --warn: #e0a64a; --bad: #ec8378; --focus: #8ea6ff; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 24px; }
+header { display: grid; gap: 6px; }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(1.7rem, 3.2vw, 2.3rem); margin: 0; letter-spacing: .02em; text-wrap: balance; }
+h1 .star { color: var(--gold); }
+.lede { margin: 0; color: var(--muted); max-width: 62ch; }
+.layout { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 860px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+/* 設定欄 */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 20px; }
+fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 12px; min-width: 0; }
+legend { font-family: var(--f-display); font-weight: 600; font-size: 1.05rem; padding: 0; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+legend .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.dot.c { background: var(--gold); } .dot.w { background: var(--violet); } .dot.b { background: var(--muted); }
+.field { display: grid; gap: 4px; }
+.field > label, .lab { font-size: .82rem; color: var(--muted); letter-spacing: .03em; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+input[type=number], select {
+  width: 100%; font: inherit; font-family: var(--f-num); font-size: .95rem; color: var(--ink); background: var(--sunken);
+  border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; min-width: 0;
+}
+select { font-family: var(--f-body); }
+input:focus-visible, select:focus-visible, button:focus-visible, .check input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.check { display: flex; align-items: center; gap: 8px; font-size: .92rem; cursor: pointer; }
+.check input { width: 17px; height: 17px; accent-color: var(--gold); }
+.hint { font-size: .78rem; color: var(--muted); margin: 0; }
+.budget-total { font-family: var(--f-num); font-size: .9rem; color: var(--ink); background: var(--sunken); border-radius: 8px; padding: 8px 10px; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 0; }
+.ex { display: inline-block; font-size: .72rem; letter-spacing: .06em; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; }
+
+/* 結果 */
+.results { display: grid; gap: 20px; min-width: 0; }
+.summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 1040px) { .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 2px; align-content: start; }
+.stat .k { font-size: .8rem; color: var(--muted); letter-spacing: .04em; }
+.stat .v { font-family: var(--f-num); font-weight: 600; font-size: 1.85rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.stat .v small { font-family: var(--f-body); font-size: .85rem; font-weight: 500; color: var(--muted); margin-left: 4px; }
+.stat .s { font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stat.hero { background: var(--gold-soft); border-color: transparent; }
+.stat.hero .v { color: var(--gold); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.card h2 { font-family: var(--f-display); font-weight: 600; font-size: 1.12rem; margin: 0; }
+.card-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .8rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 18px; height: 3px; border-radius: 2px; display: inline-block; }
+.chart-box { position: relative; width: 100%; }
+#chart { display: block; width: 100%; height: auto; touch-action: pan-y; }
+#chart text { font-family: var(--f-num); font-size: 11px; fill: var(--muted); }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--surface); font-size: .8rem; padding: 6px 9px; border-radius: 8px; white-space: nowrap; transform: translate(-50%, -110%); font-variant-numeric: tabular-nums; }
+
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; min-width: 520px; }
+th, td { text-align: right; padding: 9px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: .78rem; font-weight: 500; color: var(--muted); letter-spacing: .04em; }
+th:first-child, td:first-child { text-align: left; }
+td.num { font-family: var(--f-num); }
+.tag { display: inline-flex; align-items: center; gap: 8px; }
+.tag i { font-style: normal; font-family: var(--f-num); font-size: .75rem; padding: 1px 7px; border-radius: 6px; }
+.tag i.c { background: var(--gold-soft); color: var(--gold); }
+.tag i.w { background: var(--violet-soft); color: var(--violet); }
+.meter { display: inline-grid; grid-template-columns: 70px auto; gap: 8px; align-items: center; justify-content: end; }
+.meter .bar { height: 6px; border-radius: 3px; background: var(--sunken); border: 1px solid var(--line); overflow: hidden; }
+.meter .bar b { display: block; height: 100%; }
+.meter.good b { background: var(--good); } .meter.warn b { background: var(--warn); } .meter.bad b { background: var(--bad); }
+.meter.good em { color: var(--good); } .meter.warn em { color: var(--warn); } .meter.bad em { color: var(--bad); }
+.meter em { font-style: normal; font-family: var(--f-num); min-width: 54px; text-align: right; }
+
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 700px) { .rules { grid-template-columns: minmax(0, 1fr); } }
+.rules h3 { font-size: .95rem; margin: 0 0 6px; font-weight: 700; }
+.rules ul { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; color: var(--ink); font-size: .9rem; }
+.rules li::marker { color: var(--muted); }
+.note { font-size: .8rem; color: var(--muted); margin: 0; }
+code { font-family: var(--f-num); font-size: .88em; }
+.ctrls { display: flex; flex-wrap: wrap; gap: 8px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--sunken); }
+.seg button { font: inherit; font-size: .82rem; padding: 5px 11px; background: transparent; color: var(--muted); border: 0; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--gold-soft); color: var(--gold); font-weight: 700; }
+.seg button:hover { color: var(--ink); }
+#wait { display: block; width: 100%; height: auto; touch-action: pan-y; }
+#wait text { font-family: var(--f-num); font-size: 11px; fill: var(--muted); }
+#tip2 { white-space: pre; line-height: 1.45; }
+.wait-facts { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.wait-facts b { color: var(--ink); font-family: var(--f-num); font-weight: 600; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1><span class="star">✦</span> 原神期望抽數計算</h1>
+    <p class="lede">輸入想抽的角色命座與專武精煉、目前墊了幾抽，直接算出完整的抽數機率分布，並估計你手上的原石夠不夠。結果是精確計算，不是隨機模擬，每次算出來都一樣。</p>
+  </header>
+
+  <div class="layout">
+    <form class="panel" id="form" autocomplete="off">
+      <fieldset>
+        <legend><span class="dot c"></span>角色活動祈願</legend>
+        <div class="field">
+          <label for="chT">想抽到幾隻 UP 角色</label>
+          <select id="chT">
+            <option value="0">不抽角色</option>
+            <option value="1">1 隻 (0 命)</option>
+            <option value="2" selected>2 隻 (1 命)</option>
+            <option value="3">3 隻 (2 命)</option>
+            <option value="4">4 隻 (3 命)</option>
+            <option value="5">5 隻 (4 命)</option>
+            <option value="6">6 隻 (5 命)</option>
+            <option value="7">7 隻 (滿命)</option>
+          </select>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="chPity">已墊抽數</label>
+            <input type="number" id="chPity" min="0" max="89" value="20" inputmode="numeric">
+          </div>
+          <div class="field">
+            <label for="chC">明光計數</label>
+            <select id="chC">
+              <option value="0">0</option>
+              <option value="1" selected>1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+            </select>
+          </div>
+        </div>
+        <label class="check"><input type="checkbox" id="chG"> 目前是大保底 (上次五星歪了)</label>
+        <p class="hint">明光計數是推測模型裡的狀態：小保底歪一次加 1，贏一次減 1，最多 3。官方只確認連續三輪「先歪，再靠大保底拿到 UP」之後，下一顆五星必定觸發捕獲明光。不確定就填 0。</p>
+      </fieldset>
+
+      <hr>
+
+      <fieldset>
+        <legend><span class="dot w"></span>武器活動祈願</legend>
+        <div class="field">
+          <label for="wpT">想抽到幾把定軌武器</label>
+          <select id="wpT">
+            <option value="0">不抽武器</option>
+            <option value="1" selected>1 把 (精 1)</option>
+            <option value="2">2 把 (精 2)</option>
+            <option value="3">3 把 (精 3)</option>
+            <option value="4">4 把 (精 4)</option>
+            <option value="5">5 把 (精 5)</option>
+          </select>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="wpPity">已墊抽數</label>
+            <input type="number" id="wpPity" min="0" max="79" value="0" inputmode="numeric">
+          </div>
+          <div class="field">
+            <label for="wpF">命定值</label>
+            <select id="wpF">
+              <option value="0" selected>0</option>
+              <option value="1">1 (下把必定是定軌)</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <hr>
+
+      <fieldset>
+        <legend><span class="dot b"></span>手上的資源 <span class="ex">範例數字</span></legend>
+        <div class="row3">
+          <div class="field">
+            <label for="bPrimo">原石</label>
+            <input type="number" id="bPrimo" min="0" step="10" value="24000" inputmode="numeric">
+          </div>
+          <div class="field">
+            <label for="bFate">糾纏之緣</label>
+            <input type="number" id="bFate" min="0" value="60" inputmode="numeric">
+          </div>
+          <div class="field">
+            <label for="bStar">無主星輝</label>
+            <input type="number" id="bStar" min="0" value="40" inputmode="numeric">
+          </div>
+        </div>
+        <div class="budget-total" id="budgetTotal">可抽 0 抽</div>
+        <p class="hint">160 原石換 1 抽，5 顆星輝換 1 抽 (不計抽卡過程中額外返還的星輝)。</p>
+      </fieldset>
+
+      <hr>
+
+      <fieldset>
+        <legend>進階</legend>
+        <div class="field">
+          <label for="crModel">捕獲明光模型</label>
+          <select id="crModel">
+            <option value="conservative" selected>保守：連續三輪歪後必中</option>
+            <option value="community">社群推測：連歪 2 次後 75% 不歪</option>
+            <option value="none">關閉 (5.0 前的純 50/50)</option>
+          </select>
+        </div>
+        <p class="hint">官方公布小保底抽到 UP 的綜合機率是 55%，但沒有公開中間各階段的機率。保守模型算出的長期勝率約 55.6%，最接近官方，社群推測模型約 57.9%，所以預設用保守模型。</p>
+      </fieldset>
+    </form>
+
+    <div class="results">
+      <div class="summary" id="summary"></div>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>幾抽內能達成目標</h2>
+          <div class="legend">
+            <span><i class="sw" style="background: var(--gold)"></i>累積達成機率</span>
+            <span><i class="sw" style="background: var(--ink)"></i>你的預算</span>
+          </div>
+        </div>
+        <div class="chart-box" id="chartBox">
+          <svg id="chart" viewBox="0 0 800 300" role="img" aria-label="累積達成機率曲線"></svg>
+          <div class="tip" id="tip" hidden></div>
+        </div>
+        <p class="note">把滑鼠移到曲線上 (手機用手指拖曳) 可以看任意抽數的達成機率。</p>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>每個里程碑</h2>
+          <span class="note">先抽角色、再抽武器，抽數為累計</span>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>目標</th><th>期望抽數</th><th>一半機率</th><th>九成機率</th><th>最多</th><th>預算內達成</th></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>下一顆五星的等待</h2>
+          <div class="ctrls">
+            <div class="seg" id="waitPool" aria-label="卡池">
+              <button type="button" data-v="char" aria-pressed="true">角色池</button>
+              <button type="button" data-v="weapon" aria-pressed="false">武器池</button>
+            </div>
+            <div class="seg" id="waitView" aria-label="圖表類型">
+              <button type="button" data-v="hazard" aria-pressed="false">條件機率</button>
+              <button type="button" data-v="pmf" aria-pressed="true">首金分布</button>
+              <button type="button" data-v="cdf" aria-pressed="false">累計出金率</button>
+            </div>
+          </div>
+        </div>
+        <p class="note" id="waitDesc"></p>
+        <div class="chart-box" id="waitBox">
+          <svg id="wait" viewBox="0 0 800 260" role="img" aria-label="下一顆五星的等待分布"></svg>
+          <div class="tip" id="tip2" hidden></div>
+        </div>
+        <div class="wait-facts" id="waitFacts"></div>
+      </section>
+
+      <section class="card">
+        <h2>計算用的抽卡規則</h2>
+        <div class="rules">
+          <div>
+            <h3>三個官方數字</h3>
+            <ul>
+              <li>0.600%：每一次祈願的五星基礎機率</li>
+              <li>1.600%：算進保底後的長期綜合五星率，約 62.5 抽一顆</li>
+              <li>90 抽：等待五星的硬上限</li>
+              <li>只有 0.6% 加 90 抽硬保底時平均要 69.7 抽 (1.435%)，所以 90 抽前一定有軟保底，但官方沒公布曲線</li>
+            </ul>
+          </div>
+          <div>
+            <h3>五星何時出現 (社群擬合)</h3>
+            <ul>
+              <li>角色池：前 73 抽 0.6%，第 74 抽起每抽加 6%，第 89 抽約 96.6%，第 90 抽必出</li>
+              <li>首金分布峰值在第 77 抽 (約 10.5%)，第 80 抽前約 91.9% 已出金</li>
+              <li>長期五星率約 1.605%，與派蒙工具站約 2205 萬筆五星落點的實測形狀相近</li>
+            </ul>
+          </div>
+          <div>
+            <h3>是不是當期 UP</h3>
+            <ul>
+              <li>小保底 50% 是 UP，歪了下一顆五星必定是 UP (大保底)</li>
+              <li>捕獲明光 (5.0 起)：只在小保底時參與判定，每次祈願基礎觸發機率 0.018%，小保底 UP 綜合機率 55%</li>
+              <li>連續三輪「先歪，再靠大保底拿到 UP」(共 6 顆五星) 後，下一顆五星必定觸發</li>
+              <li>中間各階段的機率官方沒有公開，網頁的明光計數是推測模型</li>
+            </ul>
+          </div>
+          <div>
+            <h3>武器活動祈願 (社群擬合)</h3>
+            <ul>
+              <li>前 62 抽 0.7%，第 63~73 抽每抽加 7%，第 74 抽起每抽加 3.5%，第 80 抽必出</li>
+              <li>平均約 53.3 抽一把五星，75% 是兩把 UP 之一，定軌那把佔 37.5%</li>
+              <li>5.0 起命定值上限 1：沒出定軌，下一把五星必定是定軌</li>
+            </ul>
+          </div>
+        </div>
+        <p class="note">「角色活動祈願」與「角色活動祈願-2」共享抽數和大保底狀態，跟武器池互相獨立，保底會跨期繼承。逐抽機率是社群依大量抽卡紀錄擬合的結果，不是官方逐抽表，實際可能略有出入。</p>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+/*ENGINE*/
+</script>
+<script>
+(function () {
+  'use strict';
+  const E = window.GachaEngine;
+  const $ = (id) => document.getElementById(id);
+  const ids = ['chT', 'chPity', 'chC', 'chG', 'wpT', 'wpPity', 'wpF', 'bPrimo', 'bFate', 'bStar', 'crModel'];
+  const KEY = 'genshin-pulls-v1';
+  const fmt = (n) => Math.round(n).toLocaleString('zh-TW');
+  const pctTxt = (p) => (p >= 0.9995 ? '100' : p <= 0.0005 && p > 0 ? '<0.1' : (p * 100).toFixed(1)) + '%';
+  const clampInt = (v, lo, hi) => { v = parseInt(v, 10); if (!isFinite(v)) v = lo; return Math.max(lo, Math.min(hi, v)); };
+
+  // 還原上次輸入
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (saved) ids.forEach((id) => {
+      if (!(id in saved)) return;
+      const el = $(id);
+      if (el.type === 'checkbox') el.checked = !!saved[id]; else el.value = saved[id];
+    });
+  } catch (e) {}
+
+  function read() {
+    const v = {};
+    ids.forEach((id) => { const el = $(id); v[id] = el.type === 'checkbox' ? el.checked : el.value; });
+    try { localStorage.setItem(KEY, JSON.stringify(v)); } catch (e) {}
+    return {
+      character: {
+        target: clampInt(v.chT, 0, 7), pity: clampInt(v.chPity, 0, 89), guaranteed: v.chG,
+        radiance: clampInt(v.chC, 0, 3), cr: E.CR_PRESETS[v.crModel] ? E.CR_PRESETS[v.crModel].cr : E.CR_PRESETS.conservative.cr,
+      },
+      weapon: { target: clampInt(v.wpT, 0, 5), pity: clampInt(v.wpPity, 0, 79), fate: clampInt(v.wpF, 0, 1) },
+      budget: Math.floor(clampInt(v.bPrimo, 0, 1e9) / 160) + clampInt(v.bFate, 0, 1e7) + Math.floor(clampInt(v.bStar, 0, 1e8) / 5),
+      primo: clampInt(v.bPrimo, 0, 1e9),
+    };
+  }
+
+  function meterClass(p) { return p >= 0.9 ? 'good' : p >= 0.5 ? 'warn' : 'bad'; }
+
+  let current = null;
+
+  function render() {
+    const opt = read();
+    $('budgetTotal').textContent = '可抽 ' + fmt(opt.budget) + ' 抽 (約 ' + fmt(opt.budget * 160) + ' 原石)';
+    const res = E.plan(opt);
+    const st = E.stats(res.total);
+    const has = res.rows.length > 0;
+    const pB = st.within(opt.budget);
+    const short = Math.max(0, Math.ceil(st.mean) - opt.budget);
+
+    $('summary').innerHTML = has ? `
+      <div class="stat hero"><span class="k">期望抽數</span><span class="v">${fmt(st.mean)}<small>抽</small></span><span class="s">約 ${fmt(st.mean * 160)} 原石</span></div>
+      <div class="stat"><span class="k">一半機率在</span><span class="v">${fmt(st.p50)}<small>抽內</small></span><span class="s">運氣好 (10%) ${fmt(st.p10)} 抽</span></div>
+      <div class="stat"><span class="k">九成機率在</span><span class="v">${fmt(st.p90)}<small>抽內</small></span><span class="s">最壞情況 ${fmt(st.max)} 抽</span></div>
+      <div class="stat"><span class="k">預算 ${fmt(opt.budget)} 抽的達成率</span><span class="v" style="color: var(--${meterClass(pB)})">${pctTxt(pB)}</span><span class="s">${short > 0 ? '距離期望還差 ' + fmt(short) + ' 抽' : '已超過期望抽數'}</span></div>`
+      : `<div class="stat" style="grid-column: 1 / -1"><span class="k">尚未設定目標</span><span class="s">在左側選擇想抽的角色或武器數量。</span></div>`;
+
+    const rowsHtml = res.rows.map((r) => {
+      const s = E.stats(r.dist);
+      const p = s.within(opt.budget);
+      const label = r.kind === 'char'
+        ? `<span class="tag"><i class="c">${r.n - 1 === 6 ? '滿命' : (r.n - 1) + ' 命'}</i>第 ${r.n} 隻角色</span>`
+        : `<span class="tag"><i class="w">精 ${r.n}</i>第 ${r.n} 把武器</span>`;
+      return `<tr><td>${label}</td><td class="num">${s.mean.toFixed(1)}</td><td class="num">${fmt(s.p50)}</td><td class="num">${fmt(s.p90)}</td><td class="num">${fmt(s.max)}</td>
+        <td><span class="meter ${meterClass(p)}"><span class="bar"><b style="width:${(p * 100).toFixed(1)}%"></b></span><em>${pctTxt(p)}</em></span></td></tr>`;
+    }).join('');
+    $('tbody').innerHTML = rowsHtml || `<tr><td colspan="6" style="text-align:left;color:var(--muted)">還沒有目標。</td></tr>`;
+
+    current = { st, budget: opt.budget, has };
+    drawChart();
+  }
+
+  // ---- SVG 累積機率圖 ----
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = $('chart');
+  let geom = null;
+
+  function niceStep(range) {
+    const raw = range / 6;
+    const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    for (const m of [1, 2, 2.5, 5, 10]) if (m * mag >= raw) return m * mag;
+    return 10 * mag;
+  }
+
+  function el(tag, attrs, parent) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    (parent || svg).appendChild(e);
+    return e;
+  }
+
+  function drawChart() {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    $('tip').hidden = true;
+    if (!current || !current.has) { geom = null; return; }
+    const { st, budget } = current;
+    const W = Math.max(320, Math.round($('chartBox').clientWidth || 800));
+    const H = W < 520 ? 240 : 300;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    const m = { l: 46, r: 16, t: 14, b: 32 };
+    const cdf = st.cdf;
+    let xMax = st.max;
+    for (let i = 0; i < cdf.length; i++) if (cdf[i] >= 0.9995) { xMax = i; break; }
+    xMax = Math.max(xMax, Math.min(budget, st.max) + 5, 10);
+    const step = niceStep(xMax);
+    xMax = Math.ceil(xMax / step) * step;
+    const X = (n) => m.l + (n / xMax) * (W - m.l - m.r);
+    const Y = (p) => m.t + (1 - p) * (H - m.t - m.b);
+
+    const css = getComputedStyle(document.documentElement);
+    const c = (name) => css.getPropertyValue(name).trim();
+
+    // 格線
+    [0, 0.25, 0.5, 0.75, 1].forEach((p) => {
+      el('line', { x1: m.l, x2: W - m.r, y1: Y(p), y2: Y(p), stroke: c('--line'), 'stroke-width': 1 });
+      const t = el('text', { x: m.l - 8, y: Y(p) + 4, 'text-anchor': 'end' }); t.textContent = Math.round(p * 100) + '%';
+    });
+    for (let x = 0; x <= xMax + 1e-9; x += step) {
+      const t = el('text', { x: X(x), y: H - m.b + 18, 'text-anchor': 'middle' }); t.textContent = x;
+    }
+
+    // 曲線與預算內面積
+    let d = `M ${X(0)} ${Y(0)}`;
+    const lim = Math.min(xMax, cdf.length - 1);
+    for (let i = 0; i <= lim; i++) d += ` L ${X(i).toFixed(1)} ${Y(cdf[i]).toFixed(1)}`;
+    if (lim < xMax) d += ` L ${X(xMax)} ${Y(1)}`;
+    const bx = Math.min(budget, xMax);
+    let area = `M ${X(0)} ${Y(0)}`;
+    for (let i = 0; i <= Math.min(bx, lim); i++) area += ` L ${X(i).toFixed(1)} ${Y(cdf[i]).toFixed(1)}`;
+    area += ` L ${X(Math.min(bx, lim))} ${Y(0)} Z`;
+    el('path', { d: area, fill: c('--gold'), 'fill-opacity': 0.14, stroke: 'none' });
+    el('path', { d, fill: 'none', stroke: c('--gold'), 'stroke-width': 2.5, 'stroke-linejoin': 'round' });
+
+    // 中位數 / 九成 標記
+    [[st.p50, '50%'], [st.p90, '90%']].forEach(([n, lab]) => {
+      if (n > xMax) return;
+      el('line', { x1: X(n), x2: X(n), y1: Y(0), y2: Y(st.within(n)), stroke: c('--muted'), 'stroke-dasharray': '3 4', 'stroke-width': 1 });
+      el('circle', { cx: X(n), cy: Y(st.within(n)), r: 3.5, fill: c('--surface'), stroke: c('--gold'), 'stroke-width': 2 });
+      const t = el('text', { x: X(n) + 6, y: Y(st.within(n)) + 14 }); t.textContent = lab + ' · ' + n;
+    });
+
+    // 預算線
+    if (budget <= xMax) {
+      el('line', { x1: X(budget), x2: X(budget), y1: m.t, y2: Y(0), stroke: c('--ink'), 'stroke-width': 1.5 });
+      const right = X(budget) > W - 120;
+      const t = el('text', { x: X(budget) + (right ? -6 : 6), y: m.t + 12, 'text-anchor': right ? 'end' : 'start' });
+      t.textContent = '預算 ' + budget + ' 抽';
+      t.setAttribute('style', 'fill:' + c('--ink'));
+    }
+
+    const hover = el('g', { visibility: 'hidden' });
+    el('line', { y1: m.t, y2: Y(0), stroke: c('--muted'), 'stroke-width': 1 }, hover);
+    el('circle', { r: 5, fill: c('--gold'), stroke: c('--surface'), 'stroke-width': 2 }, hover);
+    geom = { W, H, m, xMax, X, Y, hover };
+  }
+
+  function onMove(ev) {
+    if (!geom || !current) return;
+    const rect = svg.getBoundingClientRect();
+    const px = ((ev.clientX - rect.left) / rect.width) * geom.W;
+    const n = Math.round(((px - geom.m.l) / (geom.W - geom.m.l - geom.m.r)) * geom.xMax);
+    if (n < 0 || n > geom.xMax) { leave(); return; }
+    const p = current.st.within(n);
+    const [line, dot] = geom.hover.children;
+    line.setAttribute('x1', geom.X(n)); line.setAttribute('x2', geom.X(n));
+    dot.setAttribute('cx', geom.X(n)); dot.setAttribute('cy', geom.Y(p));
+    geom.hover.setAttribute('visibility', 'visible');
+    const tip = $('tip');
+    tip.hidden = false;
+    tip.textContent = n + ' 抽內：' + pctTxt(p) + ' (' + fmt(n * 160) + ' 原石)';
+    const scale = rect.width / geom.W;
+    tip.style.left = Math.max(70, Math.min(rect.width - 70, geom.X(n) * scale)) + 'px';
+    tip.style.top = geom.Y(p) * scale + 'px';
+  }
+  function leave() { if (geom) geom.hover.setAttribute('visibility', 'hidden'); $('tip').hidden = true; }
+  svg.addEventListener('pointermove', onMove);
+  svg.addEventListener('pointerdown', onMove);
+  svg.addEventListener('pointerleave', leave);
+
+  // ---- 下一顆五星的等待：條件機率 / 首金分布 / 累計出金率 ----
+  const svg2 = $('wait');
+  const waitState = { pool: 'char', view: 'pmf' };
+  let wgeom = null;
+  const VIEW_DESC = {
+    hazard: '條件機率：前面一直沒出金的人，在這一抽出金的比例。',
+    pmf: '首金分布：下一顆五星剛好落在第幾抽的機率，每根柱子是一抽。',
+    cdf: '累計出金率：到這一抽為止已經出金的比例。',
+  };
+
+  function setupSeg(id, key) {
+    $(id).addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      waitState[key] = b.dataset.v;
+      $(id).querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+      try { localStorage.setItem(KEY + '-wait', JSON.stringify(waitState)); } catch (err) {}
+      drawWait();
+    });
+  }
+  try {
+    const ws = JSON.parse(localStorage.getItem(KEY + '-wait') || 'null');
+    if (ws) {
+      if (ws.pool === 'char' || ws.pool === 'weapon') waitState.pool = ws.pool;
+      if (VIEW_DESC[ws.view]) waitState.view = ws.view;
+    }
+  } catch (err) {}
+  ['waitPool', 'waitView'].forEach((id) => {
+    const key = id === 'waitPool' ? 'pool' : 'view';
+    $(id).querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x.dataset.v === waitState[key] ? 'true' : 'false'));
+  });
+  setupSeg('waitPool', 'pool');
+  setupSeg('waitView', 'view');
+
+  function waitModel() {
+    const isChar = waitState.pool === 'char';
+    const hz = isChar ? E.charHazard : E.weaponHazard;
+    const max = isChar ? 90 : 80;
+    const pity = isChar ? clampInt($('chPity').value, 0, 89) : clampInt($('wpPity').value, 0, 79);
+    const d = E.nextFiveStar(hz, max, pity); // index = 再抽幾抽
+    const pmf = new Float64Array(max + 1), cdf = new Float64Array(max + 1);
+    let acc = 0, mean = 0;
+    for (let n = 1; n <= max; n++) {
+      const j = n - pity;
+      pmf[n] = j >= 1 && j < d.length ? d[j] : 0;
+      acc += pmf[n]; cdf[n] = acc; mean += pmf[n] * n;
+    }
+    return { isChar, hz, max, pity, pmf, cdf, mean };
+  }
+
+  function drawWait() {
+    while (svg2.firstChild) svg2.removeChild(svg2.firstChild);
+    $('tip2').hidden = true;
+    const md = waitModel();
+    const { max, pity, pmf, cdf } = md;
+    const view = waitState.view;
+    $('waitDesc').textContent = VIEW_DESC[view] + (pity > 0 ? ' 目前從已墊 ' + pity + ' 抽開始算。' : '');
+
+    const W = Math.max(320, Math.round($('waitBox').clientWidth || 800));
+    const H = W < 520 ? 220 : 260;
+    svg2.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    const m = { l: 46, r: 14, t: 14, b: 30 };
+    const val = (n) => (view === 'hazard' ? Math.min(1, md.hz(n)) : view === 'pmf' ? pmf[n] : cdf[n]);
+    let yMax = 1;
+    if (view === 'pmf') {
+      let pk = 0;
+      for (let n = 1; n <= max; n++) pk = Math.max(pk, pmf[n]);
+      const st = pk > 0.5 ? 0.25 : pk > 0.2 ? 0.1 : pk > 0.08 ? 0.04 : 0.02;
+      yMax = Math.min(1, Math.ceil((pk * 1.08) / st) * st);
+    }
+    const slot = (W - m.l - m.r) / max;
+    const X = (n) => m.l + (n - 0.5) * slot; // 柱子中心
+    const Y = (p) => m.t + (1 - p / yMax) * (H - m.t - m.b);
+    const css = getComputedStyle(document.documentElement);
+    const c = (name) => css.getPropertyValue(name).trim();
+
+    const ticksY = view === 'pmf' ? [0, 0.25, 0.5, 0.75, 1].map((k) => k * yMax) : [0, 0.25, 0.5, 0.75, 1];
+    ticksY.forEach((p) => {
+      el('line', { x1: m.l, x2: W - m.r, y1: Y(p), y2: Y(p), stroke: c('--line'), 'stroke-width': 1 }, svg2);
+      const t = el('text', { x: m.l - 8, y: Y(p) + 4, 'text-anchor': 'end' }, svg2);
+      t.textContent = (p * 100).toFixed(view === 'pmf' && yMax < 0.2 ? 1 : 0).replace(/\.0$/, '') + '%';
+    });
+    const xt = md.isChar ? [1, 10, 20, 30, 40, 50, 60, 73, 90] : [1, 10, 20, 30, 40, 50, 62, 80];
+    xt.forEach((n) => { const t = el('text', { x: X(n), y: H - m.b + 18, 'text-anchor': 'middle' }, svg2); t.textContent = n; });
+
+    // 軟保底起點
+    const soft = md.isChar ? 74 : 63;
+    el('line', { x1: X(soft) - slot / 2, x2: X(soft) - slot / 2, y1: m.t, y2: Y(0), stroke: c('--muted'), 'stroke-dasharray': '3 4', 'stroke-width': 1 }, svg2);
+    const st = el('text', { x: X(soft) - slot / 2 - 6, y: m.t + 12, 'text-anchor': 'end' }, svg2);
+    st.textContent = '第 ' + soft + ' 抽起升高';
+
+    if (view === 'pmf') {
+      const bw = Math.max(1, slot * 0.72);
+      for (let n = 1; n <= max; n++) {
+        if (pmf[n] <= 0) continue;
+        el('rect', { x: X(n) - bw / 2, y: Y(pmf[n]), width: bw, height: Math.max(0.5, Y(0) - Y(pmf[n])), fill: c('--gold'), 'fill-opacity': n === max ? 0.55 : 0.9 }, svg2);
+      }
+    } else {
+      // 階梯線，表示每抽是一個整數點
+      let d = '';
+      for (let n = 1; n <= max; n++) {
+        const y = Y(val(n)).toFixed(1);
+        const x0 = (m.l + (n - 1) * slot).toFixed(1), x1 = (m.l + n * slot).toFixed(1);
+        d += (n === 1 ? 'M ' : ' L ') + x0 + ' ' + y + ' L ' + x1 + ' ' + y;
+      }
+      el('path', { d: d + ` L ${W - m.r} ${Y(0)} L ${m.l} ${Y(0)} Z`, fill: c('--gold'), 'fill-opacity': 0.12, stroke: 'none' }, svg2);
+      el('path', { d, fill: 'none', stroke: c('--gold'), 'stroke-width': 2.2, 'stroke-linejoin': 'round' }, svg2);
+    }
+    if (pity > 0) {
+      el('rect', { x: m.l, y: m.t, width: pity * slot, height: Y(0) - m.t, fill: c('--muted'), 'fill-opacity': 0.08 }, svg2);
+      const t = el('text', { x: m.l + 6, y: Y(0) - 8 }, svg2); t.textContent = '已墊 ' + pity + ' 抽';
+    }
+    const hover = el('g', { visibility: 'hidden' }, svg2);
+    el('line', { y1: m.t, y2: Y(0), stroke: c('--muted'), 'stroke-width': 1 }, hover);
+    el('circle', { r: 4.5, fill: c('--gold'), stroke: c('--surface'), 'stroke-width': 2 }, hover);
+    wgeom = { W, m, slot, max, X, Y, val, hover, md };
+
+    // 重點數字
+    let pk = 1;
+    for (let n = 1; n <= max; n++) if (pmf[n] > pmf[pk]) pk = n;
+    const mid = md.isChar ? 80 : 70;
+    const facts = [
+      ['平均第', Math.round(md.mean * 10) / 10 + ' 抽出金'],
+      ['首金峰值', '第 ' + pk + ' 抽 ' + (pmf[pk] * 100).toFixed(2) + '%'],
+      ['第 ' + mid + ' 抽前已出金', pctTxt(cdf[mid])],
+      [md.isChar ? '第 89 抽條件機率' : '第 79 抽條件機率', (md.hz(max - 1) * 100).toFixed(1) + '%'],
+    ];
+    $('waitFacts').innerHTML = facts.map(([k, v]) => `<span>${k} <b>${v}</b></span>`).join('');
+  }
+
+  function onWaitMove(ev) {
+    if (!wgeom) return;
+    const rect = svg2.getBoundingClientRect();
+    const px = ((ev.clientX - rect.left) / rect.width) * wgeom.W;
+    const n = Math.floor((px - wgeom.m.l) / wgeom.slot) + 1;
+    if (n < 1 || n > wgeom.max) { leaveWait(); return; }
+    const { md } = wgeom;
+    const [line, dot] = wgeom.hover.children;
+    line.setAttribute('x1', wgeom.X(n)); line.setAttribute('x2', wgeom.X(n));
+    dot.setAttribute('cx', wgeom.X(n)); dot.setAttribute('cy', wgeom.Y(wgeom.val(n)));
+    wgeom.hover.setAttribute('visibility', 'visible');
+    const tip = $('tip2');
+    tip.hidden = false;
+    tip.textContent = '第 ' + n + ' 抽\n條件機率 ' + (Math.min(1, md.hz(n)) * 100).toFixed(1) + '%\n首金 ' + (md.pmf[n] * 100).toFixed(2) + '%\n累計 ' + pctTxt(md.cdf[n]);
+    const scale = rect.width / wgeom.W;
+    tip.style.left = Math.max(60, Math.min(rect.width - 60, wgeom.X(n) * scale)) + 'px';
+    tip.style.top = Math.max(40, wgeom.Y(wgeom.val(n)) * scale) + 'px';
+  }
+  function leaveWait() { if (wgeom) wgeom.hover.setAttribute('visibility', 'hidden'); $('tip2').hidden = true; }
+  svg2.addEventListener('pointermove', onWaitMove);
+  svg2.addEventListener('pointerdown', onWaitMove);
+  svg2.addEventListener('pointerleave', leaveWait);
+
+  const redrawAll = () => { drawChart(); drawWait(); };
+  let timer = 0;
+  const schedule = () => { clearTimeout(timer); timer = setTimeout(() => { render(); drawWait(); }, 60); };
+  $('form').addEventListener('input', schedule);
+  $('form').addEventListener('change', schedule);
+  $('form').addEventListener('submit', (e) => e.preventDefault());
+  let lastW = 0;
+  window.addEventListener('resize', () => { const w = $('chartBox').clientWidth; if (w !== lastW) { lastW = w; redrawAll(); } });
+  try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redrawAll); } catch (e) {}
+  new MutationObserver(redrawAll).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  render();
+  drawWait();
+})();
+</script>
