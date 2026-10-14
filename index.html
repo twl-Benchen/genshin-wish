@@ -285,7 +285,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .page-slide.mini .page-ticks button { font-size: .74rem; padding: 2px 3px; }
 
 /* 圓框驚嘆號說明 */
-.lab-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.lab-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; }
 .lab-row > label { font-size: .82rem; color: var(--muted); letter-spacing: .03em; }
 .info-wrap { position: relative; display: inline-flex; flex: none; }
 .info { width: 18px; height: 18px; padding: 0; border-radius: 50%; border: 1.5px solid var(--frame); background: var(--surface); color: var(--gold); font: 700 .7rem/1 var(--f-num); cursor: pointer; display: inline-grid; place-items: center; }
@@ -293,7 +293,6 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .info-pop { display: none; position: absolute; top: calc(100% + 8px); left: 0; z-index: 30; width: min(290px, calc(100vw - 32px)); padding: 10px 12px; border: 1px solid var(--frame); border-radius: 6px; background: var(--surface); color: var(--ink); font-size: .8rem; font-weight: 400; line-height: 1.6; letter-spacing: 0; box-shadow: 0 8px 24px rgba(30, 40, 70, .22); text-align: left; white-space: normal; font-family: var(--f-body); }
 .info-wrap.open .info-pop { display: block; }
 .check-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-legend.legend-row { width: 100%; justify-content: space-between; }
 
 /* 分頁 */
 .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -396,7 +395,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       <hr>
 
       <fieldset>
-        <legend><span class="dot b"></span>手上的資源 <span class="ex">範例數字</span></legend>
+        <legend><span class="dot b"></span>手上的資源 <span class="ex" id="exBadge">範例數字</span></legend>
         <div class="row3">
           <div class="field">
             <label for="bPrimo">原石</label>
@@ -418,7 +417,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
           <span class="eq" id="budgetEq"></span>
           <button type="button" class="linkbtn" id="bRevert" hidden>改回逐項填寫</button>
         </div>
-        <p class="hint" id="budgetHint">160 原石換 1 抽，5 顆星輝換 1 抽。已經算好總抽數的話，直接改「可抽」那格就好。兩種填法都會記住，點回另一邊就恢復剛才的數字。</p>
+        <p class="hint" id="budgetHint">已經算好總抽數的話，直接改「可抽」那格就好。兩種填法都會記住。</p>
         <button type="button" class="toggle" id="rfToggle" aria-expanded="false" aria-controls="rfBox">
           <span>星輝返還 <span class="st" id="rfState">未計入</span></span><span class="chev" aria-hidden="true">▾</span>
         </button>
@@ -450,9 +449,9 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       <hr>
 
       <fieldset>
-        <legend class="legend-row">進階<span class="info-wrap"><button type="button" class="info" aria-label="進階說明" aria-expanded="false">!</button><span class="info-pop" role="tooltip">官方公布小保底抽到 UP 的綜合機率是 55%，但沒有公開中間各階段的機率。保守模型算出的長期勝率約 55.6%，最接近官方，社群推測模型約 57.9%，所以預設用保守模型。</span></span></legend>
+        <legend>進階</legend>
         <div class="field">
-          <label for="crModel">捕獲明光模型</label>
+          <span class="lab-row"><label for="crModel">捕獲明光模型</label><span class="info-wrap"><button type="button" class="info" aria-label="捕獲明光模型說明" aria-expanded="false">!</button><span class="info-pop" role="tooltip">官方公布小保底抽到 UP 的綜合機率是 55%，但沒有公開中間各階段的機率。保守模型算出的長期勝率約 55.6%，最接近官方，社群推測模型約 57.9%，所以預設用保守模型。</span></span></span>
           <select id="crModel">
             <option value="conservative" selected>保守：連續三輪歪後必中</option>
             <option value="community">社群推測：連歪 2 次後 75% 不歪</option>
@@ -932,6 +931,15 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   const saveBm = () => { try { localStorage.setItem(BKEY, JSON.stringify(bm)); } catch (e) {} };
   const itemBudget = (v) => Math.floor(clampInt(v.bPrimo, 0, 1e9) / 160) + clampInt(v.bFate, 0, 1e7) + Math.floor(clampInt(v.bStar, 0, 1e8) / 5);
 
+  // 「範例數字」標籤：使用者自己填過資源 (或總抽數) 就隱藏
+  const DEMO = { bPrimo: '24000', bFate: '60', bStar: '40' };
+  function paintDemo() {
+    const vals = bm.mode === 'total' && bm.items ? bm.items : Object.fromEntries(ITEMS.map((id) => [id, $(id).value]));
+    if (ITEMS.some((id) => String(vals[id]) !== DEMO[id]) || bm.mode === 'total') { bm.touched = true; saveBm(); }
+    $('exBadge').hidden = !!bm.touched;
+  }
+  ITEMS.concat('bTotal').forEach((id) => $(id).addEventListener('input', paintDemo));
+
   function paintBudgetMode() {
     const manual = bm.mode === 'total';
     ITEMS.forEach((id) => {
@@ -979,6 +987,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   }));
   if (bm.mode === 'total' && !bm.items) { bm.items = {}; ITEMS.forEach((id) => { bm.items[id] = $(id).value; }); }
   paintBudgetMode();
+  paintDemo();
 
   // ---- 明光計數、命定值拉桿：拖動或點刻度 ----
   function paintMini(id) {
