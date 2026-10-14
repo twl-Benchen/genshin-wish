@@ -15,88 +15,164 @@ img { max-width: 100%; }
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;800&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
 <style>
-/* 版面：左側為祈願設定欄，右側為結果 (摘要數字 → 累積機率曲線 → 里程碑表 → 規則)；手機時改為單欄 */
+/* 版面：仿遊戲內祈願紀錄的羊皮紙視窗 (金色雙線框、棕褐表頭、深石板色按鈕)，放在天空漸層上。左側祈願設定，右側結果；手機時單欄 */
 :root {
-  --bg: #eef1f7;
-  --surface: #ffffff;
-  --sunken: #f5f7fb;
-  --ink: #1d2340;
-  --muted: #5b6386;
-  --line: #d5dae8;
-  --gold: #a96c12;
-  --gold-soft: #f5e6c6;
-  --violet: #6e4bb0;
-  --violet-soft: #e9e1f7;
-  --good: #2f7d55;
-  --warn: #9a620f;
-  --bad: #b2433a;
-  --focus: #3b5bdb;
+  --sky-top: #8fb6dd;
+  --sky-bot: #dbe7f2;
+  --cloud: rgba(255, 255, 255, .6);
+  --bg: #e4ecf4;
+  --surface: #f4efe6;
+  --sunken: #ebe3d4;
+  --head: #e4d4b2;
+  --frame: #d3bc8e;
+  --frame-soft: #e3d4b4;
+  --ink: #4a5366;
+  --muted: #847b6c;
+  --line: #ddd0b8;
+  --gold: #bd6932;
+  --gold-soft: #f3e2cb;
+  --hero-a: #8a4b20;
+  --hero-b: #b77630;
+  --hero-ink: #fff6e6;
+  --violet: #8d55c2;
+  --violet-soft: #ece1f5;
+  --btn: #4a5366;
+  --btn-ink: #ece5d8;
+  --star-on: #e0a93a;
+  --star-off: #d6cbb6;
+  --good: #3f7f52;
+  --warn: #a8701c;
+  --bad: #b5483b;
+  --focus: #3a6fb0;
   --f-display: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
   --f-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
   --f-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0f1326; --surface: #171c35; --sunken: #121730; --ink: #e7e9f5; --muted: #9aa1c4; --line: #2a3156;
-    --gold: #e9b862; --gold-soft: #3a3020; --violet: #ad8ee6; --violet-soft: #2c2448;
-    --good: #5cc08a; --warn: #e0a64a; --bad: #ec8378; --focus: #8ea6ff; color-scheme: dark;
+    --sky-top: #0b1024; --sky-bot: #1b2342; --cloud: rgba(160, 180, 255, .07); --bg: #141a30;
+    --surface: #262a38; --sunken: #1e2230; --head: #343848; --frame: #a88d5c; --frame-soft: #4a4536;
+    --ink: #ece5d8; --muted: #aaa293; --line: #3c3f4c; --gold: #e8a160; --gold-soft: #3d2f22;
+    --hero-a: #7a3f18; --hero-b: #a8692a; --hero-ink: #fff3e0; --violet: #c49af0; --violet-soft: #33284a;
+    --btn: #ece5d8; --btn-ink: #333a4c; --star-on: #f0c060; --star-off: #4a4a52;
+    --good: #6cc48a; --warn: #e5ae55; --bad: #ef8a7c; --focus: #8eb4ff; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0f1326; --surface: #171c35; --sunken: #121730; --ink: #e7e9f5; --muted: #9aa1c4; --line: #2a3156;
-  --gold: #e9b862; --gold-soft: #3a3020; --violet: #ad8ee6; --violet-soft: #2c2448;
-  --good: #5cc08a; --warn: #e0a64a; --bad: #ec8378; --focus: #8ea6ff; color-scheme: dark;
+  --sky-top: #0b1024; --sky-bot: #1b2342; --cloud: rgba(160, 180, 255, .07); --bg: #141a30;
+  --surface: #262a38; --sunken: #1e2230; --head: #343848; --frame: #a88d5c; --frame-soft: #4a4536;
+  --ink: #ece5d8; --muted: #aaa293; --line: #3c3f4c; --gold: #e8a160; --gold-soft: #3d2f22;
+  --hero-a: #7a3f18; --hero-b: #a8692a; --hero-ink: #fff3e0; --violet: #c49af0; --violet-soft: #33284a;
+  --btn: #ece5d8; --btn-ink: #333a4c; --star-on: #f0c060; --star-off: #4a4a52;
+  --good: #6cc48a; --warn: #e5ae55; --bad: #ef8a7c; --focus: #8eb4ff; color-scheme: dark;
 }
 * { box-sizing: border-box; }
 body {
-  background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.6;
+  background:
+    radial-gradient(60% 220px at 12% 90px, var(--cloud), transparent 70%),
+    radial-gradient(50% 180px at 88% 40px, var(--cloud), transparent 70%),
+    linear-gradient(180deg, var(--sky-top), var(--sky-bot) 560px, var(--bg) 900px);
+  background-color: var(--bg);
+  color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.6;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: 28px 48px;
 }
 .wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 24px; }
 header { display: grid; gap: 6px; }
-h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(1.7rem, 3.2vw, 2.3rem); margin: 0; letter-spacing: .02em; text-wrap: balance; }
-h1 .star { color: var(--gold); }
-.lede { margin: 0; color: var(--muted); max-width: 62ch; }
-.layout { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 24px; align-items: start; }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(1.7rem, 3.2vw, 2.3rem); margin: 0; letter-spacing: .04em; text-wrap: balance; color: var(--ink); }
+h1 .star { color: var(--star-on); }
+.lede { margin: 0; color: var(--ink); opacity: .85; max-width: 62ch; }
+.layout { display: grid; grid-template-columns: minmax(0, 350px) minmax(0, 1fr); gap: 24px; align-items: start; }
 @media (max-width: 860px) { .layout { grid-template-columns: minmax(0, 1fr); } }
 
+/* 遊戲視窗框：金色外框 + 內側細線 + 四角括號 */
+.frame {
+  --c: var(--frame);
+  background:
+    linear-gradient(var(--c), var(--c)) left 5px top 5px / 14px 2px no-repeat,
+    linear-gradient(var(--c), var(--c)) left 5px top 5px / 2px 14px no-repeat,
+    linear-gradient(var(--c), var(--c)) right 5px top 5px / 14px 2px no-repeat,
+    linear-gradient(var(--c), var(--c)) right 5px top 5px / 2px 14px no-repeat,
+    linear-gradient(var(--c), var(--c)) left 5px bottom 5px / 14px 2px no-repeat,
+    linear-gradient(var(--c), var(--c)) left 5px bottom 5px / 2px 14px no-repeat,
+    linear-gradient(var(--c), var(--c)) right 5px bottom 5px / 14px 2px no-repeat,
+    linear-gradient(var(--c), var(--c)) right 5px bottom 5px / 2px 14px no-repeat,
+    var(--surface);
+  border: 1px solid var(--frame); border-radius: 4px;
+  outline: 1px solid var(--frame-soft); outline-offset: -9px;
+  box-shadow: 0 6px 24px rgba(30, 40, 70, .12);
+}
+
 /* 設定欄 */
-.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 20px; }
+.panel { padding: 22px; display: grid; gap: 20px; }
 fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 12px; min-width: 0; }
 legend { font-family: var(--f-display); font-weight: 600; font-size: 1.05rem; padding: 0; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
-legend .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-.dot.c { background: var(--gold); } .dot.w { background: var(--violet); } .dot.b { background: var(--muted); }
+legend .dot { width: 10px; height: 10px; transform: rotate(45deg); display: inline-block; }
+.dot.c { background: var(--gold); } .dot.w { background: var(--violet); } .dot.b { background: var(--frame); }
 .field { display: grid; gap: 4px; }
 .field > label, .lab { font-size: .82rem; color: var(--muted); letter-spacing: .03em; }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 input[type=number], select {
   width: 100%; font: inherit; font-family: var(--f-num); font-size: .95rem; color: var(--ink); background: var(--sunken);
-  border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; min-width: 0;
+  border: 1px solid var(--frame-soft); border-radius: 6px; padding: 7px 9px; min-width: 0;
 }
 select { font-family: var(--f-body); }
-input:focus-visible, select:focus-visible, button:focus-visible, .check input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+input:focus-visible, select:focus-visible, button:focus-visible, .check input:focus-visible, tr[tabindex]:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .check { display: flex; align-items: center; gap: 8px; font-size: .92rem; cursor: pointer; }
 .check input { width: 17px; height: 17px; accent-color: var(--gold); }
 .hint { font-size: .78rem; color: var(--muted); margin: 0; }
-.budget-total { font-family: var(--f-num); font-size: .9rem; color: var(--ink); background: var(--sunken); border-radius: 8px; padding: 8px 10px; }
-hr { border: 0; border-top: 1px solid var(--line); margin: 0; }
-.ex { display: inline-block; font-size: .72rem; letter-spacing: .06em; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; }
+.budget-total { font-family: var(--f-num); font-size: .9rem; color: var(--ink); background: var(--sunken); border-radius: 6px; padding: 8px 10px; }
+hr { border: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--frame), transparent); margin: 0; }
+.ex { display: inline-block; font-family: var(--f-body); font-size: .72rem; letter-spacing: .06em; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; font-weight: 400; }
+.inline { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+
+/* 按鈕：遊戲裡的深石板色膠囊鈕 */
+.gbtn {
+  font: inherit; font-size: .85rem; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--btn); color: var(--btn-ink); border: 0; border-radius: 999px; padding: 6px 14px 6px 6px; cursor: pointer; white-space: nowrap;
+}
+.gbtn .ic { width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center; font-size: .75rem; border: 1.5px solid var(--frame); color: var(--frame); line-height: 1; }
+.gbtn.light { background: var(--sunken); color: var(--ink); border: 1px solid var(--frame-soft); }
+.gbtn:hover { filter: brightness(1.08); }
+.gbtn.small { font-size: .8rem; padding: 4px 11px 4px 4px; }
+.gbtn.small .ic { width: 20px; height: 20px; }
+.toggle { font: inherit; font-size: .88rem; width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--sunken); color: var(--ink); border: 1px solid var(--frame-soft); border-radius: 6px; padding: 8px 10px; cursor: pointer; text-align: left; }
+.toggle .st { font-size: .76rem; color: var(--muted); }
+.toggle .st.on { color: var(--gold); font-weight: 700; }
+.toggle .chev { transition: transform .15s; color: var(--muted); }
+.toggle[aria-expanded="true"] .chev { transform: rotate(180deg); }
+.sub { display: grid; gap: 12px; padding: 12px; border: 1px dashed var(--frame); border-radius: 6px; background: var(--surface); }
+
+/* 常駐五星命座 */
+.cons { display: grid; gap: 2px; }
+.cons-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 3px 0; border-bottom: 1px solid var(--line); }
+.cons-row:last-child { border-bottom: 0; }
+.cons-name { font-size: .88rem; line-height: 1.25; min-width: 0; }
+.cons-name small { display: block; color: var(--muted); font-size: .72rem; }
+.own { font: inherit; font-size: .72rem; border-radius: 999px; padding: 1px 8px; cursor: pointer; border: 1px solid var(--frame-soft); background: transparent; color: var(--muted); }
+.own[aria-pressed="true"] { background: var(--gold-soft); color: var(--gold); border-color: transparent; }
+.stars { display: inline-flex; }
+.stars button { font: inherit; font-size: 1.05rem; line-height: 1; width: 21px; height: 26px; padding: 0; background: transparent; border: 0; cursor: pointer; color: var(--star-off); }
+.stars button.on { color: var(--star-on); }
+.stars button:hover { transform: scale(1.15); }
 
 /* 結果 */
 .results { display: grid; gap: 20px; min-width: 0; }
 .summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 @media (max-width: 1040px) { .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 2px; align-content: start; }
+.stat { background: var(--surface); border: 1px solid var(--frame); border-radius: 4px; padding: 14px 16px; display: grid; gap: 2px; align-content: start; }
 .stat .k { font-size: .8rem; color: var(--muted); letter-spacing: .04em; }
 .stat .v { font-family: var(--f-num); font-weight: 600; font-size: 1.85rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
 .stat .v small { font-family: var(--f-body); font-size: .85rem; font-weight: 500; color: var(--muted); margin-left: 4px; }
 .stat .s { font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.stat.hero { background: var(--gold-soft); border-color: transparent; }
-.stat.hero .v { color: var(--gold); }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
-.card h2 { font-family: var(--f-display); font-weight: 600; font-size: 1.12rem; margin: 0; }
+/* 期望抽數做成五星物品卡的橙金底 */
+.stat.hero { background: linear-gradient(150deg, var(--hero-a), var(--hero-b)); border-color: var(--frame); color: var(--hero-ink); position: relative; overflow: hidden; }
+.stat.hero::after { content: "★★★★★"; position: absolute; right: 10px; top: 8px; font-size: .62rem; letter-spacing: 1px; color: var(--hero-ink); opacity: .55; }
+.stat.hero .k, .stat.hero .s, .stat.hero .v small { color: var(--hero-ink); opacity: .9; }
+.card { padding: 22px; display: grid; gap: 12px; min-width: 0; }
+.card h2 { font-family: var(--f-display); font-weight: 600; font-size: 1.12rem; margin: 0; display: flex; align-items: center; gap: 8px; }
+.card h2::before { content: "✦"; color: var(--star-on); font-size: .95rem; }
 .card-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; }
 .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .8rem; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
@@ -104,16 +180,21 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 0; }
 .chart-box { position: relative; width: 100%; }
 #chart { display: block; width: 100%; height: auto; touch-action: pan-y; }
 #chart text { font-family: var(--f-num); font-size: 11px; fill: var(--muted); }
-.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--surface); font-size: .8rem; padding: 6px 9px; border-radius: 8px; white-space: nowrap; transform: translate(-50%, -110%); font-variant-numeric: tabular-nums; }
+.tip { position: absolute; pointer-events: none; background: var(--btn); color: var(--btn-ink); font-size: .8rem; padding: 6px 9px; border-radius: 6px; white-space: nowrap; transform: translate(-50%, -110%); font-variant-numeric: tabular-nums; }
 
+/* 表格：照祈願紀錄的格線表 */
 .tbl-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; min-width: 520px; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.gtable { border: 1px solid var(--frame-soft); }
+.gtable th, .gtable td { border: 1px solid var(--line); }
+.gtable th { background: var(--head); }
+#plan { min-width: 520px; }
 th, td { text-align: right; padding: 9px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-th { font-size: .78rem; font-weight: 500; color: var(--muted); letter-spacing: .04em; }
+th { font-size: .8rem; font-weight: 700; color: var(--ink); letter-spacing: .04em; }
 th:first-child, td:first-child { text-align: left; }
 td.num { font-family: var(--f-num); }
 .tag { display: inline-flex; align-items: center; gap: 8px; }
-.tag i { font-style: normal; font-family: var(--f-num); font-size: .75rem; padding: 1px 7px; border-radius: 6px; }
+.tag i { font-style: normal; font-family: var(--f-num); font-size: .75rem; padding: 1px 7px; border-radius: 4px; }
 .tag i.c { background: var(--gold-soft); color: var(--gold); }
 .tag i.w { background: var(--violet-soft); color: var(--violet); }
 .meter { display: inline-grid; grid-template-columns: 70px auto; gap: 8px; align-items: center; justify-content: end; }
@@ -127,20 +208,52 @@ td.num { font-family: var(--f-num); }
 @media (max-width: 700px) { .rules { grid-template-columns: minmax(0, 1fr); } }
 .rules h3 { font-size: .95rem; margin: 0 0 6px; font-weight: 700; }
 .rules ul { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; color: var(--ink); font-size: .9rem; }
-.rules li::marker { color: var(--muted); }
+.rules li::marker { color: var(--frame); }
 .note { font-size: .8rem; color: var(--muted); margin: 0; }
 code { font-family: var(--f-num); font-size: .88em; }
 .ctrls { display: flex; flex-wrap: wrap; gap: 8px; }
-.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--sunken); }
-.seg button { font: inherit; font-size: .82rem; padding: 5px 11px; background: transparent; color: var(--muted); border: 0; cursor: pointer; }
-.seg button + button { border-left: 1px solid var(--line); }
-.seg button[aria-pressed="true"] { background: var(--gold-soft); color: var(--gold); font-weight: 700; }
+.seg { display: inline-flex; border: 1px solid var(--frame-soft); border-radius: 999px; overflow: hidden; background: var(--sunken); }
+.seg button { font: inherit; font-size: .82rem; padding: 5px 12px; background: transparent; color: var(--muted); border: 0; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--frame-soft); }
+.seg button[aria-pressed="true"] { background: var(--btn); color: var(--btn-ink); font-weight: 700; }
 .seg button:hover { color: var(--ink); }
+.seg button[aria-pressed="true"]:hover { color: var(--btn-ink); }
+.seg.full { display: flex; } .seg.full button { flex: 1; padding-inline: 4px; }
 #wait { display: block; width: 100%; height: auto; touch-action: pan-y; }
 #wait text { font-family: var(--f-num); font-size: 11px; fill: var(--muted); }
 #tip2 { white-space: pre; line-height: 1.45; }
 .wait-facts { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 .wait-facts b { color: var(--ink); font-family: var(--f-num); font-weight: 600; }
+
+/* 祈願歷史紀錄視窗 */
+dialog.hist { padding: 0; border: 0; background: transparent; color: var(--ink); width: min(640px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); }
+dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
+.hist-in { padding: 24px 24px 20px; display: grid; gap: 12px; max-height: calc(100dvh - 24px); overflow-y: auto; }
+.hist-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.hist-head h2 { font-family: var(--f-display); font-size: 1.3rem; margin: 0; display: flex; gap: 8px; align-items: center; }
+.hist-head h2 span { color: var(--star-on); }
+.hist-x { width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--btn); color: var(--btn-ink); font-size: 1rem; cursor: pointer; flex: none; }
+.hist-type { display: grid; grid-template-columns: auto minmax(0, 1fr); border: 1px solid var(--frame); border-radius: 999px; overflow: hidden; font-size: .9rem; }
+.hist-type span { background: var(--head); padding: 6px 18px; font-weight: 700; }
+.hist-type b { padding: 6px 14px; font-weight: 700; background: var(--sunken); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hist-tbl th, .hist-tbl td { text-align: center; padding: 8px 6px; font-size: .88rem; }
+.hist-tbl tbody tr { cursor: pointer; }
+.hist-tbl tbody tr:hover td { background: var(--sunken); }
+.hist-tbl td.nm { color: var(--muted); }
+.hist-tbl tr.sel td { background: var(--gold-soft); }
+.hist-tbl tr.sel td.nm { color: var(--gold); font-weight: 700; }
+.hist-tbl tr.off { cursor: not-allowed; opacity: .4; }
+.hist-tbl td.after { font-family: var(--f-num); color: var(--muted); }
+.pager { display: flex; justify-content: center; align-items: center; gap: 12px; }
+.pager button { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--frame-soft); background: var(--surface); color: var(--ink); font-size: 1.1rem; cursor: pointer; box-shadow: 0 1px 3px rgba(30, 40, 70, .15); }
+.pager button:disabled { opacity: .35; cursor: default; }
+.pager input { width: 64px; text-align: center; font-weight: 600; }
+.hist-opts { display: grid; gap: 10px; }
+.hist-opts .lab { display: block; margin-bottom: 4px; }
+.hist-result { font-size: .95rem; background: var(--sunken); border-radius: 6px; padding: 9px 12px; }
+.hist-result b { font-family: var(--f-num); color: var(--gold); font-size: 1.1rem; }
+.hist-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.hist-actions .gbtn { min-width: 130px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
@@ -152,7 +265,7 @@ code { font-family: var(--f-num); font-size: .88em; }
   </header>
 
   <div class="layout">
-    <form class="panel" id="form" autocomplete="off">
+    <form class="panel frame" id="form" autocomplete="off">
       <fieldset>
         <legend><span class="dot c"></span>角色活動祈願</legend>
         <div class="field">
@@ -171,7 +284,10 @@ code { font-family: var(--f-num); font-size: .88em; }
         <div class="row2">
           <div class="field">
             <label for="chPity">已墊抽數</label>
-            <input type="number" id="chPity" min="0" max="89" value="20" inputmode="numeric">
+            <div class="inline">
+              <input type="number" id="chPity" min="0" max="89" value="20" inputmode="numeric">
+              <button type="button" class="gbtn small" data-hist="char" aria-label="從祈願紀錄推算角色池墊抽"><span class="ic">≡</span>看紀錄</button>
+            </div>
           </div>
           <div class="field">
             <label for="chC">明光計數</label>
@@ -184,7 +300,7 @@ code { font-family: var(--f-num); font-size: .88em; }
           </div>
         </div>
         <label class="check"><input type="checkbox" id="chG"> 目前是大保底 (上次五星歪了)</label>
-        <p class="hint">明光計數是推測模型裡的狀態：小保底歪一次加 1，贏一次減 1，最多 3。官方只確認連續三輪「先歪，再靠大保底拿到 UP」之後，下一顆五星必定觸發捕獲明光。不確定就填 0。</p>
+        <p class="hint">懶得數墊抽的話，按「看紀錄」照遊戲裡的祈願歷史紀錄點上一顆五星的位置就好。明光計數是推測模型裡的狀態：小保底歪一次加 1，贏一次減 1，最多 3。官方只確認連續三輪「先歪，再靠大保底拿到 UP」之後，下一顆五星必定觸發捕獲明光。不確定就填 0。</p>
       </fieldset>
 
       <hr>
@@ -205,7 +321,10 @@ code { font-family: var(--f-num); font-size: .88em; }
         <div class="row2">
           <div class="field">
             <label for="wpPity">已墊抽數</label>
-            <input type="number" id="wpPity" min="0" max="79" value="0" inputmode="numeric">
+            <div class="inline">
+              <input type="number" id="wpPity" min="0" max="79" value="0" inputmode="numeric">
+              <button type="button" class="gbtn small" data-hist="weapon" aria-label="從祈願紀錄推算武器池墊抽"><span class="ic">≡</span>看紀錄</button>
+            </div>
           </div>
           <div class="field">
             <label for="wpF">命定值</label>
@@ -236,7 +355,30 @@ code { font-family: var(--f-num); font-size: .88em; }
           </div>
         </div>
         <div class="budget-total" id="budgetTotal">可抽 0 抽</div>
-        <p class="hint">160 原石換 1 抽，5 顆星輝換 1 抽 (不計抽卡過程中額外返還的星輝)。</p>
+        <p class="hint">160 原石換 1 抽，5 顆星輝換 1 抽。</p>
+        <button type="button" class="toggle" id="rfToggle" aria-expanded="false" aria-controls="rfBox">
+          <span>星輝返還 <span class="st" id="rfState">未計入</span></span><span class="chev" aria-hidden="true">▾</span>
+        </button>
+        <div class="sub" id="rfBox" hidden>
+          <label class="check"><input type="checkbox" id="rfOn"> 計入抽卡過程中返還的星輝</label>
+          <div class="field">
+            <span class="lab" id="rfC6Lab">四星角色大約有幾成已經滿命</span>
+            <div class="seg full" id="rfC6Seg" role="group" aria-labelledby="rfC6Lab">
+              <button type="button" data-v="0">0%</button>
+              <button type="button" data-v="0.25">25%</button>
+              <button type="button" data-v="0.5">50%</button>
+              <button type="button" data-v="0.75">75%</button>
+              <button type="button" data-v="1">100%</button>
+            </div>
+            <input type="hidden" id="rfC6" value="0.25">
+          </div>
+          <div class="field">
+            <span class="lab">常駐五星命座 (歪的時候會抽到)</span>
+            <div class="cons" id="cons"></div>
+            <input type="hidden" id="rfCons" value="">
+          </div>
+          <p class="hint">按第幾顆星就是幾命，再按同一顆退回一命。重複的四星角色返還 2 顆星輝，滿命後 5 顆；重複的五星角色 10 顆，滿命後 25 顆；四星武器 2 顆，五星武器 10 顆；第一次抽到的角色不返還。開啟後結果改用「實付抽數」，也就是扣掉抽卡途中返還、再換成抽數的部分。</p>
+        </div>
       </fieldset>
 
       <hr>
@@ -258,9 +400,9 @@ code { font-family: var(--f-num); font-size: .88em; }
     <div class="results">
       <div class="summary" id="summary"></div>
 
-      <section class="card">
+      <section class="card frame">
         <div class="card-head">
-          <h2>幾抽內能達成目標</h2>
+          <h2 id="chartTitle">幾抽內能達成目標</h2>
           <div class="legend">
             <span><i class="sw" style="background: var(--gold)"></i>累積達成機率</span>
             <span><i class="sw" style="background: var(--ink)"></i>你的預算</span>
@@ -273,20 +415,20 @@ code { font-family: var(--f-num); font-size: .88em; }
         <p class="note">把滑鼠移到曲線上 (手機用手指拖曳) 可以看任意抽數的達成機率。</p>
       </section>
 
-      <section class="card">
+      <section class="card frame">
         <div class="card-head">
           <h2>每個里程碑</h2>
           <span class="note">先抽角色、再抽武器，抽數為累計</span>
         </div>
         <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>目標</th><th>期望抽數</th><th>一半機率</th><th>九成機率</th><th>最多</th><th>預算內達成</th></tr></thead>
+          <table class="gtable" id="plan">
+            <thead><tr><th>目標</th><th id="thMean">期望抽數</th><th>一半機率</th><th>九成機率</th><th>最多</th><th>預算內達成</th></tr></thead>
             <tbody id="tbody"></tbody>
           </table>
         </div>
       </section>
 
-      <section class="card">
+      <section class="card frame">
         <div class="card-head">
           <h2>下一顆五星的等待</h2>
           <div class="ctrls">
@@ -309,7 +451,7 @@ code { font-family: var(--f-num); font-size: .88em; }
         <div class="wait-facts" id="waitFacts"></div>
       </section>
 
-      <section class="card">
+      <section class="card frame">
         <h2>計算用的抽卡規則</h2>
         <div class="rules">
           <div>
@@ -347,11 +489,70 @@ code { font-family: var(--f-num); font-size: .88em; }
             </ul>
           </div>
         </div>
+        <div class="rules">
+          <div>
+            <h3>星輝返還 (官方)</h3>
+            <ul>
+              <li>同一角色第 2~7 次獲得：命星加星輝，四星 2 顆、五星 10 顆</li>
+              <li>第 8 次起 (已滿命)：四星 5 顆、五星 25 顆</li>
+              <li>四星武器 2 顆、五星武器 10 顆，三星武器給的是星塵</li>
+              <li>星輝在「星輝兌換」換糾纏之緣沒有次數上限，5 顆換 1 抽</li>
+            </ul>
+          </div>
+          <div>
+            <h3>返還怎麼算進來</h3>
+            <ul>
+              <li>四星：角色池綜合機率 13%，約 75% 是角色；武器池 14.5%，約 12.5% 是角色。數量多又穩定，用每抽平均返還計算</li>
+              <li>五星：精確追蹤途中歪了幾次，常駐角色等機率出現，會依你填的命座逐次升命</li>
+              <li>達成目標那一顆五星的返還，只能拿去抽後面的武器</li>
+            </ul>
+          </div>
+        </div>
         <p class="note">「角色活動祈願」與「角色活動祈願-2」共享抽數和大保底狀態，跟武器池互相獨立，保底會跨期繼承。逐抽機率是社群依大量抽卡紀錄擬合的結果，不是官方逐抽表，實際可能略有出入。</p>
       </section>
     </div>
   </div>
 </div>
+
+<dialog class="hist" id="hist" aria-labelledby="histTitle">
+  <form method="dialog" class="hist-in frame" id="histForm">
+    <div class="hist-head">
+      <h2 id="histTitle"><span>✦</span>祈願歷史紀錄</h2>
+      <button type="submit" class="hist-x" value="cancel" aria-label="關閉">✕</button>
+    </div>
+    <div class="hist-type"><span>祈願類型</span><b id="histPool">角色活動祈願與角色活動祈願-2</b></div>
+    <p class="note">在遊戲裡打開祈願歷史紀錄，翻到最近一顆五星，把下面的頁數調成一樣，再點它在第幾列。紀錄由新到舊排列，約延遲 1 小時，剛抽完的幾抽要自己加上。</p>
+    <div class="tbl-wrap">
+      <table class="gtable hist-tbl">
+        <thead><tr><th>類型</th><th>名稱</th><th>之後抽了</th></tr></thead>
+        <tbody id="histRows"></tbody>
+      </table>
+    </div>
+    <div class="pager">
+      <button type="button" id="histPrev" aria-label="上一頁">‹</button>
+      <input type="number" id="histPage" min="1" value="1" inputmode="numeric" aria-label="頁數">
+      <button type="button" id="histNext" aria-label="下一頁">›</button>
+    </div>
+    <div class="hist-opts">
+      <div>
+        <span class="lab" id="histWhatLab">這顆五星是</span>
+        <div class="seg full" id="histWhat" role="group" aria-labelledby="histWhatLab"></div>
+      </div>
+      <div>
+        <span class="lab" id="histPerLab">每頁筆數 (照遊戲畫面一頁有幾列)</span>
+        <div class="seg" id="histPer" role="group" aria-labelledby="histPerLab">
+          <button type="button" data-v="5">5 筆</button>
+          <button type="button" data-v="6">6 筆</button>
+        </div>
+      </div>
+    </div>
+    <div class="hist-result" id="histResult"></div>
+    <div class="hist-actions">
+      <button type="submit" class="gbtn light" value="cancel"><span class="ic">✕</span>取消</button>
+      <button type="submit" class="gbtn" value="apply" id="histApply"><span class="ic">○</span>套用</button>
+    </div>
+  </form>
+</dialog>
 
 <script>
 // 原神抽卡精確分布引擎 (馬可夫鏈 + 卷積，不用隨機模擬)
@@ -407,11 +608,13 @@ code { font-family: var(--f-num); font-size: .88em; }
 
   // 通用：依「每次出五星時的狀態轉移」算出拿到第 1..target 隻目標的抽數分布
   // step(state) => [{p, hit:boolean, next:state}]
-  function chain(target, firstDraw, freshDraw, initState, step, keyOf) {
+  // 回傳 milestones[k-1][m] = 拿到第 k 隻、途中歪了 m 次的抽數分布 (trackMiss 為 false 時全部記在 m = 0)
+  function chain(target, firstDraw, freshDraw, initState, step, keyOf, trackMiss) {
     const milestones = [];
     if (target <= 0) return milestones;
     let active = new Map();
-    active.set(keyOf(initState), { s: initState, d: Float64Array.of(1), first: true });
+    const init = Object.assign({}, initState, { m: 0 });
+    active.set(keyOf(init) + '|0', { s: init, d: Float64Array.of(1), first: true });
     // 每輪讓所有狀態各出一隻五星
     for (let round = 0; active.size && round < 10 * target + 10; round++) {
       const next = new Map();
@@ -419,13 +622,14 @@ code { font-family: var(--f-num); font-size: .88em; }
         const nd = conv(d, first ? firstDraw : freshDraw);
         for (const o of step(s)) {
           if (o.p <= 0) continue;
-          const ns = Object.assign({}, o.next, { got: s.got + (o.hit ? 1 : 0) });
+          const ns = Object.assign({}, o.next, { got: s.got + (o.hit ? 1 : 0), m: s.m + (o.hit || !trackMiss ? 0 : 1) });
           if (o.hit) {
             const k = ns.got;
-            milestones[k - 1] = addInto(milestones[k - 1] || new Float64Array(0), nd, o.p);
+            const row = milestones[k - 1] || (milestones[k - 1] = []);
+            row[ns.m] = addInto(row[ns.m] || new Float64Array(0), nd, o.p);
             if (k >= target) continue;
           }
-          const key = keyOf(ns);
+          const key = keyOf(ns) + '|' + ns.m;
           const cur = next.get(key);
           if (cur) cur.d = addInto(cur.d, nd, o.p);
           else next.set(key, { s: ns, d: Float64Array.from(nd, (x) => x * o.p), first: false });
@@ -436,6 +640,11 @@ code { font-family: var(--f-num); font-size: .88em; }
     return milestones;
   }
 
+  // 把「依歪的次數分開」的里程碑合併成單一分布
+  function mergeMiss(milestones) {
+    return milestones.map((row) => row.reduce((acc, d) => (d ? addInto(acc, d, 1) : acc), new Float64Array(0)));
+  }
+
   // 捕獲明光：cr[c] = 計數為 c 時「本來會歪」轉為命中的機率
   const CR_PRESETS = {
     conservative: { cr: [0, 0, 0, 1], label: '保守：連歪 3 次後必中' },
@@ -443,7 +652,7 @@ code { font-family: var(--f-num); font-size: .88em; }
     none: { cr: [0, 0, 0, 0], label: '關閉 (5.0 前舊規則 50/50)' },
   };
 
-  function characterMilestones(opt) {
+  function characterMilestonesByMiss(opt, trackMiss) {
     const cr = opt.cr || CR_PRESETS.conservative.cr;
     const init = { got: 0, g: !!opt.guaranteed, c: Math.max(0, Math.min(3, opt.radiance | 0)) };
     return chain(
@@ -460,12 +669,14 @@ code { font-family: var(--f-num); font-size: .88em; }
           { p: 0.5 * (1 - pc), hit: false, next: { g: true, c: Math.min(3, s.c + 1) } },
         ];
       },
-      (s) => s.got + '|' + (s.g ? 1 : 0) + '|' + s.c
+      (s) => s.got + '|' + (s.g ? 1 : 0) + '|' + s.c,
+      trackMiss
     );
   }
+  const characterMilestones = (opt) => mergeMiss(characterMilestonesByMiss(opt, false));
 
   // 武器池 (5.0 後命定值上限 1)：75% 為兩把 UP 之一，定軌那把 37.5%
-  function weaponMilestones(opt) {
+  function weaponMilestonesByMiss(opt, trackMiss) {
     const init = { got: 0, f: opt.fate ? 1 : 0 };
     return chain(
       opt.target | 0,
@@ -478,9 +689,11 @@ code { font-family: var(--f-num); font-size: .88em; }
             { p: 0.375, hit: true, next: { f: 0 } },
             { p: 0.625, hit: false, next: { f: 1 } },
           ],
-      (s) => s.got + '|' + s.f
+      (s) => s.got + '|' + s.f,
+      trackMiss
     );
   }
+  const weaponMilestones = (opt) => mergeMiss(weaponMilestonesByMiss(opt, false));
 
   function stats(d) {
     let mean = 0, total = 0;
@@ -500,19 +713,99 @@ code { font-family: var(--f-num); font-size: .88em; }
     };
   }
 
+  // ---- 星輝返還 ----
+  // 官方：同一角色第 2~7 次獲得給命星與星輝 (四星 2、五星 10)，第 8 次起給 (四星 5、五星 25)
+  // 四星、五星武器固定 2、10。第一次獲得角色不給星輝。
+  const FOUR_RATE = { char: 0.13, weapon: 0.145 }; // 四星綜合機率
+  // 四星組成：角色池 50% UP 角色 + 50% 常駐 (角色/武器約各半)；武器池 75% UP 武器 + 25% 常駐
+  const FOUR_CHAR_SHARE = { char: 0.75, weapon: 0.125 };
+  const STANDARD_5 = ['提納里', '夢見月瑞希', '琴', '莫娜', '刻晴', '迪希雅', '迪盧克', '七七'];
+
+  // 第 q 次獲得同一隻五星角色返還的星輝
+  function copyGlitter5(q) { return q <= 1 ? 0 : q <= 7 ? 10 : 25; }
+
+  // 每抽平均從四星拿到的星輝 (c6 = 四星角色中已滿命的比例)
+  function fourStarGlitterPerPull(pool, c6) {
+    const share = FOUR_CHAR_SHARE[pool];
+    return FOUR_RATE[pool] * (share * (2 + 3 * c6) + (1 - share) * 2);
+  }
+
+  // 第 l 次歪 (l 從 1 起) 的平均返還：常駐角色等機率出現，前 l-1 次歪會讓各角色的持有數增加
+  // cons[i] = 目前命座 (-1 未持有，0~6)
+  function lossGlitter(cons, l) {
+    const K = cons.length;
+    if (!K) return 0;
+    const p = 1 / K;
+    let total = 0;
+    for (const c of cons) {
+      const owned = Math.max(-1, Math.min(6, c | 0)) + 1; // 已持有的份數
+      let binom = Math.pow(1 - p, l - 1); // h = 0
+      for (let h = 0; h <= l - 1; h++) {
+        total += p * binom * copyGlitter5(owned + h + 1);
+        binom *= ((l - 1 - h) / (h + 1)) * (p / (1 - p));
+      }
+    }
+    return total;
+  }
+
+  // 把抽數分布 (index = n) 換成實付抽數 a*n - b 的分布，非整數位置按距離拆給左右兩格，平均值不變
+  function remapInto(out, d, a, b) {
+    for (let n = 0; n < d.length; n++) {
+      if (!d[n]) continue;
+      const x = Math.max(0, a * n - b);
+      const i = Math.floor(x), f = x - i;
+      out[i] += d[n] * (1 - f);
+      if (f > 0) out[i + 1] += d[n] * f;
+    }
+    return out;
+  }
+  function remapRow(row, a, bOf) {
+    let len = 2;
+    row.forEach((d) => { if (d) len = Math.max(len, d.length + 2); });
+    const out = new Float64Array(len);
+    row.forEach((d, m) => { if (d) remapInto(out, d, a, bOf(m)); });
+    return out;
+  }
+
   // 先抽角色、再抽武器；回傳各里程碑的累計分布
+  // opt.refund = { c6: 0~1, standard: [命座...] } 時，另外算出扣掉星輝返還後的實付抽數分布 (net)
   function plan(opt) {
-    const ch = characterMilestones(opt.character);
-    const wp = weaponMilestones(opt.weapon);
+    const rf = opt.refund;
+    const chM = characterMilestonesByMiss(opt.character, !!rf);
+    const wpM = weaponMilestonesByMiss(opt.weapon, !!rf);
+    const ch = mergeMiss(chM), wp = mergeMiss(wpM);
     const charFinal = ch.length ? ch[ch.length - 1] : Float64Array.of(1);
     const rows = [];
     ch.forEach((d, i) => rows.push({ kind: 'char', n: i + 1, dist: d }));
     wp.forEach((d, i) => rows.push({ kind: 'weapon', n: i + 1, dist: conv(charFinal, d) }));
     const total = rows.length ? rows[rows.length - 1].dist : Float64Array.of(1);
-    return { rows, total };
+    if (!rf) return { rows, total };
+
+    const c6 = Math.max(0, Math.min(1, +rf.c6 || 0));
+    const cons = Array.isArray(rf.standard) ? rf.standard : [];
+    const aC = 1 - fourStarGlitterPerPull('char', c6) / 5;
+    const aW = 1 - fourStarGlitterPerPull('weapon', c6) / 5;
+    const lossCum = [0];
+    for (let l = 1; l <= 8; l++) lossCum[l] = lossCum[l - 1] + lossGlitter(cons, l);
+    // 拿到第 k 隻 UP 前已入帳的 UP 返還 (UP 角色從未持有開始算)
+    const upBefore = (k) => { let s = 0; for (let q = 1; q < k; q++) s += copyGlitter5(q); return s; };
+
+    // 達成里程碑當下那顆五星的返還還沒拿到，不能拿來付這一抽，但可以拿去抽後面的武器
+    const chNet = chM.map((row, i) => remapRow(row, aC, (m) => (upBefore(i + 1) + lossCum[m]) / 5));
+    const K = chM.length;
+    const charFinalNet = K ? remapRow(chM[K - 1], aC, (m) => (upBefore(K + 1) + lossCum[m]) / 5) : Float64Array.of(1);
+    const wpNet = wpM.map((row, i) => remapRow(row, aW, (m) => (10 * (i + m)) / 5));
+    let r = 0;
+    chNet.forEach((d) => { rows[r++].net = d; });
+    wpNet.forEach((d) => { rows[r++].net = conv(charFinalNet, d); });
+    const totalNet = rows.length ? rows[rows.length - 1].net : Float64Array.of(1);
+    return { rows, total, totalNet };
   }
 
-  const api = { charHazard, weaponHazard, nextFiveStar, conv, characterMilestones, weaponMilestones, stats, plan, CR_PRESETS };
+  const api = {
+    charHazard, weaponHazard, nextFiveStar, conv, characterMilestones, weaponMilestones, characterMilestonesByMiss, weaponMilestonesByMiss,
+    stats, plan, CR_PRESETS, STANDARD_5, FOUR_RATE, fourStarGlitterPerPull, lossGlitter, copyGlitter5,
+  };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.GachaEngine = api;
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -523,7 +816,7 @@ code { font-family: var(--f-num); font-size: .88em; }
   'use strict';
   const E = window.GachaEngine;
   const $ = (id) => document.getElementById(id);
-  const ids = ['chT', 'chPity', 'chC', 'chG', 'wpT', 'wpPity', 'wpF', 'bPrimo', 'bFate', 'bStar', 'crModel'];
+  const ids = ['chT', 'chPity', 'chC', 'chG', 'wpT', 'wpPity', 'wpF', 'bPrimo', 'bFate', 'bStar', 'crModel', 'rfOn', 'rfC6', 'rfCons'];
   const KEY = 'genshin-pulls-v1';
   const fmt = (n) => Math.round(n).toLocaleString('zh-TW');
   const pctTxt = (p) => (p >= 0.9995 ? '100' : p <= 0.0005 && p > 0 ? '<0.1' : (p * 100).toFixed(1)) + '%';
@@ -539,6 +832,14 @@ code { font-family: var(--f-num); font-size: .88em; }
     });
   } catch (e) {}
 
+  // 常駐五星命座：-1 未持有，0~6
+  const STD = E.STANDARD_5;
+  function parseCons(txt) {
+    let a = [];
+    try { a = JSON.parse(txt || '[]'); } catch (e) {}
+    return STD.map((_, i) => { const v = parseInt(a && a[i], 10); return isFinite(v) ? Math.max(-1, Math.min(6, v)) : 0; });
+  }
+
   function read() {
     const v = {};
     ids.forEach((id) => { const el = $(id); v[id] = el.type === 'checkbox' ? el.checked : el.value; });
@@ -551,8 +852,161 @@ code { font-family: var(--f-num); font-size: .88em; }
       weapon: { target: clampInt(v.wpT, 0, 5), pity: clampInt(v.wpPity, 0, 79), fate: clampInt(v.wpF, 0, 1) },
       budget: Math.floor(clampInt(v.bPrimo, 0, 1e9) / 160) + clampInt(v.bFate, 0, 1e7) + Math.floor(clampInt(v.bStar, 0, 1e8) / 5),
       primo: clampInt(v.bPrimo, 0, 1e9),
+      refund: v.rfOn ? { c6: Math.max(0, Math.min(1, parseFloat(v.rfC6) || 0)), standard: parseCons(v.rfCons) } : null,
     };
   }
+
+  // ---- 星輝返還設定 ----
+  const UIKEY = KEY + '-ui';
+  let ui = { rfOpen: false, rfSeen: false, histPer: 5 };
+  try { Object.assign(ui, JSON.parse(localStorage.getItem(UIKEY) || '{}')); } catch (e) {}
+  const saveUi = () => { try { localStorage.setItem(UIKEY, JSON.stringify(ui)); } catch (e) {} };
+
+  function setRfOpen(open) {
+    $('rfToggle').setAttribute('aria-expanded', open ? 'true' : 'false');
+    $('rfBox').hidden = !open;
+    ui.rfOpen = open; saveUi();
+  }
+  $('rfToggle').addEventListener('click', () => {
+    const open = $('rfBox').hidden;
+    // 第一次打開時順便開啟計算，之後照使用者的勾選
+    if (open && !ui.rfSeen) { ui.rfSeen = true; $('rfOn').checked = true; schedule(); }
+    setRfOpen(open);
+  });
+  setRfOpen(!!ui.rfOpen);
+
+  function paintC6() {
+    const v = parseFloat($('rfC6').value) || 0;
+    $('rfC6Seg').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', Math.abs(parseFloat(b.dataset.v) - v) < 1e-9 ? 'true' : 'false'));
+  }
+  $('rfC6Seg').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    $('rfC6').value = b.dataset.v;
+    paintC6(); schedule();
+  });
+  paintC6();
+
+  const consTxt = (c) => (c < 0 ? '未持有' : c === 6 ? '滿命' : c + ' 命');
+  function paintCons() {
+    const cons = parseCons($('rfCons').value);
+    $('rfCons').value = JSON.stringify(cons);
+    $('cons').innerHTML = STD.map((name, i) => {
+      const c = cons[i];
+      const stars = [1, 2, 3, 4, 5, 6].map((k) =>
+        `<button type="button" data-i="${i}" data-k="${k}" class="${c >= k ? 'on' : ''}" aria-label="${name} ${k} 命" aria-pressed="${c === k}">★</button>`).join('');
+      return `<div class="cons-row"><span class="cons-name">${name}<small>${consTxt(c)}</small></span>
+        <button type="button" class="own" data-i="${i}" aria-pressed="${c >= 0}">${c >= 0 ? '持有' : '未持有'}</button>
+        <span class="stars" role="group" aria-label="${name} 命座">${stars}</span></div>`;
+    }).join('');
+  }
+  $('cons').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    const cons = parseCons($('rfCons').value);
+    const i = +b.dataset.i;
+    if (b.classList.contains('own')) cons[i] = cons[i] >= 0 ? -1 : 0;
+    else { const k = +b.dataset.k; cons[i] = cons[i] === k ? k - 1 : k; }
+    $('rfCons').value = JSON.stringify(cons);
+    paintCons(); schedule();
+    const again = $('cons').querySelector(`button[data-i="${i}"]${b.dataset.k ? `[data-k="${b.dataset.k}"]` : '.own'}`);
+    if (again) again.focus();
+  });
+  paintCons();
+
+  // ---- 從祈願歷史紀錄推算墊抽 ----
+  const HIST = {
+    char: {
+      pool: '角色活動祈願與角色活動祈願-2', type: '角色', max: 89,
+      what: [['up', '當期 UP 角色'], ['std', '常駐角色 (歪了)']],
+      note: (w) => (w === 'std' ? '上次歪了，下一顆五星是大保底' : '下一顆五星是小保底'),
+    },
+    weapon: {
+      pool: '武器活動祈願', type: '武器', max: 79,
+      what: [['course', '定軌的武器'], ['other', '其他五星武器']],
+      note: (w) => (w === 'other' ? '命定值 1，下一把五星必定是定軌' : '命定值 0'),
+    },
+  };
+  const hs = { pool: 'char', page: 1, selPage: 1, selRow: 1, what: 'up' };
+  const per = () => (ui.histPer === 6 ? 6 : 5);
+  const selPity = () => (hs.selPage - 1) * per() + hs.selRow - 1;
+  const maxPage = () => Math.floor(HIST[hs.pool].max / per()) + 1;
+
+  function paintHist() {
+    const cfg = HIST[hs.pool], n = per();
+    hs.page = Math.max(1, Math.min(maxPage(), hs.page));
+    $('histPage').value = hs.page;
+    $('histPage').max = maxPage();
+    $('histPrev').disabled = hs.page <= 1;
+    $('histNext').disabled = hs.page >= maxPage();
+    let rows = '';
+    for (let r = 1; r <= n; r++) {
+      const after = (hs.page - 1) * n + r - 1;
+      const off = after > cfg.max;
+      const sel = !off && hs.page === hs.selPage && r === hs.selRow;
+      rows += `<tr data-r="${r}" class="${sel ? 'sel' : ''}${off ? ' off' : ''}" ${off ? '' : 'tabindex="0"'} aria-selected="${sel}">
+        <td>${sel ? cfg.type : '·'}</td><td class="nm">${sel ? '上一顆五星' : off ? '超過保底上限' : '點這列'}</td>
+        <td class="after">${off ? '' : after + ' 抽'}</td></tr>`;
+    }
+    $('histRows').innerHTML = rows;
+    $('histPer').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', +b.dataset.v === n ? 'true' : 'false'));
+    $('histWhat').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === hs.what ? 'true' : 'false'));
+    $('histResult').innerHTML = `第 ${hs.selPage} 頁第 ${hs.selRow} 列，已墊 <b>${selPity()}</b> 抽 · ${cfg.note(hs.what)}`;
+  }
+
+  function openHist(pool) {
+    const cfg = HIST[pool], n = per();
+    hs.pool = pool;
+    const pity = pool === 'char' ? clampInt($('chPity').value, 0, 89) : clampInt($('wpPity').value, 0, 79);
+    hs.selPage = hs.page = Math.floor(pity / n) + 1;
+    hs.selRow = (pity % n) + 1;
+    hs.what = pool === 'char' ? ($('chG').checked ? 'std' : 'up') : ($('wpF').value === '1' ? 'other' : 'course');
+    $('histPool').textContent = cfg.pool;
+    $('histWhat').innerHTML = cfg.what.map(([v, t]) => `<button type="button" data-v="${v}">${t}</button>`).join('');
+    paintHist();
+    const dlg = $('hist');
+    dlg.returnValue = '';
+    if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+  }
+  document.querySelectorAll('[data-hist]').forEach((b) => b.addEventListener('click', () => openHist(b.dataset.hist)));
+
+  function pickRow(tr) {
+    if (!tr || tr.classList.contains('off')) return;
+    hs.selPage = hs.page; hs.selRow = +tr.dataset.r;
+    paintHist();
+    const again = $('histRows').querySelector(`tr[data-r="${hs.selRow}"]`);
+    if (again) again.focus();
+  }
+  $('histRows').addEventListener('click', (e) => pickRow(e.target.closest('tr')));
+  $('histRows').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickRow(e.target.closest('tr')); }
+  });
+  $('histPrev').addEventListener('click', () => { hs.page--; paintHist(); });
+  $('histNext').addEventListener('click', () => { hs.page++; paintHist(); });
+  $('histPage').addEventListener('input', () => { const v = parseInt($('histPage').value, 10); if (isFinite(v)) { hs.page = v; paintHist(); } });
+  $('histPage').addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
+  $('histPer').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    ui.histPer = +b.dataset.v; saveUi();
+    // 頁數與列數照遊戲畫面不變，換算出來的墊抽跟著變
+    const n = per();
+    if (hs.selRow > n) hs.selRow = n;
+    while (selPity() > HIST[hs.pool].max && hs.selPage > 1) hs.selPage--;
+    paintHist();
+  });
+  $('histWhat').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    hs.what = b.dataset.v; paintHist();
+  });
+  $('hist').addEventListener('close', () => {
+    if ($('hist').returnValue !== 'apply') return;
+    const pity = Math.min(selPity(), HIST[hs.pool].max);
+    if (hs.pool === 'char') { $('chPity').value = pity; $('chG').checked = hs.what === 'std'; }
+    else { $('wpPity').value = pity; $('wpF').value = hs.what === 'other' ? '1' : '0'; }
+    schedule();
+  });
 
   function meterClass(p) { return p >= 0.9 ? 'good' : p >= 0.5 ? 'warn' : 'bad'; }
 
@@ -562,20 +1016,29 @@ code { font-family: var(--f-num); font-size: .88em; }
     const opt = read();
     $('budgetTotal').textContent = '可抽 ' + fmt(opt.budget) + ' 抽 (約 ' + fmt(opt.budget * 160) + ' 原石)';
     const res = E.plan(opt);
-    const st = E.stats(res.total);
+    const useNet = !!opt.refund;
+    const st = E.stats(useNet ? res.totalNet : res.total);
+    const raw = useNet ? E.stats(res.total) : st;
     const has = res.rows.length > 0;
+    const off = useNet && raw.mean > 0 ? (st.mean / raw.mean) * 10 : 10;
+    $('rfState').textContent = useNet ? (has ? '已計入 · 約 ' + off.toFixed(1) + ' 折' : '已計入') : '未計入';
+    $('rfState').classList.toggle('on', useNet);
+    $('thMean').textContent = useNet ? '期望實付' : '期望抽數';
+    $('chartTitle').textContent = useNet ? '實付幾抽能達成目標' : '幾抽內能達成目標';
     const pB = st.within(opt.budget);
     const short = Math.max(0, Math.ceil(st.mean) - opt.budget);
 
     $('summary').innerHTML = has ? `
-      <div class="stat hero"><span class="k">期望抽數</span><span class="v">${fmt(st.mean)}<small>抽</small></span><span class="s">約 ${fmt(st.mean * 160)} 原石</span></div>
+      <div class="stat hero"><span class="k">${useNet ? '期望實付抽數' : '期望抽數'}</span><span class="v">${fmt(st.mean)}<small>抽</small></span><span class="s">${useNet
+        ? '共抽約 ' + fmt(raw.mean) + ' 抽，星輝折抵 ' + fmt(raw.mean - st.mean) + ' 抽 (約 ' + off.toFixed(1) + ' 折)'
+        : '約 ' + fmt(st.mean * 160) + ' 原石'}</span></div>
       <div class="stat"><span class="k">一半機率在</span><span class="v">${fmt(st.p50)}<small>抽內</small></span><span class="s">運氣好 (10%) ${fmt(st.p10)} 抽</span></div>
       <div class="stat"><span class="k">九成機率在</span><span class="v">${fmt(st.p90)}<small>抽內</small></span><span class="s">最壞情況 ${fmt(st.max)} 抽</span></div>
       <div class="stat"><span class="k">預算 ${fmt(opt.budget)} 抽的達成率</span><span class="v" style="color: var(--${meterClass(pB)})">${pctTxt(pB)}</span><span class="s">${short > 0 ? '距離期望還差 ' + fmt(short) + ' 抽' : '已超過期望抽數'}</span></div>`
       : `<div class="stat" style="grid-column: 1 / -1"><span class="k">尚未設定目標</span><span class="s">在左側選擇想抽的角色或武器數量。</span></div>`;
 
     const rowsHtml = res.rows.map((r) => {
-      const s = E.stats(r.dist);
+      const s = E.stats(useNet ? r.net : r.dist);
       const p = s.within(opt.budget);
       const label = r.kind === 'char'
         ? `<span class="tag"><i class="c">${r.n - 1 === 6 ? '滿命' : (r.n - 1) + ' 命'}</i>第 ${r.n} 隻角色</span>`
@@ -851,7 +1314,7 @@ code { font-family: var(--f-num); font-size: .88em; }
 
   const redrawAll = () => { drawChart(); drawWait(); };
   let timer = 0;
-  const schedule = () => { clearTimeout(timer); timer = setTimeout(() => { render(); drawWait(); }, 60); };
+  function schedule() { clearTimeout(timer); timer = setTimeout(() => { render(); drawWait(); }, 60); }
   $('form').addEventListener('input', schedule);
   $('form').addEventListener('change', schedule);
   $('form').addEventListener('submit', (e) => e.preventDefault());

@@ -68,3 +68,70 @@ console.log('角色池每隻五星期望', one.mean.toFixed(3), '武器池', one
 const t0 = Date.now();
 const pl = E.plan({ character: { target: 7, pity: 0, guaranteed: false, radiance: 0 }, weapon: { target: 5, pity: 0, fate: 0 } });
 console.log('C6R5 plan', E.stats(pl.total).mean.toFixed(1), 'ms', Date.now() - t0);
+
+// ---- 星輝返還：逐抽模擬四星 (含四星保底)、常駐角色命座、星輝餘額，跟引擎的實付抽數比對 ----
+function four(pool, n) {
+  if (pool === 'char') return n <= 8 ? 0.051 : n === 9 ? 0.561 : 1;
+  return n <= 7 ? 0.06 : n === 8 ? 0.66 : n === 9 ? 0.96 : 1;
+}
+function mcRefund(o, N) {
+  const cr = E.CR_PRESETS.conservative.cr;
+  const res = [], raw = [];
+  let fours = 0, allPulls = 0;
+  for (let t = 0; t < N; t++) {
+    const cons = o.standard.map((c) => c + 1); // 持有份數
+    let glitter = 0, paid = 0, pulls = 0;
+    const pull = () => {
+      if (glitter >= 5) glitter -= 5; else paid++;
+      pulls++;
+    };
+    const fourStar = (pool) => {
+      fours++;
+      const isChar = Math.random() < (pool === 'char' ? 0.75 : 0.125);
+      glitter += isChar && Math.random() < o.c6 ? 5 : 2;
+    };
+    // 角色池
+    let p = 0, p4 = 0, g = false, c = 0, got = 0, up = 0;
+    while (got < o.ct) {
+      pull(); p++; p4++;
+      if (Math.random() < E.charHazard(p)) {
+        p = 0;
+        let hit;
+        if (g) { hit = true; g = false; }
+        else if (Math.random() < 0.5) { hit = true; c = Math.max(0, c - 1); }
+        else if (Math.random() < cr[c]) { hit = true; c = 1; }
+        else { hit = false; g = true; c = Math.min(3, c + 1); }
+        if (hit) { got++; up++; glitter += E.copyGlitter5(up); }
+        else { const i = Math.floor(Math.random() * cons.length); cons[i]++; glitter += E.copyGlitter5(cons[i]); }
+      } else if (Math.random() < four('char', p4)) { p4 = 0; fourStar('char'); }
+    }
+    // 武器池
+    p = 0; p4 = 0; let f = 0; got = 0;
+    while (got < o.wt) {
+      pull(); p++; p4++;
+      if (Math.random() < E.weaponHazard(p)) {
+        p = 0; glitter += 10;
+        if (f || Math.random() < 0.375) { got++; f = 0; } else f = 1;
+      } else if (Math.random() < four('weapon', p4)) { p4 = 0; fourStar('weapon'); }
+    }
+    allPulls += pulls;
+    res.push(paid); raw.push(pulls);
+  }
+  return { res, raw, fourRate: fours / allPulls };
+}
+const refundCases = [
+  { name: '角色 1 隻 四星滿命 0%', ct: 1, wt: 0, c6: 0, standard: [-1, -1, 0, 0, 0, 0, 0, 0] },
+  { name: '角色 7 隻 四星滿命 50%', ct: 7, wt: 0, c6: 0.5, standard: [0, 1, 2, 6, -1, 3, 6, 0] },
+  { name: '滿命精5 四星滿命 100% 常駐全滿', ct: 7, wt: 5, c6: 1, standard: [6, 6, 6, 6, 6, 6, 6, 6] },
+];
+for (const cs of refundCases) {
+  const pl = E.plan({
+    character: { target: cs.ct, pity: 0, guaranteed: false, radiance: 0 },
+    weapon: { target: cs.wt, pity: 0, fate: 0 },
+    refund: { c6: cs.c6, standard: cs.standard },
+  });
+  const sn = E.stats(pl.totalNet), sr = E.stats(pl.total);
+  const mc = mcRefund(cs, 100000);
+  console.log('返還', cs.name, '| exact 總抽', sr.mean.toFixed(2), '實付', sn.mean.toFixed(2), sn.p50, sn.p90,
+    '| MC 總抽', mean(mc.raw).toFixed(2), '實付', mean(mc.res).toFixed(2), pct(mc.res, 0.5), pct(mc.res, 0.9), '四星率', (mc.fourRate * 100).toFixed(2) + '%');
+}
