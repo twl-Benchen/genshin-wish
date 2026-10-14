@@ -856,12 +856,12 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   // ---- 從祈願歷史紀錄推算墊抽 ----
   const HIST = {
     char: {
-      pool: '角色活動祈願與角色活動祈願-2', type: '角色', max: 89,
+      pool: '角色活動祈願與角色活動祈願-2', type: '角色', max: 89, startPage: 16,
       what: [['up', '當期 UP 角色'], ['std', '常駐角色 (歪了)']],
       note: (w) => (w === 'std' ? '上次歪了，下一顆五星是大保底' : '下一顆五星是小保底'),
     },
     weapon: {
-      pool: '武器活動祈願', type: '武器', max: 79,
+      pool: '武器活動祈願', type: '武器', max: 79, startPage: 14,
       what: [['course', '定軌的武器'], ['other', '其他五星武器']],
       note: (w) => (w === 'other' ? '命定值 1，下一把五星必定是定軌' : '命定值 0'),
     },
@@ -905,7 +905,9 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     const cfg = HIST[pool], n = per();
     hs.pool = pool;
     const pity = pool === 'char' ? clampInt($('chPity').value, 0, 89) : clampInt($('wpPity').value, 0, 79);
-    hs.selPage = hs.page = Math.floor(pity / n) + 1;
+    hs.selPage = Math.floor(pity / n) + 1;
+    // 打開時預設停在第 16 頁 (角色) / 第 14 頁 (武器)，墊抽通常落在軟保底附近
+    hs.page = cfg.startPage;
     hs.selRow = (pity % n) + 1;
     hs.what = pool === 'char' ? ($('chG').checked ? 'std' : 'up') : ($('wpF').value === '1' ? 'other' : 'course');
     $('histPool').textContent = cfg.pool;
