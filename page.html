@@ -62,6 +62,7 @@ body {
     radial-gradient(50% 180px at 88% 40px, var(--cloud), transparent 70%),
     linear-gradient(180deg, var(--sky-top), var(--sky-bot) 560px, var(--bg) 900px);
   background-color: var(--bg);
+  background-repeat: no-repeat;
   color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.6;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: 28px 48px;
@@ -111,7 +112,14 @@ input:focus-visible, select:focus-visible, button:focus-visible, .check input:fo
 .check { display: flex; align-items: center; gap: 8px; font-size: .92rem; cursor: pointer; }
 .check input { width: 17px; height: 17px; accent-color: var(--gold); }
 .hint { font-size: .78rem; color: var(--muted); margin: 0; }
-.budget-total { font-family: var(--f-num); font-size: .9rem; color: var(--ink); background: var(--sunken); border-radius: 6px; padding: 8px 10px; }
+.budget-total { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-size: .9rem; color: var(--ink); background: var(--sunken); border: 1px solid transparent; border-radius: 6px; padding: 6px 10px; }
+.budget-total.manual { border-color: var(--gold); background: var(--gold-soft); }
+.budget-total input[type=number] { width: 86px; padding: 3px 7px; font-weight: 600; background: var(--surface); }
+.budget-total .eq { font-family: var(--f-num); font-size: .82rem; color: var(--muted); }
+.linkbtn { font: inherit; font-size: .78rem; color: var(--gold); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; margin-left: auto; }
+/* 改成直接輸入總抽數時，三個資源欄位顯示 0 並變淡，點了就恢復原本的數字 */
+.row3 input.inactive { opacity: .5; background: transparent; border-style: dashed; cursor: pointer; }
+.row3 .field:has(input.inactive) > label { opacity: .6; }
 hr { border: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--frame), transparent); margin: 0; }
 .ex { display: inline-block; font-family: var(--f-body); font-size: .72rem; letter-spacing: .06em; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; font-weight: 400; }
 .inline { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
@@ -233,16 +241,43 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .hist-tbl tr.sel td.nm { color: var(--gold); font-weight: 700; }
 .hist-tbl tr.off { cursor: not-allowed; opacity: .4; }
 .hist-tbl td.after { font-family: var(--f-num); color: var(--muted); }
-.pager { display: flex; justify-content: center; align-items: center; gap: 12px; }
-.pager button { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--frame-soft); background: var(--surface); color: var(--ink); font-size: 1.1rem; cursor: pointer; box-shadow: 0 1px 3px rgba(30, 40, 70, .15); }
-.pager button:disabled { opacity: .35; cursor: default; }
-.pager input { width: 64px; text-align: center; font-weight: 600; }
+.pager { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.pager > button { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--frame-soft); background: var(--surface); color: var(--ink); font-size: 1.1rem; cursor: pointer; box-shadow: 0 1px 3px rgba(30, 40, 70, .15); }
+.pager > button:disabled { opacity: .35; cursor: default; }
+/* 頁數拉桿：可拖動，也可點刻度或軌道 */
+.page-slide { --thumb: 22px; display: grid; gap: 2px; min-width: 0; }
+.page-now { text-align: center; font-size: .85rem; color: var(--muted); }
+.page-now b { font-family: var(--f-num); font-size: 1.25rem; color: var(--ink); margin: 0 4px; }
+.page-slide input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 28px; margin: 0; background: transparent; cursor: pointer; touch-action: pan-y; }
+.page-slide input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: var(--head); border: 1px solid var(--frame-soft); }
+.page-slide input[type=range]::-moz-range-track { height: 6px; border-radius: 3px; background: var(--head); border: 1px solid var(--frame-soft); }
+.page-slide input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: var(--thumb); height: var(--thumb); margin-top: -9px; border-radius: 50%; background: var(--btn); border: 3px solid var(--frame); box-shadow: 0 1px 4px rgba(30, 40, 70, .3); }
+.page-slide input[type=range]::-moz-range-thumb { width: var(--thumb); height: var(--thumb); border-radius: 50%; background: var(--btn); border: 3px solid var(--frame); box-sizing: border-box; }
+.page-ticks { position: relative; height: 22px; }
+.page-ticks button { position: absolute; top: 0; transform: translateX(-50%); font: inherit; font-family: var(--f-num); font-size: .7rem; line-height: 1; min-width: 18px; padding: 4px 2px; border: 0; border-radius: 4px; background: transparent; color: var(--muted); cursor: pointer; }
+.page-ticks button.on { background: var(--btn); color: var(--btn-ink); font-weight: 600; }
+.page-ticks button.has { color: var(--gold); font-weight: 700; }
+@media (max-width: 520px) { .page-ticks button.minor { color: transparent; min-width: 10px; } .page-ticks button.minor::after { content: "·"; color: var(--muted); position: absolute; left: 50%; top: 2px; transform: translateX(-50%); } .page-ticks button.minor.on, .page-ticks button.minor.has { color: transparent; } .page-ticks button.minor.on::after { color: var(--btn-ink); } }
 .hist-opts { display: grid; gap: 10px; }
 .hist-opts .lab { display: block; margin-bottom: 4px; }
 .hist-result { font-size: .95rem; background: var(--sunken); border-radius: 6px; padding: 9px 12px; }
 .hist-result b { font-family: var(--f-num); color: var(--gold); font-size: 1.1rem; }
 .hist-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
 .hist-actions .gbtn { min-width: 130px; }
+/* 分頁 */
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.tabs button { font: inherit; font-size: .92rem; font-weight: 500; padding: 7px 18px; border-radius: 999px; border: 1px solid var(--frame); background: var(--surface); color: var(--ink); cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--btn); color: var(--btn-ink); border-color: var(--btn); font-weight: 700; }
+.rules-page { max-width: 980px; }
+
+/* 里程碑拖動排序 */
+.row-head { display: inline-flex; align-items: center; gap: 8px; }
+.grip { flex: none; width: 22px; height: 26px; padding: 0; border: 0; border-radius: 4px; background: transparent; cursor: grab; touch-action: none; position: relative; }
+.grip::before { content: ""; position: absolute; inset: 6px 6px; background: radial-gradient(circle, var(--muted) 1.4px, transparent 1.6px) 0 0 / 5px 5px; }
+.grip:hover { background: var(--sunken); }
+#plan tr.dragging td { background: var(--gold-soft); }
+#plan tr.dragging .grip { cursor: grabbing; }
+body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: none; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
@@ -252,7 +287,12 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     <p class="lede">輸入想抽的角色命座與專武精煉、目前墊了幾抽，直接算出完整的抽數機率分布，並估計你手上的原石夠不夠。結果是精確計算，不是隨機模擬，每次算出來都一樣。</p>
   </header>
 
-  <div class="layout">
+  <nav class="tabs" role="tablist" aria-label="頁面">
+    <button type="button" role="tab" id="tabBtnCalc" aria-controls="tabCalc" aria-selected="true">計算</button>
+    <button type="button" role="tab" id="tabBtnRules" aria-controls="tabRules" aria-selected="false">抽卡規則</button>
+  </nav>
+
+  <div class="layout" id="tabCalc" role="tabpanel" aria-labelledby="tabBtnCalc">
     <form class="panel frame" id="form" autocomplete="off">
       <fieldset>
         <legend><span class="dot c"></span>角色活動祈願</legend>
@@ -342,8 +382,14 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
             <input type="number" id="bStar" min="0" value="40" inputmode="numeric">
           </div>
         </div>
-        <div class="budget-total" id="budgetTotal">可抽 0 抽</div>
-        <p class="hint">160 原石換 1 抽，5 顆星輝換 1 抽。</p>
+        <div class="budget-total" id="budgetBox">
+          <label for="bTotal">可抽</label>
+          <input type="number" id="bTotal" min="0" inputmode="numeric" aria-describedby="budgetHint">
+          <span>抽</span>
+          <span class="eq" id="budgetEq"></span>
+          <button type="button" class="linkbtn" id="bRevert" hidden>改回逐項填寫</button>
+        </div>
+        <p class="hint" id="budgetHint">160 原石換 1 抽，5 顆星輝換 1 抽。已經算好總抽數的話，直接改「可抽」那格就好。</p>
         <button type="button" class="toggle" id="rfToggle" aria-expanded="false" aria-controls="rfBox">
           <span>星輝返還 <span class="st" id="rfState">未計入</span></span><span class="chev" aria-hidden="true">▾</span>
         </button>
@@ -364,6 +410,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
             <span class="lab">常駐五星命座 (歪的時候會抽到)</span>
             <div class="cons" id="cons"></div>
             <input type="hidden" id="rfCons" value="">
+            <input type="hidden" id="order" value="">
           </div>
           <p class="hint">按第幾顆星就是幾命，再按同一顆退回一命。重複的四星角色返還 2 顆星輝，滿命後 5 顆；重複的五星角色 10 顆，滿命後 25 顆；四星武器 2 顆，五星武器 10 顆；第一次抽到的角色不返還。開啟後結果改用「實付抽數」，也就是扣掉抽卡途中返還、再換成抽數的部分。</p>
         </div>
@@ -406,7 +453,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       <section class="card frame">
         <div class="card-head">
           <h2>每個里程碑</h2>
-          <span class="note">先抽角色、再抽武器，抽數為累計</span>
+          <span class="note">按住左邊的點點上下拖動，可以調整抽的順序，抽數為累計 <button type="button" class="linkbtn" id="orderReset" hidden>恢復先角色後武器</button></span>
         </div>
         <div class="tbl-wrap">
           <table class="gtable" id="plan">
@@ -439,66 +486,69 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
         <div class="wait-facts" id="waitFacts"></div>
       </section>
 
-      <section class="card frame">
-        <h2>計算用的抽卡規則</h2>
-        <div class="rules">
-          <div>
-            <h3>三個官方數字</h3>
-            <ul>
-              <li>0.600%：每一次祈願的五星基礎機率</li>
-              <li>1.600%：算進保底後的長期綜合五星率，約 62.5 抽一顆</li>
-              <li>90 抽：等待五星的硬上限</li>
-              <li>只有 0.6% 加 90 抽硬保底時平均要 69.7 抽 (1.435%)，所以 90 抽前一定有軟保底，但官方沒公布曲線</li>
-            </ul>
-          </div>
-          <div>
-            <h3>五星何時出現 (社群擬合)</h3>
-            <ul>
-              <li>角色池：前 73 抽 0.6%，第 74 抽起每抽加 6%，第 89 抽約 96.6%，第 90 抽必出</li>
-              <li>首金分布峰值在第 77 抽 (約 10.5%)，第 80 抽前約 91.9% 已出金</li>
-              <li>長期五星率約 1.605%，與派蒙工具站約 2205 萬筆五星落點的實測形狀相近</li>
-            </ul>
-          </div>
-          <div>
-            <h3>是不是當期 UP</h3>
-            <ul>
-              <li>小保底 50% 是 UP，歪了下一顆五星必定是 UP (大保底)</li>
-              <li>捕獲明光 (5.0 起)：只在小保底時參與判定，每次祈願基礎觸發機率 0.018%，小保底 UP 綜合機率 55%</li>
-              <li>連續三輪「先歪，再靠大保底拿到 UP」(共 6 顆五星) 後，下一顆五星必定觸發</li>
-              <li>中間各階段的機率官方沒有公開，網頁的明光計數是推測模型</li>
-            </ul>
-          </div>
-          <div>
-            <h3>武器活動祈願 (社群擬合)</h3>
-            <ul>
-              <li>前 62 抽 0.7%，第 63~73 抽每抽加 7%，第 74 抽起每抽加 3.5%，第 80 抽必出</li>
-              <li>平均約 53.3 抽一把五星，75% 是兩把 UP 之一，定軌那把佔 37.5%</li>
-              <li>5.0 起命定值上限 1：沒出定軌，下一把五星必定是定軌</li>
-            </ul>
-          </div>
-        </div>
-        <div class="rules">
-          <div>
-            <h3>星輝返還 (官方)</h3>
-            <ul>
-              <li>同一角色第 2~7 次獲得：命星加星輝，四星 2 顆、五星 10 顆</li>
-              <li>第 8 次起 (已滿命)：四星 5 顆、五星 25 顆</li>
-              <li>四星武器 2 顆、五星武器 10 顆，三星武器給的是星塵</li>
-              <li>星輝在「星輝兌換」換糾纏之緣沒有次數上限，5 顆換 1 抽</li>
-            </ul>
-          </div>
-          <div>
-            <h3>返還怎麼算進來</h3>
-            <ul>
-              <li>四星：角色池綜合機率 13%，約 75% 是角色；武器池 14.5%，約 12.5% 是角色。數量多又穩定，用每抽平均返還計算</li>
-              <li>五星：精確追蹤途中歪了幾次，常駐角色等機率出現，會依你填的命座逐次升命</li>
-              <li>達成目標那一顆五星的返還，只能拿去抽後面的武器</li>
-            </ul>
-          </div>
-        </div>
-        <p class="note">「角色活動祈願」與「角色活動祈願-2」共享抽數和大保底狀態，跟武器池互相獨立，保底會跨期繼承。逐抽機率是社群依大量抽卡紀錄擬合的結果，不是官方逐抽表，實際可能略有出入。</p>
-      </section>
     </div>
+  </div>
+
+  <div class="rules-page" id="tabRules" role="tabpanel" aria-labelledby="tabBtnRules" hidden>
+    <section class="card frame">
+      <h2>計算用的抽卡規則</h2>
+      <div class="rules">
+        <div>
+          <h3>三個官方數字</h3>
+          <ul>
+            <li>0.600%：每一次祈願的五星基礎機率</li>
+            <li>1.600%：算進保底後的長期綜合五星率，約 62.5 抽一顆</li>
+            <li>90 抽：等待五星的硬上限</li>
+            <li>只有 0.6% 加 90 抽硬保底時平均要 69.7 抽 (1.435%)，所以 90 抽前一定有軟保底，但官方沒公布曲線</li>
+          </ul>
+        </div>
+        <div>
+          <h3>五星何時出現 (社群擬合)</h3>
+          <ul>
+            <li>角色池：前 73 抽 0.6%，第 74 抽起每抽加 6%，第 89 抽約 96.6%，第 90 抽必出</li>
+            <li>首金分布峰值在第 77 抽 (約 10.5%)，第 80 抽前約 91.9% 已出金</li>
+            <li>長期五星率約 1.605%，與派蒙工具站約 2205 萬筆五星落點的實測形狀相近</li>
+          </ul>
+        </div>
+        <div>
+          <h3>是不是當期 UP</h3>
+          <ul>
+            <li>小保底 50% 是 UP，歪了下一顆五星必定是 UP (大保底)</li>
+            <li>捕獲明光 (5.0 起)：只在小保底時參與判定，每次祈願基礎觸發機率 0.018%，小保底 UP 綜合機率 55%</li>
+            <li>連續三輪「先歪，再靠大保底拿到 UP」(共 6 顆五星) 後，下一顆五星必定觸發</li>
+            <li>中間各階段的機率官方沒有公開，網頁的明光計數是推測模型</li>
+          </ul>
+        </div>
+        <div>
+          <h3>武器活動祈願 (社群擬合)</h3>
+          <ul>
+            <li>前 62 抽 0.7%，第 63~73 抽每抽加 7%，第 74 抽起每抽加 3.5%，第 80 抽必出</li>
+            <li>平均約 53.3 抽一把五星，75% 是兩把 UP 之一，定軌那把佔 37.5%</li>
+            <li>5.0 起命定值上限 1：沒出定軌，下一把五星必定是定軌</li>
+          </ul>
+        </div>
+      </div>
+      <div class="rules">
+        <div>
+          <h3>星輝返還 (官方)</h3>
+          <ul>
+            <li>同一角色第 2~7 次獲得：命星加星輝，四星 2 顆、五星 10 顆</li>
+            <li>第 8 次起 (已滿命)：四星 5 顆、五星 25 顆</li>
+            <li>四星武器 2 顆、五星武器 10 顆，三星武器給的是星塵</li>
+            <li>星輝在「星輝兌換」換糾纏之緣沒有次數上限，5 顆換 1 抽</li>
+          </ul>
+        </div>
+        <div>
+          <h3>返還怎麼算進來</h3>
+          <ul>
+            <li>四星：角色池綜合機率 13%，約 75% 是角色；武器池 14.5%，約 12.5% 是角色。數量多又穩定，用每抽平均返還計算</li>
+            <li>五星：精確追蹤途中歪了幾次，常駐角色等機率出現，會依你填的命座逐次升命</li>
+            <li>達成目標那一顆五星的返還，只能拿去抽後面的武器</li>
+          </ul>
+        </div>
+      </div>
+      <p class="note">「角色活動祈願」與「角色活動祈願-2」共享抽數和大保底狀態，跟武器池互相獨立，保底會跨期繼承。逐抽機率是社群依大量抽卡紀錄擬合的結果，不是官方逐抽表，實際可能略有出入。</p>
+    </section>
   </div>
 </div>
 
@@ -509,7 +559,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       <button type="submit" class="hist-x" value="cancel" aria-label="關閉">✕</button>
     </div>
     <div class="hist-type"><span>祈願類型</span><b id="histPool">角色活動祈願與角色活動祈願-2</b></div>
-    <p class="note">在遊戲裡打開祈願歷史紀錄，翻到最近一顆五星，把下面的頁數調成一樣，再點它在第幾列。紀錄由新到舊排列，約延遲 1 小時，剛抽完的幾抽要自己加上。</p>
+    <p class="note">在遊戲裡打開祈願歷史紀錄，翻到最近一顆五星，拖動或點下面的頁數調成一樣，再點它在第幾列。紀錄由新到舊排列，約延遲 1 小時，剛抽完的幾抽要自己加上。</p>
     <div class="tbl-wrap">
       <table class="gtable hist-tbl">
         <thead><tr><th>類型</th><th>名稱</th><th>之後抽了</th></tr></thead>
@@ -518,20 +568,17 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     </div>
     <div class="pager">
       <button type="button" id="histPrev" aria-label="上一頁">‹</button>
-      <input type="number" id="histPage" min="1" value="1" inputmode="numeric" aria-label="頁數">
+      <div class="page-slide">
+        <div class="page-now">第<b id="histPageNum">1</b>頁</div>
+        <input type="range" id="histPage" min="1" max="18" step="1" value="1" aria-label="頁數">
+        <div class="page-ticks" id="histTicks"></div>
+      </div>
       <button type="button" id="histNext" aria-label="下一頁">›</button>
     </div>
     <div class="hist-opts">
       <div>
         <span class="lab" id="histWhatLab">這顆五星是</span>
         <div class="seg full" id="histWhat" role="group" aria-labelledby="histWhatLab"></div>
-      </div>
-      <div>
-        <span class="lab" id="histPerLab">每頁筆數 (照遊戲畫面一頁有幾列)</span>
-        <div class="seg" id="histPer" role="group" aria-labelledby="histPerLab">
-          <button type="button" data-v="5">5 筆</button>
-          <button type="button" data-v="6">6 筆</button>
-        </div>
       </div>
     </div>
     <div class="hist-result" id="histResult"></div>
@@ -550,7 +597,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   'use strict';
   const E = window.GachaEngine;
   const $ = (id) => document.getElementById(id);
-  const ids = ['chT', 'chPity', 'chC', 'chG', 'wpT', 'wpPity', 'wpF', 'bPrimo', 'bFate', 'bStar', 'crModel', 'rfOn', 'rfC6', 'rfCons'];
+  const ids = ['chT', 'chPity', 'chC', 'chG', 'wpT', 'wpPity', 'wpF', 'bPrimo', 'bFate', 'bStar', 'crModel', 'rfOn', 'rfC6', 'rfCons', 'order'];
   const KEY = 'genshin-pulls-v1';
   const fmt = (n) => Math.round(n).toLocaleString('zh-TW');
   const pctTxt = (p) => (p >= 0.9995 ? '100' : p <= 0.0005 && p > 0 ? '<0.1' : (p * 100).toFixed(1)) + '%';
@@ -574,9 +621,75 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     return STD.map((_, i) => { const v = parseInt(a && a[i], 10); return isFinite(v) ? Math.max(-1, Math.min(6, v)) : 0; });
   }
 
+  // ---- 手上資源：逐項填寫 / 直接輸入總抽數 ----
+  // 直接輸入總抽數時，原石、糾纏之緣、星輝顯示 0 並變淡；原本填的數字記在 bm.items，改回來時恢復
+  const ITEMS = ['bPrimo', 'bFate', 'bStar'];
+  const BKEY = KEY + '-budget';
+  const bm = { mode: 'items', total: '', items: null };
+  try { Object.assign(bm, JSON.parse(localStorage.getItem(BKEY) || '{}')); } catch (e) {}
+  const saveBm = () => { try { localStorage.setItem(BKEY, JSON.stringify(bm)); } catch (e) {} };
+  const itemBudget = (v) => Math.floor(clampInt(v.bPrimo, 0, 1e9) / 160) + clampInt(v.bFate, 0, 1e7) + Math.floor(clampInt(v.bStar, 0, 1e8) / 5);
+
+  function paintBudgetMode() {
+    const manual = bm.mode === 'total';
+    ITEMS.forEach((id) => {
+      const el = $(id);
+      el.classList.toggle('inactive', manual);
+      if (manual) { el.value = '0'; el.title = '點一下恢復原本填的數字'; } else el.removeAttribute('title');
+    });
+    $('budgetBox').classList.toggle('manual', manual);
+    $('bRevert').hidden = !manual;
+    if (manual) $('bTotal').value = bm.total;
+  }
+  function toManual() {
+    if (bm.mode !== 'total') {
+      bm.items = {};
+      ITEMS.forEach((id) => { bm.items[id] = $(id).value; });
+      bm.mode = 'total';
+    }
+    bm.total = $('bTotal').value;
+    saveBm(); paintBudgetMode();
+  }
+  function toItems() {
+    if (bm.mode !== 'total') return;
+    bm.mode = 'items';
+    if (bm.items) ITEMS.forEach((id) => { if (bm.items[id] != null) $(id).value = bm.items[id]; });
+    saveBm(); paintBudgetMode(); schedule();
+  }
+  $('bTotal').addEventListener('input', toManual);
+  $('bTotal').addEventListener('blur', () => { if (bm.mode === 'total' && $('bTotal').value.trim() === '') toItems(); });
+  $('bRevert').addEventListener('click', toItems);
+  ITEMS.forEach((id) => $(id).addEventListener('focus', () => {
+    if (bm.mode !== 'total') return;
+    toItems();
+    setTimeout(() => { try { $(id).select(); } catch (e) {} }, 0);
+  }));
+  if (bm.mode === 'total') {
+    if (!bm.items) { bm.items = {}; ITEMS.forEach((id) => { bm.items[id] = $(id).value; }); }
+    paintBudgetMode();
+  }
+
+  // ---- 抽的順序：c = 角色、w = 武器，數量改變時保留使用者排好的順序 ----
+  function reconcileOrder(txt, A, B) {
+    let seq = String(txt || '').split('').filter((k) => k === 'c' || k === 'w');
+    const count = (k) => seq.filter((x) => x === k).length;
+    const dropLast = (k) => { const i = seq.lastIndexOf(k); if (i >= 0) seq.splice(i, 1); };
+    while (count('c') > A) dropLast('c');
+    while (count('w') > B) dropLast('w');
+    while (count('c') < A) { const i = seq.lastIndexOf('c'); seq.splice(i + 1, 0, 'c'); }
+    while (count('w') < B) { const i = seq.lastIndexOf('w'); seq.splice(i >= 0 ? i + 1 : seq.length, 0, 'w'); }
+    return seq.join('');
+  }
+  const defaultOrder = (A, B) => 'c'.repeat(A) + 'w'.repeat(B);
+
   function read() {
     const v = {};
     ids.forEach((id) => { const el = $(id); v[id] = el.type === 'checkbox' ? el.checked : el.value; });
+    const manual = bm.mode === 'total';
+    if (manual && bm.items) ITEMS.forEach((id) => { v[id] = bm.items[id]; });
+    const A = clampInt(v.chT, 0, 7), B = clampInt(v.wpT, 0, 5);
+    v.order = reconcileOrder(v.order, A, B);
+    $('order').value = v.order;
     try { localStorage.setItem(KEY, JSON.stringify(v)); } catch (e) {}
     return {
       character: {
@@ -584,15 +697,17 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
         radiance: clampInt(v.chC, 0, 3), cr: E.CR_PRESETS[v.crModel] ? E.CR_PRESETS[v.crModel].cr : E.CR_PRESETS.conservative.cr,
       },
       weapon: { target: clampInt(v.wpT, 0, 5), pity: clampInt(v.wpPity, 0, 79), fate: clampInt(v.wpF, 0, 1) },
-      budget: Math.floor(clampInt(v.bPrimo, 0, 1e9) / 160) + clampInt(v.bFate, 0, 1e7) + Math.floor(clampInt(v.bStar, 0, 1e8) / 5),
-      primo: clampInt(v.bPrimo, 0, 1e9),
+      budget: manual ? clampInt($('bTotal').value, 0, 1e7) : itemBudget(v),
+      manual,
+      order: v.order,
+      isDefaultOrder: v.order === defaultOrder(A, B),
       refund: v.rfOn ? { c6: Math.max(0, Math.min(1, parseFloat(v.rfC6) || 0)), standard: parseCons(v.rfCons) } : null,
     };
   }
 
   // ---- 星輝返還設定 ----
   const UIKEY = KEY + '-ui';
-  let ui = { rfOpen: false, rfSeen: false, histPer: 5 };
+  let ui = { rfOpen: false, rfSeen: false };
   try { Object.assign(ui, JSON.parse(localStorage.getItem(UIKEY) || '{}')); } catch (e) {}
   const saveUi = () => { try { localStorage.setItem(UIKEY, JSON.stringify(ui)); } catch (e) {} };
 
@@ -662,15 +777,24 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     },
   };
   const hs = { pool: 'char', page: 1, selPage: 1, selRow: 1, what: 'up' };
-  const per = () => (ui.histPer === 6 ? 6 : 5);
+  const per = () => 5; // 遊戲的祈願歷史紀錄一頁 5 筆
   const selPity = () => (hs.selPage - 1) * per() + hs.selRow - 1;
   const maxPage = () => Math.floor(HIST[hs.pool].max / per()) + 1;
 
   function paintHist() {
     const cfg = HIST[hs.pool], n = per();
     hs.page = Math.max(1, Math.min(maxPage(), hs.page));
+    const M = maxPage();
+    $('histPage').max = M;
     $('histPage').value = hs.page;
-    $('histPage').max = maxPage();
+    $('histPageNum').textContent = hs.page;
+    let ticks = '';
+    for (let i = 1; i <= M; i++) {
+      const major = i === 1 || i === M || i % 5 === 0;
+      const cls = [major ? '' : 'minor', i === hs.page ? 'on' : '', i === hs.selPage ? 'has' : ''].filter(Boolean).join(' ');
+      ticks += `<button type="button" data-p="${i}" class="${cls}" style="left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * ${(i - 1) / (M - 1)})" aria-label="第 ${i} 頁"${i === hs.page ? ' aria-current="true"' : ''}>${i}</button>`;
+    }
+    $('histTicks').innerHTML = ticks;
     $('histPrev').disabled = hs.page <= 1;
     $('histNext').disabled = hs.page >= maxPage();
     let rows = '';
@@ -683,7 +807,6 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
         <td class="after">${off ? '' : after + ' 抽'}</td></tr>`;
     }
     $('histRows').innerHTML = rows;
-    $('histPer').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', +b.dataset.v === n ? 'true' : 'false'));
     $('histWhat').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === hs.what ? 'true' : 'false'));
     $('histResult').innerHTML = `第 ${hs.selPage} 頁第 ${hs.selRow} 列，已墊 <b>${selPity()}</b> 抽 · ${cfg.note(hs.what)}`;
   }
@@ -717,17 +840,11 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   });
   $('histPrev').addEventListener('click', () => { hs.page--; paintHist(); });
   $('histNext').addEventListener('click', () => { hs.page++; paintHist(); });
-  $('histPage').addEventListener('input', () => { const v = parseInt($('histPage').value, 10); if (isFinite(v)) { hs.page = v; paintHist(); } });
-  $('histPage').addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
-  $('histPer').addEventListener('click', (e) => {
+  $('histPage').addEventListener('input', () => { const v = parseInt($('histPage').value, 10); if (isFinite(v) && v !== hs.page) { hs.page = v; paintHist(); } });
+  $('histTicks').addEventListener('click', (e) => {
     const b = e.target.closest('button');
     if (!b) return;
-    ui.histPer = +b.dataset.v; saveUi();
-    // 頁數與列數照遊戲畫面不變，換算出來的墊抽跟著變
-    const n = per();
-    if (hs.selRow > n) hs.selRow = n;
-    while (selPity() > HIST[hs.pool].max && hs.selPage > 1) hs.selPage--;
-    paintHist();
+    hs.page = +b.dataset.p; paintHist();
   });
   $('histWhat').addEventListener('click', (e) => {
     const b = e.target.closest('button');
@@ -742,13 +859,84 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     schedule();
   });
 
+  // ---- 里程碑拖動排序 ----
+  const tbody = $('tbody');
+  let drag = null;
+  const domOrder = () => Array.from(tbody.querySelectorAll('tr[data-k]')).map((tr) => tr.dataset.k).join('');
+  function commitOrder(next, focusIndex) {
+    if (next === $('order').value) return;
+    $('order').value = next;
+    render();
+    if (focusIndex != null) { const g = tbody.querySelectorAll('.grip')[focusIndex]; if (g) g.focus(); }
+  }
+  tbody.addEventListener('pointerdown', (e) => {
+    const g = e.target.closest('.grip');
+    if (!g || e.button > 0) return;
+    e.preventDefault();
+    const tr = g.closest('tr');
+    drag = { tr };
+    tr.classList.add('dragging');
+    document.body.classList.add('is-dragging');
+  });
+  window.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const y = e.clientY;
+    const prev = drag.tr.previousElementSibling, next = drag.tr.nextElementSibling;
+    if (prev) { const r = prev.getBoundingClientRect(); if (y < r.top + r.height / 2) { tbody.insertBefore(drag.tr, prev); return; } }
+    if (next) { const r = next.getBoundingClientRect(); if (y > r.top + r.height / 2) tbody.insertBefore(next, drag.tr); }
+  });
+  const endDrag = () => {
+    if (!drag) return;
+    drag.tr.classList.remove('dragging');
+    document.body.classList.remove('is-dragging');
+    drag = null;
+    commitOrder(domOrder());
+  };
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('pointercancel', endDrag);
+  tbody.addEventListener('keydown', (e) => {
+    const g = e.target.closest('.grip');
+    if (!g || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+    e.preventDefault();
+    const i = +g.dataset.i, j = e.key === 'ArrowUp' ? i - 1 : i + 1;
+    const seq = $('order').value.split('');
+    if (j < 0 || j >= seq.length) return;
+    [seq[i], seq[j]] = [seq[j], seq[i]];
+    commitOrder(seq.join(''), j);
+  });
+  $('orderReset').addEventListener('click', () => {
+    const seq = $('order').value;
+    commitOrder(defaultOrder(seq.split('c').length - 1, seq.split('w').length - 1));
+  });
+
+  // ---- 分頁：計算 / 抽卡規則 ----
+  function showTab(name) {
+    const rules = name === 'rules';
+    $('tabCalc').hidden = rules;
+    $('tabRules').hidden = !rules;
+    $('tabBtnCalc').setAttribute('aria-selected', rules ? 'false' : 'true');
+    $('tabBtnRules').setAttribute('aria-selected', rules ? 'true' : 'false');
+    try { history.replaceState(null, '', rules ? '#rules' : location.pathname + location.search); } catch (e) {}
+    if (!rules) setTimeout(() => { drawChart(); drawWait(); }, 0);
+  }
+  $('tabBtnCalc').addEventListener('click', () => showTab('calc'));
+  $('tabBtnRules').addEventListener('click', () => showTab('rules'));
+  document.querySelector('.tabs').addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    const toRules = $('tabBtnCalc').getAttribute('aria-selected') === 'true';
+    showTab(toRules ? 'rules' : 'calc');
+    $(toRules ? 'tabBtnRules' : 'tabBtnCalc').focus();
+  });
+
   function meterClass(p) { return p >= 0.9 ? 'good' : p >= 0.5 ? 'warn' : 'bad'; }
 
   let current = null;
 
   function render() {
     const opt = read();
-    $('budgetTotal').textContent = '可抽 ' + fmt(opt.budget) + ' 抽 (約 ' + fmt(opt.budget * 160) + ' 原石)';
+    if (!opt.manual && document.activeElement !== $('bTotal')) $('bTotal').value = opt.budget;
+    $('budgetEq').textContent = '(約 ' + fmt(opt.budget * 160) + ' 原石)';
+    $('orderReset').hidden = opt.isDefaultOrder;
     const res = E.plan(opt);
     const useNet = !!opt.refund;
     const st = E.stats(useNet ? res.totalNet : res.total);
@@ -771,13 +959,13 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       <div class="stat"><span class="k">預算 ${fmt(opt.budget)} 抽的達成率</span><span class="v" style="color: var(--${meterClass(pB)})">${pctTxt(pB)}</span><span class="s">${short > 0 ? '距離期望還差 ' + fmt(short) + ' 抽' : '已超過期望抽數'}</span></div>`
       : `<div class="stat" style="grid-column: 1 / -1"><span class="k">尚未設定目標</span><span class="s">在左側選擇想抽的角色或武器數量。</span></div>`;
 
-    const rowsHtml = res.rows.map((r) => {
+    const rowsHtml = res.rows.map((r, i) => {
       const s = E.stats(useNet ? r.net : r.dist);
       const p = s.within(opt.budget);
       const label = r.kind === 'char'
         ? `<span class="tag"><i class="c">${r.n - 1 === 6 ? '滿命' : (r.n - 1) + ' 命'}</i>第 ${r.n} 隻角色</span>`
         : `<span class="tag"><i class="w">精 ${r.n}</i>第 ${r.n} 把武器</span>`;
-      return `<tr><td>${label}</td><td class="num">${s.mean.toFixed(1)}</td><td class="num">${fmt(s.p50)}</td><td class="num">${fmt(s.p90)}</td><td class="num">${fmt(s.max)}</td>
+      return `<tr data-k="${r.kind === 'char' ? 'c' : 'w'}"><td><span class="row-head"><button type="button" class="grip" data-i="${i}" aria-label="調整順序：拖動，或按上下鍵移動"></button>${label}</span></td><td class="num">${s.mean.toFixed(1)}</td><td class="num">${fmt(s.p50)}</td><td class="num">${fmt(s.p90)}</td><td class="num">${fmt(s.max)}</td>
         <td><span class="meter ${meterClass(p)}"><span class="bar"><b style="width:${(p * 100).toFixed(1)}%"></b></span><em>${pctTxt(p)}</em></span></td></tr>`;
     }).join('');
     $('tbody').innerHTML = rowsHtml || `<tr><td colspan="6" style="text-align:left;color:var(--muted)">還沒有目標。</td></tr>`;
@@ -1059,5 +1247,6 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 
   render();
   drawWait();
+  if (location.hash === '#rules') showTab('rules');
 })();
 </script>

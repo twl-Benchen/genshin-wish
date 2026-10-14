@@ -210,44 +210,65 @@
     return out;
   }
 
-  // 先抽角色、再抽武器；回傳各里程碑的累計分布
+  // 依抽的順序回傳各里程碑的累計分布
+  // opt.order = 'c'/'w' 組成的字串或陣列 (例如 'cccwc')，省略時先抽完角色再抽武器
+  // 兩個卡池的保底互不影響，所以「拿到 a 隻角色、b 把武器」的總抽數 = 角色 a 隻的抽數 + 武器 b 把的抽數，直接卷積
   // opt.refund = { c6: 0~1, standard: [命座...] } 時，另外算出扣掉星輝返還後的實付抽數分布 (net)
+  function normalizeOrder(order, A, B) {
+    const seq = [];
+    let a = 0, b = 0;
+    for (const k of order || []) {
+      if (k === 'c' && a < A) { seq.push('c'); a++; }
+      else if (k === 'w' && b < B) { seq.push('w'); b++; }
+    }
+    while (a < A) { seq.push('c'); a++; }
+    while (b < B) { seq.push('w'); b++; }
+    return seq;
+  }
+
   function plan(opt) {
     const rf = opt.refund;
     const chM = characterMilestonesByMiss(opt.character, !!rf);
     const wpM = weaponMilestonesByMiss(opt.weapon, !!rf);
-    const ch = mergeMiss(chM), wp = mergeMiss(wpM);
-    const charFinal = ch.length ? ch[ch.length - 1] : Float64Array.of(1);
+    const one = Float64Array.of(1);
+    const chRaw = [one].concat(mergeMiss(chM)), wpRaw = [one].concat(mergeMiss(wpM));
+    const order = normalizeOrder(opt.order, chM.length, wpM.length);
+
+    let chExcl, chFull, wpExcl, wpFull;
+    if (rf) {
+      const c6 = Math.max(0, Math.min(1, +rf.c6 || 0));
+      const cons = Array.isArray(rf.standard) ? rf.standard : [];
+      const aC = 1 - fourStarGlitterPerPull('char', c6) / 5;
+      const aW = 1 - fourStarGlitterPerPull('weapon', c6) / 5;
+      const lossCum = [0];
+      for (let l = 1; l <= 8; l++) lossCum[l] = lossCum[l - 1] + lossGlitter(cons, l);
+      // 拿到第 k 隻 UP 前已入帳的 UP 返還 (UP 角色從未持有開始算)
+      const upBefore = (k) => { let s = 0; for (let q = 1; q < k; q++) s += copyGlitter5(q); return s; };
+      // excl：達成當下那顆五星的返還還沒拿到，不能付自己這一抽；full：已入帳，可以拿去抽另一個卡池
+      chExcl = [one].concat(chM.map((row, i) => remapRow(row, aC, (m) => (upBefore(i + 1) + lossCum[m]) / 5)));
+      chFull = [one].concat(chM.map((row, i) => remapRow(row, aC, (m) => (upBefore(i + 2) + lossCum[m]) / 5)));
+      wpExcl = [one].concat(wpM.map((row, i) => remapRow(row, aW, (m) => (10 * (i + m)) / 5)));
+      wpFull = [one].concat(wpM.map((row, i) => remapRow(row, aW, (m) => (10 * (i + 1 + m)) / 5)));
+    }
+
     const rows = [];
-    ch.forEach((d, i) => rows.push({ kind: 'char', n: i + 1, dist: d }));
-    wp.forEach((d, i) => rows.push({ kind: 'weapon', n: i + 1, dist: conv(charFinal, d) }));
-    const total = rows.length ? rows[rows.length - 1].dist : Float64Array.of(1);
-    if (!rf) return { rows, total };
-
-    const c6 = Math.max(0, Math.min(1, +rf.c6 || 0));
-    const cons = Array.isArray(rf.standard) ? rf.standard : [];
-    const aC = 1 - fourStarGlitterPerPull('char', c6) / 5;
-    const aW = 1 - fourStarGlitterPerPull('weapon', c6) / 5;
-    const lossCum = [0];
-    for (let l = 1; l <= 8; l++) lossCum[l] = lossCum[l - 1] + lossGlitter(cons, l);
-    // 拿到第 k 隻 UP 前已入帳的 UP 返還 (UP 角色從未持有開始算)
-    const upBefore = (k) => { let s = 0; for (let q = 1; q < k; q++) s += copyGlitter5(q); return s; };
-
-    // 達成里程碑當下那顆五星的返還還沒拿到，不能拿來付這一抽，但可以拿去抽後面的武器
-    const chNet = chM.map((row, i) => remapRow(row, aC, (m) => (upBefore(i + 1) + lossCum[m]) / 5));
-    const K = chM.length;
-    const charFinalNet = K ? remapRow(chM[K - 1], aC, (m) => (upBefore(K + 1) + lossCum[m]) / 5) : Float64Array.of(1);
-    const wpNet = wpM.map((row, i) => remapRow(row, aW, (m) => (10 * (i + m)) / 5));
-    let r = 0;
-    chNet.forEach((d) => { rows[r++].net = d; });
-    wpNet.forEach((d) => { rows[r++].net = conv(charFinalNet, d); });
-    const totalNet = rows.length ? rows[rows.length - 1].net : Float64Array.of(1);
-    return { rows, total, totalNet };
+    let a = 0, b = 0;
+    for (const k of order) {
+      if (k === 'c') a++; else b++;
+      const row = { kind: k === 'c' ? 'char' : 'weapon', n: k === 'c' ? a : b, chars: a, weapons: b };
+      row.dist = a && b ? conv(chRaw[a], wpRaw[b]) : a ? chRaw[a] : wpRaw[b];
+      if (rf) row.net = k === 'c' ? conv(chExcl[a], wpFull[b]) : conv(chFull[a], wpExcl[b]);
+      rows.push(row);
+    }
+    const last = rows[rows.length - 1];
+    const total = last ? last.dist : one;
+    if (!rf) return { rows, total, order: order.join('') };
+    return { rows, total, totalNet: last ? last.net : one, order: order.join('') };
   }
 
   const api = {
     charHazard, weaponHazard, nextFiveStar, conv, characterMilestones, weaponMilestones, characterMilestonesByMiss, weaponMilestonesByMiss,
-    stats, plan, CR_PRESETS, STANDARD_5, FOUR_RATE, fourStarGlitterPerPull, lossGlitter, copyGlitter5,
+    stats, plan, normalizeOrder, CR_PRESETS, STANDARD_5, FOUR_RATE, fourStarGlitterPerPull, lossGlitter, copyGlitter5,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.GachaEngine = api;

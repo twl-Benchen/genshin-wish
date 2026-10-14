@@ -135,3 +135,14 @@ for (const cs of refundCases) {
   console.log('返還', cs.name, '| exact 總抽', sr.mean.toFixed(2), '實付', sn.mean.toFixed(2), sn.p50, sn.p90,
     '| MC 總抽', mean(mc.raw).toFixed(2), '實付', mean(mc.res).toFixed(2), pct(mc.res, 0.5), pct(mc.res, 0.9), '四星率', (mc.fourRate * 100).toFixed(2) + '%');
 }
+
+// ---- 自訂抽的順序：最後一列的總分布不受順序影響，先抽的武器里程碑等於單抽武器 ----
+{
+  const base = { character: { target: 3, pity: 10, guaranteed: false, radiance: 1 }, weapon: { target: 2, pity: 5, fate: 0 }, refund: { c6: 0.5, standard: [0, 1, 2, 6, -1, 3, 6, 0] } };
+  const a = E.plan(base), b = E.plan(Object.assign({}, base, { order: 'wcwcc' }));
+  const w1 = E.stats(E.weaponMilestones(base.weapon)[0]).mean;
+  console.log('順序', a.order, '→', b.order,
+    '| 總抽', E.stats(a.total).mean.toFixed(3), E.stats(b.total).mean.toFixed(3),
+    '| 實付', E.stats(a.totalNet).mean.toFixed(3), E.stats(b.totalNet).mean.toFixed(3),
+    '| 先抽武器第 1 把', E.stats(b.rows[0].dist).mean.toFixed(3), '單算', w1.toFixed(3));
+}
