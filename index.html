@@ -2517,15 +2517,21 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     const T = TB(big);
     sectionTitle(ctx, '每個里程碑', y + 26, '抽數為累計，照排好的順序');
     y += 48;
-    const xMeter = CW - 104 - T.meter, xP90 = xMeter - 34, xP50 = xP90 - (big ? 130 : 110), xMean = xP50 - (big ? 130 : 110);
+    // 欄位 (跟網頁一樣)：目標 | 需準備 (平均) | 九成機率 | 最多 | N 抽內達成率，表頭全部置中，數字欄置中，目標欄內容靠左
+    const nw = big ? 150 : 124, rw = T.meter + (big ? 150 : 128);
+    const xR = CW - rw, x3 = xR - nw, x2 = x3 - nw, x1 = x2 - nw; // 各欄左邊界 (相對 CX)
     const cols = [
-      { t: '目標', x: 16, a: 'left' }, { t: '需準備 (平均)', x: xMean, a: 'right' },
-      { t: '九成機率', x: xP50, a: 'right' }, { t: '最多', x: xP90, a: 'right' }, { t: fmt(d.opt.budget) + ' 抽內達成率', x: CW - 16, a: 'right' },
+      { t: '目標', l: 0, r: x1 }, { t: '需準備 (平均)', l: x1, r: x2 }, { t: '九成機率', l: x2, r: x3 },
+      { t: '最多', l: x3, r: xR }, { t: fmt(d.opt.budget) + ' 抽內達成率', l: xR, r: CW },
     ];
+    const mid0 = (c) => CX + (c.l + c.r) / 2;
     const rowH = T.row, th = T.head, tw = CW, th0 = y, mid = rowH / 2; // mid：列的垂直中線
     ctx.fillStyle = K.head; ctx.fillRect(CX, y, tw, th);
-    cols.forEach((c) => text(ctx, c.t, CX + c.x, y + th / 2 + 7, `700 ${big ? 21 : 18}px ${FB}`, K.ink, c.a));
+    cols.forEach((c) => text(ctx, c.t, mid0(c), y + th / 2 + 7, `700 ${big ? 21 : 18}px ${FB}`, K.ink, 'center'));
     y += th;
+    // 達成率那格：進度條加百分比當成一組置中，百分比在固定寬度裡靠右，各列才會對齊
+    ctx.font = `600 ${T.num}px ${FN}`;
+    const pw = ctx.measureText('100.0%').width, gw = T.meter + 14 + pw, gx = mid0(cols[4]) - gw / 2;
     d.rows.forEach((r, i) => {
       if (i % 2) { ctx.fillStyle = 'rgba(235,227,212,.5)'; ctx.fillRect(CX, y, tw, rowH); }
       ctx.font = `600 ${T.tag}px ${FN}`;
@@ -2533,19 +2539,21 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       roundRect(ctx, CX + 16, y + mid - tgh / 2, tgw, tgh, 5); ctx.fillStyle = r.kind === 'c' ? K.goldSoft : K.violetSoft; ctx.fill();
       text(ctx, r.tag, CX + 25, y + mid + T.tag * 0.36, `600 ${T.tag}px ${FN}`, r.kind === 'c' ? K.gold : K.violet);
       const base = y + mid + T.num * 0.36;
-      ctx.font = fitFont(ctx, r.text, 500, T.fs, FB, xMean - 120 - (16 + tgw + 12));
+      ctx.font = fitFont(ctx, r.text, 500, T.fs, FB, x1 - 16 - (16 + tgw + 12));
       ctx.fillStyle = K.ink; ctx.textAlign = 'left'; ctx.fillText(r.text, CX + 16 + tgw + 12, base);
-      text(ctx, fmt(r.mean), CX + xMean, base, `400 ${T.num}px ${FN}`, K.ink, 'right');
-      text(ctx, fmt(r.p90), CX + xP50, base, `400 ${T.num}px ${FN}`, K.ink, 'right');
-      text(ctx, fmt(r.max), CX + xP90, base, `400 ${T.num}px ${FN}`, K.ink, 'right');
-      const mx = CX + xMeter, mw = T.meter;
-      roundRect(ctx, mx, y + mid - 4.5, mw, 9, 4.5); ctx.fillStyle = K.sunken; ctx.fill(); ctx.strokeStyle = K.line; ctx.lineWidth = 1; ctx.stroke();
-      if (r.p > 0) { roundRect(ctx, mx, y + mid - 4.5, Math.max(9, mw * r.p), 9, 4.5); ctx.fillStyle = meterColor(r.p); ctx.fill(); }
-      text(ctx, pctTxt(r.p), CX + CW - 16, base, `600 ${T.num}px ${FN}`, meterColor(r.p), 'right');
+      text(ctx, fmt(r.mean), mid0(cols[1]), base, `400 ${T.num}px ${FN}`, K.ink, 'center');
+      text(ctx, fmt(r.p90), mid0(cols[2]), base, `400 ${T.num}px ${FN}`, K.ink, 'center');
+      text(ctx, fmt(r.max), mid0(cols[3]), base, `400 ${T.num}px ${FN}`, K.ink, 'center');
+      const mw = T.meter;
+      roundRect(ctx, gx, y + mid - 4.5, mw, 9, 4.5); ctx.fillStyle = K.sunken; ctx.fill(); ctx.strokeStyle = K.line; ctx.lineWidth = 1; ctx.stroke();
+      if (r.p > 0) { roundRect(ctx, gx, y + mid - 4.5, Math.max(9, mw * r.p), 9, 4.5); ctx.fillStyle = meterColor(r.p); ctx.fill(); }
+      text(ctx, pctTxt(r.p), gx + gw, base, `600 ${T.num}px ${FN}`, meterColor(r.p), 'right');
       y += rowH;
     });
     ctx.strokeStyle = K.line; ctx.lineWidth = 1;
     for (let i = 0; i <= d.rows.length; i++) { const ly = th0 + th + i * rowH; ctx.beginPath(); ctx.moveTo(CX, ly); ctx.lineTo(CX + tw, ly); ctx.stroke(); }
+    // 直的格線，跟網頁的表格一樣
+    [x1, x2, x3, xR].forEach((x) => { ctx.beginPath(); ctx.moveTo(CX + x, th0); ctx.lineTo(CX + x, y); ctx.stroke(); });
     ctx.strokeStyle = K.frameSoft; ctx.strokeRect(CX, th0, tw, y - th0);
     return y;
   }
