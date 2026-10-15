@@ -374,7 +374,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       <fieldset>
         <legend><span class="dot c"></span>角色活動祈願</legend>
         <div class="field">
-          <span class="lab-row"><label for="chT" id="chTLab">想抽到幾隻 UP 角色</label><span class="info-wrap" id="ch2Info" hidden><button type="button" class="info" aria-label="兩隻角色說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">「角色活動祈願」和「角色活動祈願-2」共享墊抽、大保底和明光計數，每次出五星前都可以自己選在哪個池子抽，所以總抽數只看總共要幾隻 UP。兩隻角色的先後順序可以在右邊的里程碑表拖動調整。</span></span></span>
+          <span class="lab-row"><label for="chT" id="chTLab">想抽到幾隻 UP 角色</label><span class="info-wrap" id="ch2Info" hidden><button type="button" class="info" aria-label="兩隻角色說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">「角色活動祈願」和「角色活動祈願-2」共享墊抽、大保底和明光計數。</span></span></span>
           <div class="pick" id="chPick">
             <div class="pk"><label class="sublab" for="chT" id="chSub1" hidden>角色一</label>
             <select id="chT">
@@ -412,7 +412,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
             </div>
           </div>
           <div class="field">
-            <span class="lab-row"><label for="chC">明光計數</label><span class="info-wrap"><button type="button" class="info" aria-label="明光計數說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">明光計數是推測模型裡的狀態：小保底歪一次加 1，贏一次減 1，最多 3。官方只確認連續三輪「先歪，再靠大保底拿到 UP」之後，下一顆五星必定觸發捕獲明光。歪了一定是大保底，所以勾「大保底」時會自動調成至少 1。不確定的話，小保底選 0，大保底選 1。</span></span></span>
+            <span class="lab-row"><label for="chC">明光計數</label><span class="info-wrap"><button type="button" class="info" aria-label="明光計數說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">捕獲明光：小保底歪一次加 1，沒歪一次減 1，最多 3。官方只確認連續三輪「先歪，再靠大保底拿到 UP」之後，下一顆五星必定觸發捕獲明光。</span></span></span>
             <div class="seg num-seg" data-for="chC" role="group" aria-label="明光計數"><button type="button" data-v="0">0</button><button type="button" data-v="1">1</button><button type="button" data-v="2">2</button><button type="button" data-v="3">3</button></div>
             <input type="hidden" id="chC" value="1">
           </div>
@@ -452,7 +452,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
         <div class="pool-rest" id="wpRest">
         <div class="second" id="wp2Row" hidden>
           <div class="field">
-            <span class="lab-row"><label for="wpStrat">兩把都要時的定軌方式</label><span class="info-wrap"><button type="button" class="info" aria-label="定軌方式說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">5.0 起命定值只要 1 點，兩把 UP 都要的時候，歪到常駐武器 (有大保底、命定值 1) 不一定要繼續抽。先取消定軌再重新定軌，命定值歸 0，大保底還在，下一把五星一定是兩把 UP 之一，抽到哪一把都有用。兩把各 1 把時，這樣比繼續抽少 12%；從頭算省約 3%，各 5 把省約 1.4% (跟「定軌缺得多的那把」比)。最佳策略會在每把五星之前自動選最划算的做法，下面也會告訴你現在該怎麼做。<br><a href="https://www.bilibili.com/video/BV1UQzBYFEut" target="_blank" rel="noopener noreferrer">看影片：原神武器池重大概率漏洞，5.0 後最優抽卡策略解析 (一棵平衡樹)</a></span></span></span>
+            <span class="lab-row"><label for="wpStrat">兩把都要時的定軌方式</label><span class="info-wrap"><button type="button" class="info" aria-label="定軌方式說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">兩把 UP 都要的時候，歪到常駐武器 (有大保底、命定值 1) 不一定要繼續抽。先取消定軌再重新定軌，命定值歸 0，大保底還在，下一把五星一定是兩把 UP 之一，抽到哪一把都有用。兩把各 1 把時，這樣比繼續抽少 12%；從頭算省約 3%，各 5 把省約 1.4%。<br><a href="https://www.bilibili.com/video/BV1UQzBYFEut" target="_blank" rel="noopener noreferrer">看影片：武器池5.0 後最優抽卡策略解析 (一棵平衡樹)</a></span></span></span>
             <select id="wpStrat">
               <option value="optimal" selected>最佳策略 (會重新定軌)</option>
               <option value="more">定軌缺得多的那把</option>
@@ -470,7 +470,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
             </div>
           </div>
           <div class="field">
-            <span class="lab-row"><label for="wpF">命定值 (本期)</label><span class="info-wrap"><button type="button" class="info" aria-label="命定值說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">5.0 起命定值上限是 1。抽到的五星不是定軌那把 (另一把 UP 或常駐)，命定值變成 1，下一把五星必定是定軌；抽到定軌就歸 0。這期武器池結束、換定軌或取消定軌都會讓命定值歸 0，所以上一期留下的命定值不算，這裡要選 0。</span></span></span>
+            <span class="lab-row"><label for="wpF">命定值 (本期)</label><span class="info-wrap"><button type="button" class="info" aria-label="命定值說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">抽到的五星不是定軌那把 (另一把 UP 或常駐)，命定值變成 1，下一把五星必定是定軌；抽到定軌就歸 0。這期武器池結束、換定軌或取消定軌都會讓命定值歸 0，所以上一期留下的命定值不算，這裡要選 0。</span></span></span>
             <div class="seg num-seg" data-for="wpF" role="group" aria-label="命定值"><button type="button" data-v="0">0</button><button type="button" data-v="1">1</button></div>
             <input type="hidden" id="wpF" value="0">
           </div>
@@ -531,7 +531,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
         <div class="sub" id="rfBox" hidden>
           <div class="check-row">
             <label class="check"><input type="checkbox" id="rfOn"> 計入抽卡過程中返還的星輝</label>
-            <span class="info-wrap"><button type="button" class="info" aria-label="星輝返還說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">按第幾顆星就是幾命，再按同一顆退回一命。重複的四星角色返還 2 顆星輝，滿命後 5 顆；重複的五星角色 10 顆，滿命後 25 顆；四星武器 2 顆，五星武器 10 顆；第一次抽到的角色不返還。開啟後結果改用「實付抽數」，也就是扣掉抽卡途中返還、再換成抽數的部分。</span></span>
+            <span class="info-wrap"><button type="button" class="info" aria-label="星輝返還說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">按第幾顆星就是幾命。重複的四星角色返還 2 顆星輝，滿命後 5 顆；重複的五星角色 10 顆，滿命後 25 顆；四星武器 2 顆，五星武器 10 顆。</span></span>
           </div>
           <div class="field">
             <span class="lab" id="rfC6Lab">四星角色大約有幾成已經滿命</span>
@@ -640,6 +640,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
             <li>捕獲明光 (5.0 起)：只在小保底時參與判定，每次祈願基礎觸發機率 0.018%，小保底 UP 綜合機率 55%</li>
             <li>連續三輪「先歪，再靠大保底拿到 UP」(共 6 顆五星) 後，下一顆五星必定觸發</li>
             <li>中間各階段的機率官方沒有公開，網頁的明光計數是推測模型</li>
+            <li>「角色活動祈願」和「角色活動祈願-2」共享墊抽、大保底和明光計數，每顆五星前都能自己選在哪個池子抽，所以總抽數只看總共要幾隻 UP。兩隻角色的先後順序可以在里程碑表拖動調整</li>
           </ul>
         </div>
         <div>
@@ -649,6 +650,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
             <li>保守模型：計數到 3 才必定觸發明光，其他時候照 50/50。長期小保底勝率約 55.6%，最接近官方的 55%</li>
             <li>社群推測模型：計數 2 時本來會歪的有一半觸發明光 (等於 75% 不歪)，長期勝率約 57.9%，比官方高，所以不採用</li>
             <li>網頁一律用保守模型計算，規劃時寧可多估一點抽數</li>
+            <li>不確定自己的明光計數時，小保底選 0，大保底選 1</li>
           </ul>
         </div>
         <div>
@@ -697,6 +699,8 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
             <li>四星：角色池綜合機率 13%，約 75% 是角色；武器池 14.5%，約 12.5% 是角色。數量多又穩定，用每抽平均返還計算</li>
             <li>五星：精確追蹤途中歪了幾次，常駐角色等機率出現，會依你填的命座逐次升命</li>
             <li>達成目標那一顆五星的返還，只能拿去抽後面的武器</li>
+            <li>第一次抽到的角色不返還星輝</li>
+            <li>開啟星輝返還後，結果改用「實付抽數」，也就是總抽數扣掉途中返還的星輝換成的抽數</li>
           </ul>
         </div>
       </div>
