@@ -174,7 +174,7 @@ hr { border: 0; height: 1px; background: linear-gradient(90deg, transparent, var
 .stat.hero { background: linear-gradient(150deg, var(--hero-a), var(--hero-b)); border-color: var(--frame); color: var(--hero-ink); position: relative; overflow: hidden; }
 .sum-note { grid-column: 1 / -1; margin: -4px 0 0; font-size: .8rem; color: var(--muted); }
 /* 預算達成率卡：底色不變 (文字顏色照達成率變)，只加金色外框 */
-.stat.goal { border: 2px solid var(--star-on); }
+.stat.goal { border: 4px solid var(--star-on); }
 .stat.hero::after { content: "★★★★★"; position: absolute; right: 10px; top: 8px; font-size: .62rem; letter-spacing: 1px; color: var(--hero-ink); opacity: .55; }
 .stat.hero .k, .stat.hero .s, .stat.hero .v small { color: var(--hero-ink); opacity: .9; }
 .card { padding: 22px; display: grid; gap: 12px; min-width: 0; }
@@ -1992,7 +1992,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
         ctx.fillStyle = g;
       } else ctx.fillStyle = K.surface;
       ctx.fill();
-      if (valueColor) { ctx.strokeStyle = K.star; ctx.lineWidth = 3; } else { ctx.strokeStyle = K.frame; ctx.lineWidth = 1.5; }
+      if (valueColor) { ctx.strokeStyle = K.star; ctx.lineWidth = 6; } else { ctx.strokeStyle = K.frame; ctx.lineWidth = 1.5; }
       ctx.stroke();
       const ink = hero ? K.heroInk : K.muted;
       text(ctx, label, cx + 22, cy + 36, `500 20px ${FB}`, ink);
