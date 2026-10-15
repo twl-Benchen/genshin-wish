@@ -116,6 +116,10 @@
 
 整個網頁是一個 HTML 檔，沒有後端，外部資源只用 Google Fonts，放在 GitHub Pages 就能用。
 
+## 參考來源
+
+- [一棵平衡樹：原神武器池重大概率漏洞，5.0 後最優抽卡策略解析](https://www.bilibili.com/video/BV1UQzBYFEut)：武器 77 抽保底和兩把 UP 的最佳定軌策略
+
 ## 開發
 
 ```
