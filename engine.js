@@ -8,12 +8,11 @@
     if (n >= 90) return 1;
     return 0.006 + 0.06 * (n - 73);
   }
-  // 武器池：1~62 抽 0.7%，63~73 抽每抽 +7%，74 抽起每抽 +3.5%，80 抽必出
+  // 武器池：1~62 抽 0.7%，63 抽起每抽 +7%，第 77 抽達 100% (官方標示 80 抽保底，實際 77 抽就必出)
+  const WEAPON_HARD = 77;
   function weaponHazard(n) {
     if (n <= 62) return 0.007;
-    if (n >= 80) return 1;
-    if (n <= 73) return 0.007 + 0.07 * (n - 62);
-    return 0.777 + 0.035 * (n - 73);
+    return Math.min(1, 0.007 + 0.07 * (n - 62));
   }
 
   // 已墊 pity 抽後，「再抽幾抽出下一隻五星」的分布 (index = 抽數)
@@ -95,11 +94,19 @@
     none: { cr: [0, 0, 0, 0], label: '關閉 (5.0 前舊規則 50/50)' },
   };
 
+  // 角色目標：targets = [角色一幾隻, 角色二幾隻]。兩個角色活動祈願共享墊抽、大保底與明光計數，
+  // 每次拿到 UP 都可以選在哪個祈願抽，所以總抽數只跟「總共要幾隻 UP」有關
+  function characterTargets(opt) {
+    if (Array.isArray(opt.targets)) return [Math.max(0, opt.targets[0] | 0), Math.max(0, opt.targets[1] | 0)];
+    return [Math.max(0, opt.target | 0), 0];
+  }
+
   function characterMilestonesByMiss(opt, trackMiss) {
     const cr = opt.cr || CR_PRESETS.conservative.cr;
     const init = { got: 0, g: !!opt.guaranteed, c: Math.max(0, Math.min(3, opt.radiance | 0)) };
+    const [t1, t2] = characterTargets(opt);
     return chain(
-      opt.target | 0,
+      t1 + t2,
       nextFiveStar(charHazard, 90, opt.pity | 0),
       nextFiveStar(charHazard, 90, 0),
       init,
@@ -118,21 +125,161 @@
   }
   const characterMilestones = (opt) => mergeMiss(characterMilestonesByMiss(opt, false));
 
-  // 武器池 (5.0 後命定值上限 1)：75% 為兩把 UP 之一，定軌那把 37.5%
+  // ---- 武器活動祈願 ----
+  // 兩把 UP 武器 A (目前定軌的那把) 與 B (另一把)。每出一把五星：
+  //   命定值 f = 1：必定是定軌那把
+  //   大保底 g = 1 (上一把五星是常駐)：A、B 各 50%
+  //   都沒有：A 37.5%、B 37.5%、常駐 25% (歪常駐後 g = 1)
+  // 抽到的不是定軌那把 (另一把 UP 或常駐)，命定值變 1；抽到定軌那把，命定值歸 0。
+  // 每出一把五星之前都可以換定軌或取消再重新定軌，兩種操作都會讓命定值歸 0，大保底不受影響。
+  // 命定值在這期武器池結束時歸 0，大保底會跨期保留。
+  function weaponOutcomes(c, f, g) {
+    if (f) return [[1, c]];
+    if (g) return [[0.5, 'A'], [0.5, 'B']];
+    return [[0.375, 'A'], [0.375, 'B'], [0.25, 'S']];
+  }
+  function weaponAfter(a, b, c, x) {
+    const hit = (x === 'A' && a > 0) || (x === 'B' && b > 0);
+    return {
+      a: a - (x === 'A' && a > 0 ? 1 : 0), b: b - (x === 'B' && b > 0 ? 1 : 0),
+      c, f: x === c ? 0 : 1, g: x === 'S' ? 1 : 0, hit,
+    };
+  }
+  // 出下一把五星前能做的選擇：維持現狀、定軌 A (命定值歸 0)、定軌 B (命定值歸 0)
+  function weaponOptions(c, f) {
+    const out = [{ c, f }];
+    if (f || c !== 'A') out.push({ c: 'A', f: 0 });
+    if (f || c !== 'B') out.push({ c: 'B', f: 0 });
+    return out;
+  }
+
+  // 最佳策略：V(a, b, c, f, g) = 還要幾把五星才能湊齊 A a 把、B b 把的最小期望。
+  // 每把五星的抽數獨立同分布，所以期望五星數最小，期望抽數也最小。
+  const weaponV = new Map();
+  const vKey = (a, b, c, f, g) => a + ',' + b + ',' + c + ',' + f + ',' + g;
+  function weaponQ(a, b, c, f, g, d) {
+    let q = 1;
+    for (const [p, x] of weaponOutcomes(d.c, d.f, g)) {
+      const n = weaponAfter(a, b, d.c, x);
+      q += p * weaponValue(n.a, n.b, n.c, n.f, n.g);
+    }
+    return q;
+  }
+  function solveLayer(a, b) {
+    // 同一層 (a, b 不變) 的狀態互相轉移，用值迭代求解；轉到較低層的值已經算好
+    const states = [];
+    for (const c of ['A', 'B']) for (const f of [0, 1]) for (const g of [0, 1]) states.push([c, f, g]);
+    states.forEach(([c, f, g]) => weaponV.set(vKey(a, b, c, f, g), 0));
+    for (let it = 0; it < 500; it++) {
+      let delta = 0;
+      for (const [c, f, g] of states) {
+        let best = Infinity;
+        for (const d of weaponOptions(c, f)) best = Math.min(best, weaponQ(a, b, c, f, g, d));
+        const k = vKey(a, b, c, f, g);
+        delta = Math.max(delta, Math.abs(best - weaponV.get(k)));
+        weaponV.set(k, best);
+      }
+      if (delta < 1e-13) break;
+    }
+  }
+  function weaponValue(a, b, c, f, g) {
+    if (a <= 0 && b <= 0) return 0;
+    const k = vKey(a, b, c, f, g);
+    if (!weaponV.has(k)) solveLayer(a, b);
+    return weaponV.get(k);
+  }
+
+  // 依策略決定這把五星前要不要換定軌
+  // optimal：最佳策略 (動態規劃)
+  // more：定軌缺得多的那把，沒有命定值時才換，從不重設命定值
+  // separate：分開抽，定軌一把抽滿再換另一把
+  const WEAPON_STRATEGIES = ['optimal', 'more', 'separate'];
+  function weaponDecide(strategy, a, b, c, f, g) {
+    const need = (x) => (x === 'A' ? a : b);
+    const o = c === 'A' ? 'B' : 'A';
+    if (strategy === 'separate' || strategy === 'more') {
+      if (need(c) === 0) return need(o) > 0 ? { c: o, f: 0 } : { c, f };
+      if (strategy === 'more' && !f && need(o) > need(c)) return { c: o, f: 0 };
+      return { c, f };
+    }
+    const opts = weaponOptions(c, f);
+    let best = opts[0], bq = weaponQ(a, b, c, f, g, opts[0]);
+    for (let i = 1; i < opts.length; i++) {
+      const q = weaponQ(a, b, c, f, g, opts[i]);
+      if (q < bq - 1e-9) { best = opts[i]; bq = q; } // 一樣好時維持現狀，少一次操作
+    }
+    return best;
+  }
+
+  // 依策略算某個狀態還要幾把五星的期望 (用來比較抽法)
+  const policyV = { more: new Map(), separate: new Map() };
+  function weaponExpected(strategy, a, b, c, f, g) {
+    if (!policyV[strategy]) return weaponValue(a, b, c, f, g);
+    if (a <= 0 && b <= 0) return 0;
+    const memo = policyV[strategy];
+    const k = vKey(a, b, c, f, g);
+    if (memo.has(k)) return memo.get(k);
+    // 固定策略：同一層的狀態互相轉移，直接迭代；轉到較低層就遞迴
+    const layer = [];
+    for (const cc of ['A', 'B']) for (const ff of [0, 1]) for (const gg of [0, 1]) layer.push([cc, ff, gg]);
+    const val = new Map(layer.map(([cc, ff, gg]) => [vKey(a, b, cc, ff, gg), 0]));
+    for (let it = 0; it < 500; it++) {
+      let delta = 0;
+      for (const [cc, ff, gg] of layer) {
+        const d = weaponDecide(strategy, a, b, cc, ff, gg);
+        let q = 1;
+        for (const [p, x] of weaponOutcomes(d.c, d.f, gg)) {
+          const n = weaponAfter(a, b, d.c, x);
+          q += p * (n.a === a && n.b === b ? val.get(vKey(a, b, n.c, n.f, n.g)) : weaponExpected(strategy, n.a, n.b, n.c, n.f, n.g));
+        }
+        const kk = vKey(a, b, cc, ff, gg);
+        delta = Math.max(delta, Math.abs(q - val.get(kk)));
+        val.set(kk, q);
+      }
+      if (delta < 1e-13) break;
+    }
+    val.forEach((v, kk) => memo.set(kk, v));
+    return memo.get(k);
+  }
+
+  // 目前這一步的最佳做法：維持、取消再重新定軌同一把、或改定軌另一把
+  // targets = [A 要幾把, B 要幾把]，A 是目前定軌的那把。回傳各抽法還要幾把五星的期望
+  function weaponAdvice(targets, fate, guaranteed) {
+    const a = Math.max(0, targets[0] | 0), b = Math.max(0, targets[1] | 0);
+    const f = fate ? 1 : 0, g = guaranteed ? 1 : 0;
+    if (a + b === 0) return null;
+    const keepQ = weaponQ(a, b, 'A', f, g, { c: 'A', f });
+    const d = weaponDecide('optimal', a, b, 'A', f, g);
+    const bestQ = weaponQ(a, b, 'A', f, g, d);
+    const action = d.c === 'B' ? 'switch' : d.f !== f ? 'reset' : 'keep';
+    const expected = {};
+    WEAPON_STRATEGIES.forEach((s) => { expected[s] = weaponExpected(s, a, b, 'A', f, g); });
+    return { action, keep: keepQ, best: bestQ, expected };
+  }
+
+  function weaponTargets(opt) {
+    if (Array.isArray(opt.targets)) return [Math.max(0, opt.targets[0] | 0), Math.max(0, opt.targets[1] | 0)];
+    return [Math.max(0, opt.target | 0), 0];
+  }
+
+  // 武器池里程碑：第 k 把「還需要的」UP 武器 (A 或 B 任一) 到手時的抽數分布
   function weaponMilestonesByMiss(opt, trackMiss) {
-    const init = { got: 0, f: opt.fate ? 1 : 0 };
+    const [a0, b0] = weaponTargets(opt);
+    const strategy = WEAPON_STRATEGIES.includes(opt.strategy) ? opt.strategy : 'optimal';
+    const init = { got: 0, a: a0, b: b0, c: 'A', f: opt.fate ? 1 : 0, g: opt.guaranteed ? 1 : 0 };
     return chain(
-      opt.target | 0,
+      a0 + b0,
       nextFiveStar(weaponHazard, 80, opt.pity | 0),
       nextFiveStar(weaponHazard, 80, 0),
       init,
-      (s) => s.f
-        ? [{ p: 1, hit: true, next: { f: 0 } }]
-        : [
-            { p: 0.375, hit: true, next: { f: 0 } },
-            { p: 0.625, hit: false, next: { f: 1 } },
-          ],
-      (s) => s.got + '|' + s.f,
+      (s) => {
+        const d = weaponDecide(strategy, s.a, s.b, s.c, s.f, s.g);
+        return weaponOutcomes(d.c, d.f, s.g).map(([p, x]) => {
+          const n = weaponAfter(s.a, s.b, d.c, x);
+          return { p, hit: n.hit, next: { a: n.a, b: n.b, c: n.c, f: n.f, g: n.g } };
+        });
+      },
+      (s) => vKey(s.a, s.b, s.c, s.f, s.g),
       trackMiss
     );
   }
@@ -211,28 +358,33 @@
   }
 
   // 依抽的順序回傳各里程碑的累計分布
-  // opt.order = 'c'/'w' 組成的字串或陣列 (例如 'cccwc')，省略時先抽完角色再抽武器
+  // opt.order = 'c' (角色一)、'd' (角色二)、'w' (武器) 組成的字串或陣列 (例如 'ccdwc')，省略時照角色一、角色二、武器
   // 兩個卡池的保底互不影響，所以「拿到 a 隻角色、b 把武器」的總抽數 = 角色 a 隻的抽數 + 武器 b 把的抽數，直接卷積
+  // 武器的里程碑是「第 k 把還需要的 UP 武器」，兩把都要時先到手的是哪一把由運氣決定，所以不分 A、B
   // opt.refund = { c6: 0~1, standard: [命座...] } 時，另外算出扣掉星輝返還後的實付抽數分布 (net)
-  function normalizeOrder(order, A, B) {
+  function normalizeOrder(order, C1, W, C2) {
+    C2 = C2 | 0;
+    const want = { c: C1 | 0, d: C2, w: W | 0 };
+    const have = { c: 0, d: 0, w: 0 };
     const seq = [];
-    let a = 0, b = 0;
-    for (const k of order || []) {
-      if (k === 'c' && a < A) { seq.push('c'); a++; }
-      else if (k === 'w' && b < B) { seq.push('w'); b++; }
-    }
-    while (a < A) { seq.push('c'); a++; }
-    while (b < B) { seq.push('w'); b++; }
+    for (const k of order || []) if (want[k] != null && have[k] < want[k]) { seq.push(k); have[k]++; }
+    for (const k of ['c', 'd', 'w']) while (have[k] < want[k]) { seq.push(k); have[k]++; }
     return seq;
   }
 
   function plan(opt) {
     const rf = opt.refund;
+    const [t1, t2] = characterTargets(opt.character);
     const chM = characterMilestonesByMiss(opt.character, !!rf);
     const wpM = weaponMilestonesByMiss(opt.weapon, !!rf);
     const one = Float64Array.of(1);
     const chRaw = [one].concat(mergeMiss(chM)), wpRaw = [one].concat(mergeMiss(wpM));
-    const order = normalizeOrder(opt.order, chM.length, wpM.length);
+    const order = normalizeOrder(opt.order, t1, wpM.length, t2);
+    // 第 j 隻 UP 角色是誰：照順序裡的 c、d 分配，返還要分開算各自的第幾次獲得
+    const charSeq = order.filter((k) => k !== 'w');
+    const copyNo = [];
+    const seen = { c: 0, d: 0 };
+    charSeq.forEach((k) => { seen[k]++; copyNo.push(seen[k]); });
 
     let chExcl, chFull, wpExcl, wpFull;
     if (rf) {
@@ -242,8 +394,8 @@
       const aW = 1 - fourStarGlitterPerPull('weapon', c6) / 5;
       const lossCum = [0];
       for (let l = 1; l <= 8; l++) lossCum[l] = lossCum[l - 1] + lossGlitter(cons, l);
-      // 拿到第 k 隻 UP 前已入帳的 UP 返還 (UP 角色從未持有開始算)
-      const upBefore = (k) => { let s = 0; for (let q = 1; q < k; q++) s += copyGlitter5(q); return s; };
+      // 拿到第 k 隻 UP 前已入帳的 UP 返還 (兩隻 UP 角色都從未持有開始算，各自計第幾次獲得)
+      const upBefore = (k) => { let s = 0; for (let q = 1; q < k && q <= copyNo.length; q++) s += copyGlitter5(copyNo[q - 1]); return s; };
       // excl：達成當下那顆五星的返還還沒拿到，不能付自己這一抽；full：已入帳，可以拿去抽另一個卡池
       chExcl = [one].concat(chM.map((row, i) => remapRow(row, aC, (m) => (upBefore(i + 1) + lossCum[m]) / 5)));
       chFull = [one].concat(chM.map((row, i) => remapRow(row, aC, (m) => (upBefore(i + 2) + lossCum[m]) / 5)));
@@ -253,11 +405,13 @@
 
     const rows = [];
     let a = 0, b = 0;
+    const per = { c: 0, d: 0 };
     for (const k of order) {
-      if (k === 'c') a++; else b++;
-      const row = { kind: k === 'c' ? 'char' : 'weapon', n: k === 'c' ? a : b, chars: a, weapons: b };
+      const isChar = k !== 'w';
+      if (isChar) { a++; per[k]++; } else b++;
+      const row = { kind: isChar ? 'char' : 'weapon', who: k, n: isChar ? per[k] : b, chars: a, weapons: b };
       row.dist = a && b ? conv(chRaw[a], wpRaw[b]) : a ? chRaw[a] : wpRaw[b];
-      if (rf) row.net = k === 'c' ? conv(chExcl[a], wpFull[b]) : conv(chFull[a], wpExcl[b]);
+      if (rf) row.net = isChar ? conv(chExcl[a], wpFull[b]) : conv(chFull[a], wpExcl[b]);
       rows.push(row);
     }
     const last = rows[rows.length - 1];
@@ -267,8 +421,9 @@
   }
 
   const api = {
-    charHazard, weaponHazard, nextFiveStar, conv, characterMilestones, weaponMilestones, characterMilestonesByMiss, weaponMilestonesByMiss,
+    charHazard, weaponHazard, WEAPON_HARD, nextFiveStar, conv, characterMilestones, weaponMilestones, characterMilestonesByMiss, weaponMilestonesByMiss,
     stats, plan, normalizeOrder, CR_PRESETS, STANDARD_5, FOUR_RATE, fourStarGlitterPerPull, lossGlitter, copyGlitter5,
+    weaponOutcomes, weaponAfter, weaponDecide, weaponValue, weaponExpected, weaponAdvice, WEAPON_STRATEGIES,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.GachaEngine = api;
