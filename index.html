@@ -386,7 +386,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       <fieldset>
         <legend><span class="dot c"></span>角色活動祈願</legend>
         <div class="field">
-          <span class="lab-row"><label for="chT" id="chTLab">想抽到幾隻 UP 角色</label><span class="info-wrap" id="ch2Info" hidden><button type="button" class="info" aria-label="兩隻角色說明" aria-expanded="false">!</button><span class="info-pop" role="tooltip">「角色活動祈願」和「角色活動祈願-2」共享墊抽、大保底和明光計數，每次出五星前都可以自己選在哪個池子抽，所以總抽數只看總共要幾隻 UP。兩隻角色的先後順序可以在右邊的里程碑表拖動調整。</span></span></span>
+          <span class="lab-row"><label for="chT" id="chTLab">想抽到幾隻 UP 角色</label><span class="info-wrap" id="ch2Info" hidden><button type="button" class="info" aria-label="兩隻角色說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">「角色活動祈願」和「角色活動祈願-2」共享墊抽、大保底和明光計數，每次出五星前都可以自己選在哪個池子抽，所以總抽數只看總共要幾隻 UP。兩隻角色的先後順序可以在右邊的里程碑表拖動調整。</span></span></span>
           <div class="pick" id="chPick">
             <div class="pk"><label class="sublab" for="chT" id="chSub1" hidden>角色一</label>
             <select id="chT">
@@ -419,12 +419,12 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
           <div class="field">
             <label for="chPity">已墊抽數</label>
             <div class="inline">
-              <button type="button" class="gbtn small" data-hist="char" aria-label="從祈願紀錄推算角色池墊抽"><span class="ic">≡</span>從紀錄算</button>
+              <button type="button" class="gbtn small" data-hist="char" aria-label="從祈願紀錄推算角色池墊抽"><span class="ic">≡</span>算抽數</button>
               <input type="number" id="chPity" min="0" max="89" value="20" inputmode="numeric">
             </div>
           </div>
           <div class="field">
-            <span class="lab-row"><label for="chC">明光計數</label><span class="info-wrap"><button type="button" class="info" aria-label="明光計數說明" aria-expanded="false">!</button><span class="info-pop" role="tooltip">明光計數是推測模型裡的狀態：小保底歪一次加 1，贏一次減 1，最多 3。官方只確認連續三輪「先歪，再靠大保底拿到 UP」之後，下一顆五星必定觸發捕獲明光。歪了一定是大保底，所以勾「大保底」時會自動調成至少 1。不確定的話，小保底選 0，大保底選 1。</span></span></span>
+            <span class="lab-row"><label for="chC">明光計數</label><span class="info-wrap"><button type="button" class="info" aria-label="明光計數說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">明光計數是推測模型裡的狀態：小保底歪一次加 1，贏一次減 1，最多 3。官方只確認連續三輪「先歪，再靠大保底拿到 UP」之後，下一顆五星必定觸發捕獲明光。歪了一定是大保底，所以勾「大保底」時會自動調成至少 1。不確定的話，小保底選 0，大保底選 1。</span></span></span>
             <div class="seg num-seg" data-for="chC" role="group" aria-label="明光計數"><button type="button" data-v="0">0</button><button type="button" data-v="1">1</button><button type="button" data-v="2">2</button><button type="button" data-v="3">3</button></div>
             <input type="hidden" id="chC" value="1">
           </div>
@@ -464,7 +464,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
         <div class="pool-rest" id="wpRest">
         <div class="second" id="wp2Row" hidden>
           <div class="field">
-            <span class="lab-row"><label for="wpStrat">兩把都要時的定軌方式</label><span class="info-wrap"><button type="button" class="info" aria-label="定軌方式說明" aria-expanded="false">!</button><span class="info-pop" role="tooltip">5.0 起命定值只要 1 點，兩把 UP 都要的時候，歪到常駐武器 (有大保底、命定值 1) 不一定要繼續抽。先取消定軌再重新定軌，命定值歸 0，大保底還在，下一把五星一定是兩把 UP 之一，抽到哪一把都有用。兩把各 1 把時，這樣比繼續抽少 12%；從頭算省約 3%，各 5 把省約 1.4% (跟「定軌缺得多的那把」比)。最佳策略會在每把五星之前自動選最划算的做法，下面也會告訴你現在該怎麼做。<br><a href="https://www.bilibili.com/video/BV1UQzBYFEut" target="_blank" rel="noopener noreferrer">看影片：原神武器池重大概率漏洞，5.0 後最優抽卡策略解析 (一棵平衡樹)</a></span></span></span>
+            <span class="lab-row"><label for="wpStrat">兩把都要時的定軌方式</label><span class="info-wrap"><button type="button" class="info" aria-label="定軌方式說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">5.0 起命定值只要 1 點，兩把 UP 都要的時候，歪到常駐武器 (有大保底、命定值 1) 不一定要繼續抽。先取消定軌再重新定軌，命定值歸 0，大保底還在，下一把五星一定是兩把 UP 之一，抽到哪一把都有用。兩把各 1 把時，這樣比繼續抽少 12%；從頭算省約 3%，各 5 把省約 1.4% (跟「定軌缺得多的那把」比)。最佳策略會在每把五星之前自動選最划算的做法，下面也會告訴你現在該怎麼做。<br><a href="https://www.bilibili.com/video/BV1UQzBYFEut" target="_blank" rel="noopener noreferrer">看影片：原神武器池重大概率漏洞，5.0 後最優抽卡策略解析 (一棵平衡樹)</a></span></span></span>
             <select id="wpStrat">
               <option value="optimal" selected>最佳策略 (會重新定軌)</option>
               <option value="more">定軌缺得多的那把</option>
@@ -477,19 +477,19 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
           <div class="field">
             <label for="wpPity">已墊抽數</label>
             <div class="inline">
-              <button type="button" class="gbtn small" data-hist="weapon" aria-label="從祈願紀錄推算武器池墊抽"><span class="ic">≡</span>從紀錄算</button>
+              <button type="button" class="gbtn small" data-hist="weapon" aria-label="從祈願紀錄推算武器池墊抽"><span class="ic">≡</span>算抽數</button>
               <input type="number" id="wpPity" min="0" max="76" value="0" inputmode="numeric">
             </div>
           </div>
           <div class="field">
-            <span class="lab-row"><label for="wpF">命定值 (本期)</label><span class="info-wrap"><button type="button" class="info" aria-label="命定值說明" aria-expanded="false">!</button><span class="info-pop" role="tooltip">5.0 起命定值上限是 1。抽到的五星不是定軌那把 (另一把 UP 或常駐)，命定值變成 1，下一把五星必定是定軌；抽到定軌就歸 0。這期武器池結束、換定軌或取消定軌都會讓命定值歸 0，所以上一期留下的命定值不算，這裡要選 0。</span></span></span>
+            <span class="lab-row"><label for="wpF">命定值 (本期)</label><span class="info-wrap"><button type="button" class="info" aria-label="命定值說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">5.0 起命定值上限是 1。抽到的五星不是定軌那把 (另一把 UP 或常駐)，命定值變成 1，下一把五星必定是定軌；抽到定軌就歸 0。這期武器池結束、換定軌或取消定軌都會讓命定值歸 0，所以上一期留下的命定值不算，這裡要選 0。</span></span></span>
             <div class="seg num-seg" data-for="wpF" role="group" aria-label="命定值"><button type="button" data-v="0">0</button><button type="button" data-v="1">1</button></div>
             <input type="hidden" id="wpF" value="0">
           </div>
         </div>
         <div class="check-row">
           <label class="check"><input type="checkbox" id="wpG"> 大保底 (上次五星武器是常駐)</label>
-          <span class="info-wrap"><button type="button" class="info" aria-label="武器大保底說明" aria-expanded="false">!</button><span class="info-pop" role="tooltip">武器池每出一把五星，75% 是兩把 UP 之一 (各 37.5%)，25% 是常駐武器。上一把是常駐的話，下一把五星必定是 UP，兩把各 50%。這個大保底會跨期保留，跟命定值不一樣。例如上一期命定值是 1、又是歪常駐留下來的，這一期命定值歸 0，但下一把五星還是 50% 是你要的那把。</span></span>
+          <span class="info-wrap"><button type="button" class="info" aria-label="武器大保底說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">武器池每出一把五星，75% 是兩把 UP 之一 (各 37.5%)，25% 是常駐武器。上一把是常駐的話，下一把五星必定是 UP，兩把各 50%。這個大保底會跨期保留，跟命定值不一樣。例如上一期命定值是 1、又是歪常駐留下來的，這一期命定值歸 0，但下一把五星還是 50% 是你要的那把。</span></span>
         </div>
         <p class="advice" id="wpAdvice" hidden></p>
         </div>
@@ -543,7 +543,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
         <div class="sub" id="rfBox" hidden>
           <div class="check-row">
             <label class="check"><input type="checkbox" id="rfOn"> 計入抽卡過程中返還的星輝</label>
-            <span class="info-wrap"><button type="button" class="info" aria-label="星輝返還說明" aria-expanded="false">!</button><span class="info-pop" role="tooltip">按第幾顆星就是幾命，再按同一顆退回一命。重複的四星角色返還 2 顆星輝，滿命後 5 顆；重複的五星角色 10 顆，滿命後 25 顆；四星武器 2 顆，五星武器 10 顆；第一次抽到的角色不返還。開啟後結果改用「實付抽數」，也就是扣掉抽卡途中返還、再換成抽數的部分。</span></span>
+            <span class="info-wrap"><button type="button" class="info" aria-label="星輝返還說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">按第幾顆星就是幾命，再按同一顆退回一命。重複的四星角色返還 2 顆星輝，滿命後 5 顆；重複的五星角色 10 顆，滿命後 25 顆；四星武器 2 顆，五星武器 10 顆；第一次抽到的角色不返還。開啟後結果改用「實付抽數」，也就是扣掉抽卡途中返還、再換成抽數的部分。</span></span>
           </div>
           <div class="field">
             <span class="lab" id="rfC6Lab">四星角色大約有幾成已經滿命</span>
@@ -723,11 +723,11 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       <h2 id="histTitle"><span>✦</span>祈願歷史紀錄</h2>
       <button type="submit" class="hist-x" value="cancel" aria-label="關閉">✕</button>
     </div>
-    <div class="hist-type"><span>祈願類型</span><b id="histPool">角色活動祈願與角色活動祈願-2</b></div>
-    <p class="note">在遊戲裡打開祈願歷史紀錄，翻到最近一顆五星，拖動或點下面的頁數調成一樣，再點它在第幾列。紀錄由新到舊排列，約延遲 1 小時，剛抽完的幾抽要自己加上。</p>
+    <div class="hist-type"><span>祈願類型</span><b id="histPool">角色活動祈願與角色活動祈願-1</b></div>
+    <p class="note">遊戲內顯示約延遲 1 小時，剛抽完的幾抽要自己加上。</p>
     <div class="tbl-wrap">
       <table class="gtable hist-tbl">
-        <thead><tr><th>類型</th><th>名稱</th><th>之後抽了</th></tr></thead>
+        <thead><tr><th>類型</th><th>名稱</th><th>已經墊了</th></tr></thead>
         <tbody id="histRows"></tbody>
       </table>
     </div>
@@ -1583,7 +1583,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   // ---- 從祈願歷史紀錄推算墊抽 ----
   const HIST = {
     char: {
-      pool: '角色活動祈願與角色活動祈願-2', type: '角色', max: 89, startPage: 16,
+      pool: '角色活動祈願與角色活動祈願-1', type: '角色', max: 89, startPage: 16,
       what: [['up', '當期 UP 角色'], ['std', '常駐角色 (歪了)']],
       note: (w) => (w === 'std' ? '上次歪了，下一顆五星是大保底' : '下一顆五星是小保底'),
     },
@@ -1637,7 +1637,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     $('histWhat').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === hs.what ? 'true' : 'false'));
     $('histWhenBox').hidden = hs.pool !== 'weapon';
     $('histWhen').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === hs.when ? 'true' : 'false'));
-    $('histResult').innerHTML = `第 ${hs.selPage} 頁第 ${hs.selRow} 列，已墊 <b>${selPity()}</b> 抽 · ${cfg.note(hs.what, hs.when)}`;
+    $('histResult').innerHTML = `第 ${hs.selPage} 頁第 ${hs.selRow} 列，已墊 <b>${selPity()}</b> 抽`;
   }
 
   function openHist(pool) {
