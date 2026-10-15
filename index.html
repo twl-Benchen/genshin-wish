@@ -310,14 +310,14 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 
 /* 分頁 */
 .tabbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-.share-btn { font-size: .92rem; padding: 7px 18px 7px 7px; box-shadow: 0 2px 10px rgba(30, 40, 70, .18); }
-.share-btn:disabled { opacity: .5; cursor: not-allowed; }
+.result-img-btn { font-size: .92rem; padding: 7px 18px 7px 7px; box-shadow: 0 2px 10px rgba(30, 40, 70, .18); }
+.result-img-btn:disabled { opacity: .5; cursor: not-allowed; }
 .gbtn:disabled { opacity: .5; cursor: not-allowed; filter: none; }
-dialog#shareDlg { width: min(980px, calc(100vw - 24px)); }
-.share-mode { display: flex; justify-content: center; }
-.share-prev { display: grid; place-items: center; min-height: 160px; background: var(--sunken); border-radius: 6px; padding: 10px; }
-.share-prev img { display: block; max-width: 100%; max-height: 58vh; width: auto; height: auto; border-radius: 4px; box-shadow: 0 4px 16px rgba(30, 40, 70, .2); }
-.site-share { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; }
+dialog#resultImgDlg { width: min(980px, calc(100vw - 24px)); }
+.result-img-orient { display: flex; justify-content: center; }
+.result-img-prev { display: grid; place-items: center; min-height: 160px; background: var(--sunken); border-radius: 6px; padding: 10px; }
+.result-img-prev img { display: block; max-width: 100%; max-height: 58vh; width: auto; height: auto; border-radius: 4px; box-shadow: 0 4px 16px rgba(30, 40, 70, .2); }
+.site-link-box { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; }
 #qrSmall { width: 123px; height: 123px; border-radius: 6px; border: 1px solid var(--frame); background: #fffaf0; }
 .site-text { display: grid; gap: 6px; min-width: 0; }
 .site-text b { font-family: var(--f-display); font-size: 1.05rem; }
@@ -351,7 +351,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       <button type="button" role="tab" id="tabBtnCalc" aria-controls="tabCalc" aria-selected="true">計算</button>
       <button type="button" role="tab" id="tabBtnRules" aria-controls="tabRules" aria-selected="false">抽卡規則</button>
     </nav>
-    <button type="button" class="gbtn share-btn" id="shareBtn"><span class="ic"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><circle cx="12" cy="3.5" r="2" fill="currentColor"/><circle cx="4" cy="8" r="2" fill="currentColor"/><circle cx="12" cy="12.5" r="2" fill="currentColor"/><path d="M10.3 4.5 5.7 7M5.7 9l4.6 2.5" stroke="currentColor" stroke-width="1.4" fill="none"/></svg></span>分享結果</button>
+    <button type="button" class="gbtn result-img-btn" id="resultImgBtn"><span class="ic"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><circle cx="12" cy="3.5" r="2" fill="currentColor"/><circle cx="4" cy="8" r="2" fill="currentColor"/><circle cx="12" cy="12.5" r="2" fill="currentColor"/><path d="M10.3 4.5 5.7 7M5.7 9l4.6 2.5" stroke="currentColor" stroke-width="1.4" fill="none"/></svg></span>分享結果</button>
   </div>
 
   <div class="layout" id="tabCalc" role="tabpanel" aria-labelledby="tabBtnCalc">
@@ -724,29 +724,29 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   </form>
 </dialog>
 
-<dialog class="hist" id="shareDlg" aria-labelledby="shareTitle">
+<dialog class="hist" id="resultImgDlg" aria-labelledby="resultImgTitle">
   <div class="hist-in frame">
     <div class="hist-head">
-      <h2 id="shareTitle"><span>✦</span>分享結果</h2>
-      <button type="button" class="hist-x" id="shareX" aria-label="關閉">✕</button>
+      <h2 id="resultImgTitle"><span>✦</span>分享結果</h2>
+      <button type="button" class="hist-x" id="resultImgClose" aria-label="關閉">✕</button>
     </div>
-    <div class="share-mode">
-      <div class="seg" id="shareMode" role="group" aria-label="圖片方向">
+    <div class="result-img-orient">
+      <div class="seg" id="resultImgOrient" role="group" aria-label="圖片方向">
         <button type="button" data-v="landscape">橫式</button>
         <button type="button" data-v="portrait">直式</button>
       </div>
     </div>
-    <div class="share-prev">
-      <p class="note" id="shareWait">圖片產生中…</p>
-      <img id="shareImg" alt="這次計算結果的分享圖" hidden>
+    <div class="result-img-prev">
+      <p class="note" id="resultImgWait">圖片產生中…</p>
+      <img id="resultImgPic" alt="這次計算結果的分享圖" hidden>
     </div>
     <div class="hist-actions">
-      <button type="button" class="gbtn" id="shareDl" disabled><span class="ic">↓</span>下載圖片</button>
-      <button type="button" class="gbtn light" id="shareSys" hidden><span class="ic">↗</span>分享圖片</button>
+      <button type="button" class="gbtn" id="resultImgSave" disabled><span class="ic">↓</span>下載圖片</button>
+      <button type="button" class="gbtn light" id="resultImgSend" hidden><span class="ic">↗</span>分享圖片</button>
     </div>
     <p class="note" style="text-align: center">手機也可以長按上面的圖片儲存。</p>
     <hr>
-    <div class="site-share">
+    <div class="site-link-box">
       <canvas id="qrSmall" role="img" aria-label="網站的 QR code"></canvas>
       <div class="site-text">
         <b>把這個網站分享給朋友</b>
@@ -1757,8 +1757,8 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
 
     current = { st, budget: opt.budget, has };
     shareData = { opt, st, raw, useNet, off, has, rows: shareRows, items: manualItems(opt) };
-    $('shareBtn').disabled = !has;
-    $('shareBtn').title = has ? '' : '先在左側設定想抽的角色或武器';
+    $('resultImgBtn').disabled = !has;
+    $('resultImgBtn').title = has ? '' : '先在左側設定想抽的角色或武器';
     drawChart();
   }
 
@@ -2396,14 +2396,14 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   // 分享圖方向，預設橫式，記在 ui 設定裡
   const shareMode = () => (ui.shareMode === 'portrait' ? 'portrait' : 'landscape');
   function paintShareMode() {
-    $('shareMode').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === shareMode() ? 'true' : 'false'));
+    $('resultImgOrient').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === shareMode() ? 'true' : 'false'));
   }
   const shareName = () => { const n = new Date(); return '原神期望抽數-' + n.getFullYear() + String(n.getMonth() + 1).padStart(2, '0') + String(n.getDate()).padStart(2, '0') + '.png'; };
   async function openShare() {
     if (!shareData || !shareData.has) return;
-    const dlg = $('shareDlg');
-    $('shareImg').hidden = true; $('shareWait').hidden = false; $('shareWait').textContent = '圖片產生中…';
-    $('shareDl').disabled = true; $('shareSys').hidden = true; $('copyMsg').textContent = '';
+    const dlg = $('resultImgDlg');
+    $('resultImgPic').hidden = true; $('resultImgWait').hidden = false; $('resultImgWait').textContent = '圖片產生中…';
+    $('resultImgSave').disabled = true; $('resultImgSend').hidden = true; $('copyMsg').textContent = '';
     paintQrSmall();
     paintShareMode();
     if (!dlg.open) { if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', ''); }
@@ -2411,37 +2411,37 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     try {
       const cv = await renderShare(shareMode());
       if (ticket !== openShare.ticket) return; // 等圖的時候又切換了方向，交給後來那次
-      $('shareImg').alt = '這次計算結果的分享圖 (' + (shareMode() === 'portrait' ? '直式' : '橫式') + ')';
+      $('resultImgPic').alt = '這次計算結果的分享圖 (' + (shareMode() === 'portrait' ? '直式' : '橫式') + ')';
       shareBlob = await new Promise((r) => cv.toBlob(r, 'image/png'));
       if (shareUrl) URL.revokeObjectURL(shareUrl);
       shareUrl = URL.createObjectURL(shareBlob);
-      $('shareImg').src = shareUrl;
-      $('shareImg').hidden = false; $('shareWait').hidden = true;
-      $('shareDl').disabled = false;
+      $('resultImgPic').src = shareUrl;
+      $('resultImgPic').hidden = false; $('resultImgWait').hidden = true;
+      $('resultImgSave').disabled = false;
       try {
         const file = new File([shareBlob], shareName(), { type: 'image/png' });
-        $('shareSys').hidden = !(navigator.canShare && navigator.canShare({ files: [file] }));
+        $('resultImgSend').hidden = !(navigator.canShare && navigator.canShare({ files: [file] }));
       } catch (e) {}
     } catch (e) {
-      $('shareWait').textContent = '圖片產生失敗，請重新整理後再試一次。';
+      $('resultImgWait').textContent = '圖片產生失敗，請重新整理後再試一次。';
     }
   }
-  $('shareBtn').addEventListener('click', openShare);
-  $('shareMode').addEventListener('click', (e) => {
+  $('resultImgBtn').addEventListener('click', openShare);
+  $('resultImgOrient').addEventListener('click', (e) => {
     const b = e.target.closest('button');
     if (!b || b.dataset.v === shareMode()) return;
     ui.shareMode = b.dataset.v; saveUi();
     openShare();
   });
-  $('shareX').addEventListener('click', () => $('shareDlg').close());
-  $('shareDlg').addEventListener('click', (e) => { if (e.target === $('shareDlg')) $('shareDlg').close(); });
-  $('shareDl').addEventListener('click', () => {
+  $('resultImgClose').addEventListener('click', () => $('resultImgDlg').close());
+  $('resultImgDlg').addEventListener('click', (e) => { if (e.target === $('resultImgDlg')) $('resultImgDlg').close(); });
+  $('resultImgSave').addEventListener('click', () => {
     if (!shareUrl) return;
     const a = document.createElement('a');
     a.href = shareUrl; a.download = shareName();
     document.body.appendChild(a); a.click(); a.remove();
   });
-  $('shareSys').addEventListener('click', async () => {
+  $('resultImgSend').addEventListener('click', async () => {
     try {
       const file = new File([shareBlob], shareName(), { type: 'image/png' });
       await navigator.share({ files: [file], title: '原神期望抽數計算', text: SITE });
