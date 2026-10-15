@@ -1881,7 +1881,13 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     const G = SH.gap;
     const headH = 64 + 56 + 20 + chips.rows * 46 + G;
     let gh = 330, bodyH;
-    if (land) {
+    // 橫式里程碑只有 4 列以內時表格很短，改成表格在左欄、曲線在右欄，曲線才有空間
+    const fewRows = d.rows.length <= 4;
+    if (land && fewRows) {
+      const leftH = SH.res + G + SH.stats + G + tableH(d, false);
+      gh = Math.max(300, leftH - SH.chartHead - G - SH.foot); // 曲線拉高到跟左欄一樣高，兩欄底部對齊
+      bodyH = Math.max(leftH, SH.chartHead + gh + G + SH.foot);
+    } else if (land) {
       const leftFixed = SH.res + G + SH.stats + G + SH.chartHead;
       const rightH = tableH(d, true) + G + SH.foot;
       gh = Math.max(300, rightH - leftFixed); // 曲線拉高到跟右欄一樣高，兩欄底部對齊
@@ -1941,7 +1947,15 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     });
     const y0 = wy + headH;
 
-    if (land) {
+    if (land && fewRows) {
+      setCol(left[0], left[1]);
+      y = shareResources(ctx, d, y0) + G;
+      y = shareStats(ctx, d, y) + G;
+      shareTable(ctx, d, y, false);
+      setCol(right[0], right[1]);
+      y = shareChart(ctx, d, y0, gh) + G;
+      shareFooter(ctx, Math.max(y, y0 + bodyH - SH.foot)); // QR code 貼齊右欄底部
+    } else if (land) {
       setCol(left[0], left[1]);
       y = shareResources(ctx, d, y0) + G;
       y = shareStats(ctx, d, y) + G;
