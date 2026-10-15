@@ -1789,7 +1789,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     const W = Math.max(320, Math.round($('chartBox').clientWidth || 800));
     const H = W < 520 ? 240 : 300;
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-    const m = { l: 46, r: 16, t: 14, b: 32 };
+    const m = { l: 46, r: 40, t: 14, b: 32 }; // 右邊留空間放 x 軸單位
     const cdf = st.cdf;
     let xMax = st.max;
     for (let i = 0; i < cdf.length; i++) if (cdf[i] >= 0.9995) { xMax = i; break; }
@@ -1810,6 +1810,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     for (let x = 0; x <= xMax + 1e-9; x += step) {
       const t = el('text', { x: X(x), y: H - m.b + 18, 'text-anchor': 'middle' }); t.textContent = x;
     }
+    const unit = el('text', { x: W - 2, y: H - m.b + 18, 'text-anchor': 'end' }); unit.textContent = '抽數';
 
     // 曲線與預算內面積
     let d = `M ${X(0)} ${Y(0)}`;
@@ -1828,7 +1829,10 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       if (n > xMax) return;
       el('line', { x1: X(n), x2: X(n), y1: Y(0), y2: Y(st.within(n)), stroke: c('--muted'), 'stroke-dasharray': '3 4', 'stroke-width': 1 });
       el('circle', { cx: X(n), cy: Y(st.within(n)), r: 3.5, fill: c('--surface'), stroke: c('--gold'), 'stroke-width': 2 });
-      const t = el('text', { x: X(n) + 6, y: Y(st.within(n)) + 14 }); t.textContent = lab + ' · ' + n;
+      // 機率一行、抽數一行，都用粗體
+      const t = el('text', { x: X(n) + 6, y: Y(st.within(n)) + 14, 'font-weight': 700, style: 'fill:' + c('--ink') });
+      const a = el('tspan', { x: X(n) + 6 }, t); a.textContent = lab;
+      const b = el('tspan', { x: X(n) + 6, dy: 14 }, t); b.textContent = n + ' 抽';
     });
 
     // 預算線
@@ -2092,13 +2096,13 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     const cons = (n) => (n >= 7 ? '滿命' : (n - 1) + ' 命');
     const goals = [], status = [];
     if (C1 + C2 > 0) {
-      if (C1 > 0) goals.push(['c', (C2 > 0 ? '角色一 ' : 'UP 角色 ') + C1 + ' 隻 (' + cons(C1) + ')']);
-      if (C2 > 0) goals.push(['c', '角色二 ' + C2 + ' 隻 (' + cons(C2) + ')']);
+      if (C1 > 0) goals.push(['c', (C2 > 0 ? '角色一要抽 ' : '角色要抽 ') + C1 + ' 隻 (' + cons(C1) + ')']);
+      if (C2 > 0) goals.push(['c', '角色二要抽 ' + C2 + ' 隻 (' + cons(C2) + ')']);
       status.push(['s', '角色池已墊 ' + o.character.pity + ' 抽'], ['s', o.character.guaranteed ? '大保底' : '小保底'], ['s', '明光計數 ' + o.character.radiance]);
     }
     if (W1 + W2 > 0) {
-      if (W1 > 0) goals.push(['w', '定軌武器 精 ' + W1]);
-      if (W2 > 0) goals.push(['w', '另一把 UP 精 ' + W2]);
+      if (W1 > 0) goals.push(['w', '定軌武器要抽 精 ' + W1]);
+      if (W2 > 0) goals.push(['w', '另一把 UP 要抽 精 ' + W2]);
       if (W1 > 0 && W2 > 0) goals.push(['w', STRAT_NAME[o.weapon.strategy] || '最佳策略']);
       status.push(['s', '武器池已墊 ' + o.weapon.pity + ' 抽'], ['s', '命定值 ' + o.weapon.fate]);
       if (o.weapon.guaranteed) status.push(['s', '武器大保底']);
@@ -2123,7 +2127,9 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
 
   // 各區塊的高度 (不含區塊之間的間距)
   const SH = { res: 44 + 112, stats: 2 * 136 + 16, chartHead: 48, foot: 30 + 214, gap: 34 };
-  const tableH = (d) => 48 + 48 + d.rows.length * 50;
+  // big：橫式時表格放大 (列高、字級加大)
+  const TB = (big) => (big ? { row: 64, head: 56, fs: 24, num: 23, tag: 18, meter: 130 } : { row: 50, head: 48, fs: 20, num: 19, tag: 16, meter: 100 });
+  const tableH = (d, big) => 48 + TB(big).head + d.rows.length * TB(big).row;
   const meterColor = (p) => (p >= 0.9 ? K.good : p >= 0.5 ? K.warn : K.bad);
 
   // 手上的資源，回傳畫完後的 y
@@ -2192,7 +2198,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     lx -= w1 + 52;
     text(ctx, lg1, lx, y + 24, `400 18px ${FB}`, K.muted); ctx.fillStyle = K.gold; ctx.fillRect(lx - 30, y + 16, 22, 3);
     y += SH.chartHead;
-    const m = { l: 62, r: 14, t: 14, b: 40 };
+    const m = { l: 62, r: 72, t: 14, b: 40 }; // 右邊留空間放 x 軸單位
     const cdf = st.cdf, budget = d.opt.budget;
     let xMax = st.max;
     for (let i = 0; i < cdf.length; i++) if (cdf[i] >= 0.9995) { xMax = i; break; }
@@ -2207,6 +2213,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       text(ctx, Math.round(p * 100) + '%', CX + m.l - 10, Y(p) + 6, `400 16px ${FN}`, K.muted, 'right');
     });
     for (let x = 0; x <= xMax + 1e-9; x += step) text(ctx, String(x), X(x), Y(0) + 28, `400 16px ${FN}`, K.muted, 'center');
+    text(ctx, '抽數', CX + CW, Y(0) + 28, `400 16px ${FB}`, K.muted, 'right');
     const lim = Math.min(xMax, cdf.length - 1), bx = Math.min(budget, lim);
     ctx.beginPath(); ctx.moveTo(X(0), Y(0));
     for (let i = 0; i <= bx; i++) ctx.lineTo(X(i), Y(cdf[i]));
@@ -2223,7 +2230,8 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       ctx.beginPath(); ctx.moveTo(X(n), Y(0)); ctx.lineTo(X(n), py); ctx.stroke(); ctx.setLineDash([]);
       ctx.beginPath(); ctx.arc(X(n), py, 6, 0, Math.PI * 2); ctx.fillStyle = K.surface; ctx.fill();
       ctx.strokeStyle = K.gold; ctx.lineWidth = 3; ctx.stroke();
-      text(ctx, lab + ' · ' + n, X(n) + 10, py + 24, `600 17px ${FN}`, K.ink);
+      text(ctx, lab, X(n) + 10, py + 24, `700 18px ${FN}`, K.ink);
+      text(ctx, n + ' 抽', X(n) + 10, py + 46, `700 18px ${FB}`, K.ink);
     });
     if (budget <= xMax) {
       ctx.strokeStyle = K.ink; ctx.lineWidth = 2;
@@ -2235,33 +2243,35 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   }
 
   // 里程碑表：右邊幾欄靠右對齊，欄寬變寬時多出來的空間給「目標」
-  function shareTable(ctx, d, y) {
+  function shareTable(ctx, d, y, big) {
+    const T = TB(big);
     sectionTitle(ctx, '每個里程碑', y + 26, '抽數為累計，照排好的順序');
     y += 48;
-    const xMean = CW - 458, xP50 = CW - 348, xP90 = CW - 238, xMeter = CW - 204;
+    const xMeter = CW - 104 - T.meter, xP90 = xMeter - 34, xP50 = xP90 - (big ? 130 : 110), xMean = xP50 - (big ? 130 : 110);
     const cols = [
       { t: '目標', x: 16, a: 'left' }, { t: d.useNet ? '期望實付' : '期望抽數', x: xMean, a: 'right' },
       { t: '一半機率', x: xP50, a: 'right' }, { t: '九成機率', x: xP90, a: 'right' }, { t: '預算內達成', x: CW - 16, a: 'right' },
     ];
-    const rowH = 50, th = 48, tw = CW, th0 = y;
+    const rowH = T.row, th = T.head, tw = CW, th0 = y, mid = rowH / 2; // mid：列的垂直中線
     ctx.fillStyle = K.head; ctx.fillRect(CX, y, tw, th);
-    cols.forEach((c) => text(ctx, c.t, CX + c.x, y + 31, `700 18px ${FB}`, K.ink, c.a));
+    cols.forEach((c) => text(ctx, c.t, CX + c.x, y + th / 2 + 7, `700 ${big ? 21 : 18}px ${FB}`, K.ink, c.a));
     y += th;
     d.rows.forEach((r, i) => {
       if (i % 2) { ctx.fillStyle = 'rgba(235,227,212,.5)'; ctx.fillRect(CX, y, tw, rowH); }
-      ctx.font = `600 16px ${FN}`;
-      const tgw = ctx.measureText(r.tag).width + 18;
-      roundRect(ctx, CX + 16, y + 12, tgw, 27, 5); ctx.fillStyle = r.kind === 'c' ? K.goldSoft : K.violetSoft; ctx.fill();
-      text(ctx, r.tag, CX + 25, y + 31, `600 16px ${FN}`, r.kind === 'c' ? K.gold : K.violet);
-      ctx.font = fitFont(ctx, r.text, 500, 20, FB, xMean - 120 - (16 + tgw + 12));
-      ctx.fillStyle = K.ink; ctx.textAlign = 'left'; ctx.fillText(r.text, CX + 16 + tgw + 12, y + 32);
-      text(ctx, r.mean.toFixed(1), CX + xMean, y + 32, `400 19px ${FN}`, K.ink, 'right');
-      text(ctx, fmt(r.p50), CX + xP50, y + 32, `400 19px ${FN}`, K.ink, 'right');
-      text(ctx, fmt(r.p90), CX + xP90, y + 32, `400 19px ${FN}`, K.ink, 'right');
-      const mx = CX + xMeter, mw = 100;
-      roundRect(ctx, mx, y + 21, mw, 9, 4.5); ctx.fillStyle = K.sunken; ctx.fill(); ctx.strokeStyle = K.line; ctx.lineWidth = 1; ctx.stroke();
-      if (r.p > 0) { roundRect(ctx, mx, y + 21, Math.max(9, mw * r.p), 9, 4.5); ctx.fillStyle = meterColor(r.p); ctx.fill(); }
-      text(ctx, pctTxt(r.p), CX + CW - 16, y + 32, `600 19px ${FN}`, meterColor(r.p), 'right');
+      ctx.font = `600 ${T.tag}px ${FN}`;
+      const tgw = ctx.measureText(r.tag).width + 18, tgh = T.tag + 11;
+      roundRect(ctx, CX + 16, y + mid - tgh / 2, tgw, tgh, 5); ctx.fillStyle = r.kind === 'c' ? K.goldSoft : K.violetSoft; ctx.fill();
+      text(ctx, r.tag, CX + 25, y + mid + T.tag * 0.36, `600 ${T.tag}px ${FN}`, r.kind === 'c' ? K.gold : K.violet);
+      const base = y + mid + T.num * 0.36;
+      ctx.font = fitFont(ctx, r.text, 500, T.fs, FB, xMean - 120 - (16 + tgw + 12));
+      ctx.fillStyle = K.ink; ctx.textAlign = 'left'; ctx.fillText(r.text, CX + 16 + tgw + 12, base);
+      text(ctx, r.mean.toFixed(1), CX + xMean, base, `400 ${T.num}px ${FN}`, K.ink, 'right');
+      text(ctx, fmt(r.p50), CX + xP50, base, `400 ${T.num}px ${FN}`, K.ink, 'right');
+      text(ctx, fmt(r.p90), CX + xP90, base, `400 ${T.num}px ${FN}`, K.ink, 'right');
+      const mx = CX + xMeter, mw = T.meter;
+      roundRect(ctx, mx, y + mid - 4.5, mw, 9, 4.5); ctx.fillStyle = K.sunken; ctx.fill(); ctx.strokeStyle = K.line; ctx.lineWidth = 1; ctx.stroke();
+      if (r.p > 0) { roundRect(ctx, mx, y + mid - 4.5, Math.max(9, mw * r.p), 9, 4.5); ctx.fillStyle = meterColor(r.p); ctx.fill(); }
+      text(ctx, pctTxt(r.p), CX + CW - 16, base, `600 ${T.num}px ${FN}`, meterColor(r.p), 'right');
       y += rowH;
     });
     ctx.strokeStyle = K.line; ctx.lineWidth = 1;
@@ -2314,12 +2324,12 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     const headH = 64 + 56 + 20 + chips.rows * 46 + G;
     let gh = 330, bodyH;
     if (land) {
-      const leftH = SH.res + G + SH.stats + G + SH.foot;
-      const rightH = SH.chartHead + gh + G + tableH(d);
-      if (leftH > rightH) gh = Math.min(560, gh + leftH - rightH); // 右欄比較矮時把曲線拉高，兩欄底部對齊
-      bodyH = Math.max(leftH, SH.chartHead + gh + G + tableH(d));
+      const leftFixed = SH.res + G + SH.stats + G + SH.chartHead;
+      const rightH = tableH(d, true) + G + SH.foot;
+      gh = Math.max(300, rightH - leftFixed); // 曲線拉高到跟右欄一樣高，兩欄底部對齊
+      bodyH = Math.max(leftFixed + gh, rightH);
     } else {
-      bodyH = SH.res + G + SH.stats + G + SH.chartHead + gh + G + tableH(d) + G + SH.foot;
+      bodyH = SH.res + G + SH.stats + G + SH.chartHead + gh + G + tableH(d, false) + G + SH.foot;
     }
     const winH = headH + bodyH + 52;
     const H = winH + 2 * SM;
@@ -2377,15 +2387,15 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       setCol(left[0], left[1]);
       y = shareResources(ctx, d, y0) + G;
       y = shareStats(ctx, d, y) + G;
-      shareFooter(ctx, Math.max(y, y0 + bodyH - SH.foot)); // QR code 貼齊左欄底部
+      shareChart(ctx, d, y, gh);
       setCol(right[0], right[1]);
-      y = shareChart(ctx, d, y0, gh) + G;
-      shareTable(ctx, d, y);
+      y = shareTable(ctx, d, y0, true) + G;
+      shareFooter(ctx, Math.max(y, y0 + bodyH - SH.foot)); // QR code 貼齊右欄底部
     } else {
       y = shareResources(ctx, d, y0) + G;
       y = shareStats(ctx, d, y) + G;
       y = shareChart(ctx, d, y, gh) + G;
-      y = shareTable(ctx, d, y) + G;
+      y = shareTable(ctx, d, y, false) + G;
       shareFooter(ctx, y);
     }
     setCol(FX, FW);
