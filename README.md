@@ -1,7 +1,6 @@
 # 原神期望抽數計算
 <img width="1293" height="1665" alt="twl-benchen github io_genshin-wish_" src="https://github.com/user-attachments/assets/32f8c17f-9a7e-4125-a551-444c4b5329bf" />
 
-
 **連結：https://twl-benchen.github.io/genshin-wish/**
 
 輸入想抽的角色命座、武器精煉、目前墊了幾抽和手上的資源，算出完整的抽數機率分布：期望抽數、一半機率和九成機率要幾抽、最壞情況，以及手上的原石夠不夠。
@@ -102,36 +101,13 @@
 
 預算不影響機率分布，只影響達成率和圖上的預算線。調整課金時直接沿用算好的分布，連按 + 也不會卡。
 
-### 仿遊戲介面
-
-羊皮紙視窗配金色雙線框和四角括號、棕褐色表頭的格線表、深石板色膠囊按鈕，期望抽數用五星物品卡的橙金底。祈願歷史紀錄視窗也照遊戲的樣子做，對照起來比較直覺。
-
 ### 分享功能的小細節
 
 - 網站 QR code 直接寫在程式裡，不載入外部函式庫。
 - 分享按鈕的程式名稱刻意避開 `share` 這類字，因為廣告攔截套件會把它當成社群分享按鈕藏起來。
 - 產生圖片前會先等中文字型載完，最多等 3 秒，載不到就用備用字型。
 
-### 純前端單檔
-
-整個網頁是一個 HTML 檔，沒有後端，外部資源只用 Google Fonts，放在 GitHub Pages 就能用。
-
 ## 參考來源
 
 - [一棵平衡樹：原神武器池重大概率漏洞，5.0 後最優抽卡策略解析](https://www.bilibili.com/video/BV1UQzBYFEut)：武器 77 抽保底和兩把 UP 的最佳定軌策略
-
-## 開發
-
-```
-python3 build.py   # 由 engine.js + page.html 產生 index.html
-node test.js       # 精確計算與隨機模擬比對
-```
-
-| 檔案 | 用途 |
-|---|---|
-| `engine.js` | 計算核心，瀏覽器和 Node 都能用 |
-| `page.html` | 網頁原始檔 |
-| `index.html` | 建置產物，GitHub Pages 直接用，不要手改 |
-| `test.js` | 精確計算與隨機模擬的比對測試 |
-
 規則、計算方法與待辦見 [HANDOFF.md](HANDOFF.md)。
