@@ -302,6 +302,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .share-btn { font-size: .92rem; padding: 7px 18px 7px 7px; box-shadow: 0 2px 10px rgba(30, 40, 70, .18); }
 .share-btn:disabled { opacity: .5; cursor: not-allowed; }
 .gbtn:disabled { opacity: .5; cursor: not-allowed; filter: none; }
+dialog#shareDlg { width: min(980px, calc(100vw - 24px)); }
+.share-mode { display: flex; justify-content: center; }
 .share-prev { display: grid; place-items: center; min-height: 160px; background: var(--sunken); border-radius: 6px; padding: 10px; }
 .share-prev img { display: block; max-width: 100%; max-height: 58vh; width: auto; height: auto; border-radius: 4px; box-shadow: 0 4px 16px rgba(30, 40, 70, .2); }
 .site-share { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; }
@@ -715,6 +717,12 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     <div class="hist-head">
       <h2 id="shareTitle"><span>✦</span>分享結果</h2>
       <button type="button" class="hist-x" id="shareX" aria-label="關閉">✕</button>
+    </div>
+    <div class="share-mode">
+      <div class="seg" id="shareMode" role="group" aria-label="圖片方向">
+        <button type="button" data-v="landscape">橫式</button>
+        <button type="button" data-v="portrait">直式</button>
+      </div>
     </div>
     <div class="share-prev">
       <p class="note" id="shareWait">圖片產生中…</p>
@@ -1609,8 +1617,10 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   const FD = '"Noto Serif TC", "Songti TC", "PMingLiU", serif';
   const FB = '"Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif';
   const FN = '"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace';
-  const SW = 1080, SM = 36, SP = 52; // 圖寬、外距、視窗內距
-  const CX = SM + SP, CW = SW - 2 * (SM + SP); // 內容區
+  const SM = 36, SP = 52; // 外距、視窗內距
+  // 圖寬與目前畫的那一欄 (橫式分左右兩欄，畫哪一欄就把 CX/CW 設成那一欄)
+  let SW = 1080, CX = SM + SP, CW = SW - 2 * (SM + SP);
+  const setCol = (x, w) => { CX = x; CW = w; };
 
   function roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath();
@@ -1669,77 +1679,13 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     };
   }
 
-  async function renderShare() {
-    const d = shareData;
-    if (!d || !d.has) return null;
-    const cv = document.createElement('canvas');
-    let ctx = cv.getContext('2d');
-    // 先載入畫圖要用的字型 (Google Fonts 的中文字是分段載入的，要指定實際會用到的字)
-    const sample = '原神期望抽數計算手上的資源原石糾纏之緣無主星輝可抽約一半機率在內運氣好九成最壞情況預算達成率已超過距離還差幾能目標每個里程碑累積你的隻角色二把武器全部到齊需要定軌另一命滿精墊小大保底明光計值星輝返還計入共折抵實付掃描或前往網址起來算看逐次採用社群擬合模型結果僅供參考與米哈遊官方無關順序排拖動策略缺得多分開最佳 0123456789,.%()/★✦';
-    try {
-      await Promise.race([
-        Promise.all([`800 52px ${FD}`, `600 28px ${FD}`, `400 20px ${FB}`, `500 20px ${FB}`, `700 20px ${FB}`, `600 40px ${FN}`, `400 20px ${FN}`].map((f) => document.fonts.load(f, sample))),
-        new Promise((r) => setTimeout(r, 3000)),
-      ]);
-    } catch (e) {}
+  // 各區塊的高度 (不含區塊之間的間距)
+  const SH = { res: 44 + 112, stats: 2 * 136 + 16, chartHead: 48, foot: 30 + 214, gap: 34 };
+  const tableH = (d) => 48 + 48 + d.rows.length * 50;
+  const meterColor = (p) => (p >= 0.9 ? K.good : p >= 0.5 ? K.warn : K.bad);
 
-    const chips = layoutChips(ctx, shareChips(d));
-    const L = {
-      top: 64, title: 56, chips: chips.rows * 46, gap: 34,
-      res: 44 + 112, stats: 2 * 136 + 16, chart: 48 + 330, table: 48 + 48 + d.rows.length * 50, foot: 30 + 214, bottom: 52,
-    };
-    const winH = L.top + L.title + 20 + L.chips + L.gap + L.res + L.gap + L.stats + L.gap + L.chart + L.gap + L.table + L.gap + L.foot + L.bottom;
-    const H = winH + 2 * SM;
-    const scale = 2;
-    cv.width = SW * scale; cv.height = H * scale;
-    ctx = cv.getContext('2d');
-    ctx.scale(scale, scale);
-
-    // 天空背景與雲
-    const sky = ctx.createLinearGradient(0, 0, 0, H);
-    sky.addColorStop(0, K.sky1); sky.addColorStop(Math.min(0.6, 700 / H), K.sky2); sky.addColorStop(1, '#e4ecf4');
-    ctx.fillStyle = sky; ctx.fillRect(0, 0, SW, H);
-    [[160, 90, 260], [900, 60, 220], [620, 140, 180]].forEach(([x, y, r]) => {
-      const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-      g.addColorStop(0, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = g; ctx.fillRect(x - r, y - r, 2 * r, 2 * r);
-    });
-
-    // 羊皮紙視窗：金色外框、內側細線、四角括號
-    const wx = SM, wy = SM, ww = SW - 2 * SM, wh = winH;
-    ctx.save();
-    ctx.shadowColor = 'rgba(30,40,70,.22)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 8;
-    roundRect(ctx, wx, wy, ww, wh, 6); ctx.fillStyle = K.surface; ctx.fill();
-    ctx.restore();
-    roundRect(ctx, wx, wy, ww, wh, 6); ctx.strokeStyle = K.frame; ctx.lineWidth = 2; ctx.stroke();
-    ctx.strokeStyle = K.frameSoft; ctx.lineWidth = 1.5; ctx.strokeRect(wx + 12, wy + 12, ww - 24, wh - 24);
-    ctx.fillStyle = K.frame;
-    [[wx + 8, wy + 8, 1, 1], [wx + ww - 8, wy + 8, -1, 1], [wx + 8, wy + wh - 8, 1, -1], [wx + ww - 8, wy + wh - 8, -1, -1]].forEach(([x, y, sx, sy]) => {
-      ctx.fillRect(sx > 0 ? x : x - 24, sy > 0 ? y : y - 3, 24, 3);
-      ctx.fillRect(sx > 0 ? x : x - 3, sy > 0 ? y : y - 24, 3, 24);
-    });
-
-    let y = wy + L.top;
-    // 標題與日期
-    text(ctx, '✦', CX, y + 20, `800 44px ${FD}`, K.star);
-    text(ctx, '原神期望抽數計算', CX + 56, y + 22, `800 50px ${FD}`, K.ink);
-    const now = new Date();
-    const ds = now.getFullYear() + '/' + String(now.getMonth() + 1).padStart(2, '0') + '/' + String(now.getDate()).padStart(2, '0');
-    text(ctx, ds, CX + CW, y + 18, `400 20px ${FN}`, K.muted, 'right');
-    y += L.title + 20;
-
-    // 目標與狀態標籤
-    chips.items.forEach((c) => {
-      const cy = y + c.row * 46;
-      const bg = c.k === 'c' ? K.goldSoft : c.k === 'w' ? K.violetSoft : K.sunken;
-      const fg = c.k === 'c' ? K.gold : c.k === 'w' ? K.violet : K.ink;
-      roundRect(ctx, CX + c.x, cy, c.w, 36, 18); ctx.fillStyle = bg; ctx.fill();
-      if (c.k === 's') { ctx.strokeStyle = K.frameSoft; ctx.lineWidth = 1; ctx.stroke(); }
-      text(ctx, c.s, CX + c.x + 13, cy + 25, `${c.k === 's' ? 400 : 700} 20px ${FB}`, fg);
-    });
-    y += L.chips + L.gap;
-
-    // 手上的資源
+  // 手上的資源，回傳畫完後的 y
+  function shareResources(ctx, d, y) {
     sectionTitle(ctx, '手上的資源', y + 26);
     y += 44;
     const box = (x, w, label, value, sub, hi) => {
@@ -1761,9 +1707,11 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     } else {
       box(CX, CW, '可抽 (直接輸入的總抽數)', fmt(d.opt.budget) + ' 抽', budgetSub, true);
     }
-    y += 112 + L.gap;
+    return y + 112;
+  }
 
-    // 四個重點數字
+  // 四個重點數字
+  function shareStats(ctx, d, y) {
     const st = d.st, pB = st.within(d.opt.budget), short = Math.max(0, Math.ceil(st.mean) - d.opt.budget);
     const cw2 = (CW - 16) / 2;
     const card = (cx, cy, label, value, unit, sub, hero, valueColor) => {
@@ -1782,17 +1730,18 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       ctx.font = fitFont(ctx, sub, 400, 19, FB, cw2 - 44);
       ctx.fillStyle = ink; ctx.textAlign = 'left'; ctx.fillText(sub, cx + 22, cy + 122);
     };
-    const meterColor = (p) => (p >= 0.9 ? K.good : p >= 0.5 ? K.warn : K.bad);
     card(CX, y, d.useNet ? '期望實付抽數' : '期望抽數', fmt(st.mean), '抽',
       d.useNet ? '共抽約 ' + fmt(d.raw.mean) + ' 抽，星輝折抵 ' + fmt(d.raw.mean - st.mean) + ' 抽 (約 ' + d.off.toFixed(1) + ' 折)' : '約 ' + fmt(st.mean * 160) + ' 原石', true);
     card(CX + cw2 + 16, y, '一半機率在', fmt(st.p50), '抽內', '運氣好 (10%) ' + fmt(st.p10) + ' 抽');
     card(CX, y + 152, '九成機率在', fmt(st.p90), '抽內', '最壞情況 ' + fmt(st.max) + ' 抽');
     card(CX + cw2 + 16, y + 152, '預算 ' + fmt(d.opt.budget) + ' 抽的達成率', pctTxt(pB), '', short > 0 ? '距離期望還差 ' + fmt(short) + ' 抽' : '已超過期望抽數', false, meterColor(pB));
-    y += L.stats + L.gap;
+    return y + SH.stats;
+  }
 
-    // 累積達成機率曲線
+  // 累積達成機率曲線，gh = 圖的高度
+  function shareChart(ctx, d, y, gh) {
+    const st = d.st;
     sectionTitle(ctx, d.useNet ? '實付幾抽能達成目標' : '幾抽內能達成目標', y + 26);
-    // 圖例
     ctx.font = `400 18px ${FB}`;
     const lg2 = '你的預算', lg1 = '累積達成機率';
     const w2 = ctx.measureText(lg2).width, w1 = ctx.measureText(lg1).width;
@@ -1800,102 +1749,213 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     text(ctx, lg2, lx, y + 24, `400 18px ${FB}`, K.muted); ctx.fillStyle = K.ink; ctx.fillRect(lx - 30, y + 16, 22, 3);
     lx -= w1 + 52;
     text(ctx, lg1, lx, y + 24, `400 18px ${FB}`, K.muted); ctx.fillStyle = K.gold; ctx.fillRect(lx - 30, y + 16, 22, 3);
-    y += 48;
-    {
-      const m = { l: 62, r: 14, t: 14, b: 40 }, gh = 330;
-      const cdf = st.cdf, budget = d.opt.budget;
-      let xMax = st.max;
-      for (let i = 0; i < cdf.length; i++) if (cdf[i] >= 0.9995) { xMax = i; break; }
-      xMax = Math.max(xMax, Math.min(budget, st.max) + 5, 10);
-      const step = niceStep(xMax);
-      xMax = Math.ceil(xMax / step) * step;
-      const X = (n) => CX + m.l + (n / xMax) * (CW - m.l - m.r);
-      const Y = (p) => y + m.t + (1 - p) * (gh - m.t - m.b);
-      ctx.lineWidth = 1;
-      [0, 0.25, 0.5, 0.75, 1].forEach((p) => {
-        ctx.strokeStyle = K.line; ctx.beginPath(); ctx.moveTo(CX + m.l, Y(p)); ctx.lineTo(CX + CW - m.r, Y(p)); ctx.stroke();
-        text(ctx, Math.round(p * 100) + '%', CX + m.l - 10, Y(p) + 6, `400 16px ${FN}`, K.muted, 'right');
-      });
-      for (let x = 0; x <= xMax + 1e-9; x += step) text(ctx, String(x), X(x), Y(0) + 28, `400 16px ${FN}`, K.muted, 'center');
-      const lim = Math.min(xMax, cdf.length - 1), bx = Math.min(budget, lim);
-      ctx.beginPath(); ctx.moveTo(X(0), Y(0));
-      for (let i = 0; i <= bx; i++) ctx.lineTo(X(i), Y(cdf[i]));
-      ctx.lineTo(X(bx), Y(0)); ctx.closePath();
-      ctx.fillStyle = 'rgba(189,105,50,.16)'; ctx.fill();
-      ctx.beginPath(); ctx.moveTo(X(0), Y(0));
-      for (let i = 0; i <= lim; i++) ctx.lineTo(X(i), Y(cdf[i]));
-      if (lim < xMax) ctx.lineTo(X(xMax), Y(1));
-      ctx.strokeStyle = K.gold; ctx.lineWidth = 3.5; ctx.lineJoin = 'round'; ctx.stroke();
-      [[st.p50, '50%'], [st.p90, '90%']].forEach(([n, lab]) => {
-        if (n > xMax) return;
-        const py = Y(st.within(n));
-        ctx.setLineDash([4, 5]); ctx.strokeStyle = K.muted; ctx.lineWidth = 1.2;
-        ctx.beginPath(); ctx.moveTo(X(n), Y(0)); ctx.lineTo(X(n), py); ctx.stroke(); ctx.setLineDash([]);
-        ctx.beginPath(); ctx.arc(X(n), py, 6, 0, Math.PI * 2); ctx.fillStyle = K.surface; ctx.fill();
-        ctx.strokeStyle = K.gold; ctx.lineWidth = 3; ctx.stroke();
-        text(ctx, lab + ' · ' + n, X(n) + 10, py + 24, `600 17px ${FN}`, K.ink);
-      });
-      if (budget <= xMax) {
-        ctx.strokeStyle = K.ink; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(X(budget), Y(1) - 4); ctx.lineTo(X(budget), Y(0)); ctx.stroke();
-        const right = X(budget) > CX + CW - 170;
-        text(ctx, '預算 ' + budget + ' 抽', X(budget) + (right ? -8 : 8), Y(1) + 16, `600 17px ${FN}`, K.ink, right ? 'right' : 'left');
-      }
+    y += SH.chartHead;
+    const m = { l: 62, r: 14, t: 14, b: 40 };
+    const cdf = st.cdf, budget = d.opt.budget;
+    let xMax = st.max;
+    for (let i = 0; i < cdf.length; i++) if (cdf[i] >= 0.9995) { xMax = i; break; }
+    xMax = Math.max(xMax, Math.min(budget, st.max) + 5, 10);
+    const step = niceStep(xMax);
+    xMax = Math.ceil(xMax / step) * step;
+    const X = (n) => CX + m.l + (n / xMax) * (CW - m.l - m.r);
+    const Y = (p) => y + m.t + (1 - p) * (gh - m.t - m.b);
+    ctx.lineWidth = 1;
+    [0, 0.25, 0.5, 0.75, 1].forEach((p) => {
+      ctx.strokeStyle = K.line; ctx.beginPath(); ctx.moveTo(CX + m.l, Y(p)); ctx.lineTo(CX + CW - m.r, Y(p)); ctx.stroke();
+      text(ctx, Math.round(p * 100) + '%', CX + m.l - 10, Y(p) + 6, `400 16px ${FN}`, K.muted, 'right');
+    });
+    for (let x = 0; x <= xMax + 1e-9; x += step) text(ctx, String(x), X(x), Y(0) + 28, `400 16px ${FN}`, K.muted, 'center');
+    const lim = Math.min(xMax, cdf.length - 1), bx = Math.min(budget, lim);
+    ctx.beginPath(); ctx.moveTo(X(0), Y(0));
+    for (let i = 0; i <= bx; i++) ctx.lineTo(X(i), Y(cdf[i]));
+    ctx.lineTo(X(bx), Y(0)); ctx.closePath();
+    ctx.fillStyle = 'rgba(189,105,50,.16)'; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(X(0), Y(0));
+    for (let i = 0; i <= lim; i++) ctx.lineTo(X(i), Y(cdf[i]));
+    if (lim < xMax) ctx.lineTo(X(xMax), Y(1));
+    ctx.strokeStyle = K.gold; ctx.lineWidth = 3.5; ctx.lineJoin = 'round'; ctx.stroke();
+    [[st.p50, '50%'], [st.p90, '90%']].forEach(([n, lab]) => {
+      if (n > xMax) return;
+      const py = Y(st.within(n));
+      ctx.setLineDash([4, 5]); ctx.strokeStyle = K.muted; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(X(n), Y(0)); ctx.lineTo(X(n), py); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.arc(X(n), py, 6, 0, Math.PI * 2); ctx.fillStyle = K.surface; ctx.fill();
+      ctx.strokeStyle = K.gold; ctx.lineWidth = 3; ctx.stroke();
+      text(ctx, lab + ' · ' + n, X(n) + 10, py + 24, `600 17px ${FN}`, K.ink);
+    });
+    if (budget <= xMax) {
+      ctx.strokeStyle = K.ink; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(X(budget), Y(1) - 4); ctx.lineTo(X(budget), Y(0)); ctx.stroke();
+      const right = X(budget) > CX + CW - 170;
+      text(ctx, '預算 ' + budget + ' 抽', X(budget) + (right ? -8 : 8), Y(1) + 16, `600 17px ${FN}`, K.ink, right ? 'right' : 'left');
     }
-    y += 330 + L.gap;
+    return y + gh;
+  }
 
-    // 里程碑表
+  // 里程碑表：右邊幾欄靠右對齊，欄寬變寬時多出來的空間給「目標」
+  function shareTable(ctx, d, y) {
     sectionTitle(ctx, '每個里程碑', y + 26, '抽數為累計，照排好的順序');
     y += 48;
-    {
-      const cols = [
-        { t: '目標', x: 16, a: 'left' }, { t: d.useNet ? '期望實付' : '期望抽數', x: 446, a: 'right' },
-        { t: '一半機率', x: 556, a: 'right' }, { t: '九成機率', x: 666, a: 'right' }, { t: '預算內達成', x: CW - 16, a: 'right' },
-      ];
-      const rowH = 50, th = 48, tw = CW, th0 = y;
-      ctx.fillStyle = K.head; ctx.fillRect(CX, y, tw, th);
-      cols.forEach((c) => text(ctx, c.t, CX + c.x, y + 31, `700 18px ${FB}`, K.ink, c.a));
-      y += th;
-      d.rows.forEach((r, i) => {
-        if (i % 2) { ctx.fillStyle = 'rgba(235,227,212,.5)'; ctx.fillRect(CX, y, tw, rowH); }
-        ctx.font = `600 16px ${FN}`;
-        const tgw = ctx.measureText(r.tag).width + 18;
-        roundRect(ctx, CX + 16, y + 12, tgw, 27, 5); ctx.fillStyle = r.kind === 'c' ? K.goldSoft : K.violetSoft; ctx.fill();
-        text(ctx, r.tag, CX + 25, y + 31, `600 16px ${FN}`, r.kind === 'c' ? K.gold : K.violet);
-        ctx.font = fitFont(ctx, r.text, 500, 20, FB, 446 - 120 - (16 + tgw + 12));
-        ctx.fillStyle = K.ink; ctx.textAlign = 'left'; ctx.fillText(r.text, CX + 16 + tgw + 12, y + 32);
-        text(ctx, r.mean.toFixed(1), CX + 446, y + 32, `400 19px ${FN}`, K.ink, 'right');
-        text(ctx, fmt(r.p50), CX + 556, y + 32, `400 19px ${FN}`, K.ink, 'right');
-        text(ctx, fmt(r.p90), CX + 666, y + 32, `400 19px ${FN}`, K.ink, 'right');
-        const mx = CX + 700, mw = 100;
-        roundRect(ctx, mx, y + 21, mw, 9, 4.5); ctx.fillStyle = K.sunken; ctx.fill(); ctx.strokeStyle = K.line; ctx.lineWidth = 1; ctx.stroke();
-        if (r.p > 0) { roundRect(ctx, mx, y + 21, Math.max(9, mw * r.p), 9, 4.5); ctx.fillStyle = meterColor(r.p); ctx.fill(); }
-        text(ctx, pctTxt(r.p), CX + CW - 16, y + 32, `600 19px ${FN}`, meterColor(r.p), 'right');
-        y += rowH;
-      });
-      // 格線
-      ctx.strokeStyle = K.line; ctx.lineWidth = 1;
-      for (let i = 0; i <= d.rows.length; i++) { const ly = th0 + th + i * rowH; ctx.beginPath(); ctx.moveTo(CX, ly); ctx.lineTo(CX + tw, ly); ctx.stroke(); }
-      ctx.strokeStyle = K.frameSoft; ctx.strokeRect(CX, th0, tw, y - th0);
-    }
-    y += L.gap;
+    const xMean = CW - 458, xP50 = CW - 348, xP90 = CW - 238, xMeter = CW - 204;
+    const cols = [
+      { t: '目標', x: 16, a: 'left' }, { t: d.useNet ? '期望實付' : '期望抽數', x: xMean, a: 'right' },
+      { t: '一半機率', x: xP50, a: 'right' }, { t: '九成機率', x: xP90, a: 'right' }, { t: '預算內達成', x: CW - 16, a: 'right' },
+    ];
+    const rowH = 50, th = 48, tw = CW, th0 = y;
+    ctx.fillStyle = K.head; ctx.fillRect(CX, y, tw, th);
+    cols.forEach((c) => text(ctx, c.t, CX + c.x, y + 31, `700 18px ${FB}`, K.ink, c.a));
+    y += th;
+    d.rows.forEach((r, i) => {
+      if (i % 2) { ctx.fillStyle = 'rgba(235,227,212,.5)'; ctx.fillRect(CX, y, tw, rowH); }
+      ctx.font = `600 16px ${FN}`;
+      const tgw = ctx.measureText(r.tag).width + 18;
+      roundRect(ctx, CX + 16, y + 12, tgw, 27, 5); ctx.fillStyle = r.kind === 'c' ? K.goldSoft : K.violetSoft; ctx.fill();
+      text(ctx, r.tag, CX + 25, y + 31, `600 16px ${FN}`, r.kind === 'c' ? K.gold : K.violet);
+      ctx.font = fitFont(ctx, r.text, 500, 20, FB, xMean - 120 - (16 + tgw + 12));
+      ctx.fillStyle = K.ink; ctx.textAlign = 'left'; ctx.fillText(r.text, CX + 16 + tgw + 12, y + 32);
+      text(ctx, r.mean.toFixed(1), CX + xMean, y + 32, `400 19px ${FN}`, K.ink, 'right');
+      text(ctx, fmt(r.p50), CX + xP50, y + 32, `400 19px ${FN}`, K.ink, 'right');
+      text(ctx, fmt(r.p90), CX + xP90, y + 32, `400 19px ${FN}`, K.ink, 'right');
+      const mx = CX + xMeter, mw = 100;
+      roundRect(ctx, mx, y + 21, mw, 9, 4.5); ctx.fillStyle = K.sunken; ctx.fill(); ctx.strokeStyle = K.line; ctx.lineWidth = 1; ctx.stroke();
+      if (r.p > 0) { roundRect(ctx, mx, y + 21, Math.max(9, mw * r.p), 9, 4.5); ctx.fillStyle = meterColor(r.p); ctx.fill(); }
+      text(ctx, pctTxt(r.p), CX + CW - 16, y + 32, `600 19px ${FN}`, meterColor(r.p), 'right');
+      y += rowH;
+    });
+    ctx.strokeStyle = K.line; ctx.lineWidth = 1;
+    for (let i = 0; i <= d.rows.length; i++) { const ly = th0 + th + i * rowH; ctx.beginPath(); ctx.moveTo(CX, ly); ctx.lineTo(CX + tw, ly); ctx.stroke(); }
+    ctx.strokeStyle = K.frameSoft; ctx.strokeRect(CX, th0, tw, y - th0);
+    return y;
+  }
 
-    // 頁尾：分隔線、QR code、網址
+  // 頁尾：分隔線、QR code、網址
+  function shareFooter(ctx, y) {
     const dg = ctx.createLinearGradient(CX, 0, CX + CW, 0);
     dg.addColorStop(0, 'rgba(211,188,142,0)'); dg.addColorStop(0.5, K.frame); dg.addColorStop(1, 'rgba(211,188,142,0)');
     ctx.fillStyle = dg; ctx.fillRect(CX, y, CW, 1.5);
     y += 30;
     roundRect(ctx, CX - 4, y - 4, 213, 213, 8); ctx.fillStyle = '#fffaf0'; ctx.fill(); ctx.strokeStyle = K.frame; ctx.lineWidth = 1.5; ctx.stroke();
     drawQR(ctx, CX, y, 5, '#2f3441', '#fffaf0');
-    const fx = CX + 240;
+    const fx = CX + 240, fw = CW - 240;
     text(ctx, '一起來算算看要幾抽', fx, y + 62, `600 34px ${FD}`, K.ink);
     text(ctx, SITE.replace('https://', '').replace(/\/$/, ''), fx, y + 106, `600 22px ${FN}`, K.gold);
-    text(ctx, '掃描 QR code 或前往網址，輸入你的墊抽和原石', fx, y + 144, `400 18px ${FB}`, K.muted);
-    text(ctx, '逐抽機率採用社群擬合模型，結果僅供參考，與米哈遊官方無關。', fx, y + 176, `400 16px ${FB}`, K.muted);
+    const l1 = '掃描 QR code 或前往網址，輸入你的墊抽和原石';
+    const l2 = '逐抽機率採用社群擬合模型，結果僅供參考，與米哈遊官方無關。';
+    ctx.font = fitFont(ctx, l1, 400, 18, FB, fw); ctx.fillStyle = K.muted; ctx.textAlign = 'left'; ctx.fillText(l1, fx, y + 144);
+    ctx.font = fitFont(ctx, l2, 400, 16, FB, fw); ctx.fillText(l2, fx, y + 176);
+    return y + 214;
+  }
+
+  // mode：'landscape' 橫式 (寬 1920，左欄資源、重點數字、QR code，右欄曲線與里程碑表) 或 'portrait' 直式 (寬 1080，由上而下)
+  async function renderShare(mode) {
+    const d = shareData;
+    if (!d || !d.has) return null;
+    const land = mode !== 'portrait';
+    const cv = document.createElement('canvas');
+    let ctx = cv.getContext('2d');
+    // 先載入畫圖要用的字型 (Google Fonts 的中文字是分段載入的，要指定實際會用到的字)
+    const sample = '原神期望抽數計算手上的資源原石糾纏之緣無主星輝可抽約一半機率在內運氣好九成最壞情況預算達成率已超過距離還差幾能目標每個里程碑累積你的隻角色二把武器全部到齊需要定軌另一命滿精墊小大保底明光計值星輝返還計入共折抵實付掃描或前往網址起來算看逐次採用社群擬合模型結果僅供參考與米哈遊官方無關順序排拖動策略缺得多分開最佳 0123456789,.%()/★✦';
+    try {
+      await Promise.race([
+        Promise.all([`800 52px ${FD}`, `600 28px ${FD}`, `400 20px ${FB}`, `500 20px ${FB}`, `700 20px ${FB}`, `600 40px ${FN}`, `400 20px ${FN}`].map((f) => document.fonts.load(f, sample))),
+        new Promise((r) => setTimeout(r, 3000)),
+      ]);
+    } catch (e) {}
+
+    SW = land ? 1920 : 1080;
+    const FX = SM + SP, FW = SW - 2 * (SM + SP);
+    const LW = 760, CG = 56; // 橫式左欄寬、欄距
+    const left = land ? [FX, LW] : [FX, FW], right = land ? [FX + LW + CG, FW - LW - CG] : [FX, FW];
+    setCol(FX, FW);
+    const chips = layoutChips(ctx, shareChips(d));
+    const G = SH.gap;
+    const headH = 64 + 56 + 20 + chips.rows * 46 + G;
+    let gh = 330, bodyH;
+    if (land) {
+      const leftH = SH.res + G + SH.stats + G + SH.foot;
+      const rightH = SH.chartHead + gh + G + tableH(d);
+      if (leftH > rightH) gh = Math.min(560, gh + leftH - rightH); // 右欄比較矮時把曲線拉高，兩欄底部對齊
+      bodyH = Math.max(leftH, SH.chartHead + gh + G + tableH(d));
+    } else {
+      bodyH = SH.res + G + SH.stats + G + SH.chartHead + gh + G + tableH(d) + G + SH.foot;
+    }
+    const winH = headH + bodyH + 52;
+    const H = winH + 2 * SM;
+    const scale = 2;
+    cv.width = SW * scale; cv.height = H * scale;
+    ctx = cv.getContext('2d');
+    ctx.scale(scale, scale);
+
+    // 天空背景與雲
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, K.sky1); sky.addColorStop(Math.min(0.6, 700 / H), K.sky2); sky.addColorStop(1, '#e4ecf4');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, SW, H);
+    [[0.15, 90, 260], [0.83, 60, 220], [0.57, 140, 180]].forEach(([fx, y, r]) => {
+      const x = fx * SW;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g; ctx.fillRect(x - r, y - r, 2 * r, 2 * r);
+    });
+
+    // 羊皮紙視窗：金色外框、內側細線、四角括號
+    const wx = SM, wy = SM, ww = SW - 2 * SM, wh = winH;
+    ctx.save();
+    ctx.shadowColor = 'rgba(30,40,70,.22)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 8;
+    roundRect(ctx, wx, wy, ww, wh, 6); ctx.fillStyle = K.surface; ctx.fill();
+    ctx.restore();
+    roundRect(ctx, wx, wy, ww, wh, 6); ctx.strokeStyle = K.frame; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = K.frameSoft; ctx.lineWidth = 1.5; ctx.strokeRect(wx + 12, wy + 12, ww - 24, wh - 24);
+    ctx.fillStyle = K.frame;
+    [[wx + 8, wy + 8, 1, 1], [wx + ww - 8, wy + 8, -1, 1], [wx + 8, wy + wh - 8, 1, -1], [wx + ww - 8, wy + wh - 8, -1, -1]].forEach(([x, y, sx, sy]) => {
+      ctx.fillRect(sx > 0 ? x : x - 24, sy > 0 ? y : y - 3, 24, 3);
+      ctx.fillRect(sx > 0 ? x : x - 3, sy > 0 ? y : y - 24, 3, 24);
+    });
+
+    let y = wy + 64;
+    // 標題與日期 (橫跨整張圖)
+    text(ctx, '✦', CX, y + 20, `800 44px ${FD}`, K.star);
+    text(ctx, '原神期望抽數計算', CX + 56, y + 22, `800 50px ${FD}`, K.ink);
+    const now = new Date();
+    const ds = now.getFullYear() + '/' + String(now.getMonth() + 1).padStart(2, '0') + '/' + String(now.getDate()).padStart(2, '0');
+    text(ctx, ds, CX + CW, y + 18, `400 20px ${FN}`, K.muted, 'right');
+    y += 56 + 20;
+
+    // 目標與狀態標籤
+    chips.items.forEach((c) => {
+      const cy = y + c.row * 46;
+      const bg = c.k === 'c' ? K.goldSoft : c.k === 'w' ? K.violetSoft : K.sunken;
+      const fg = c.k === 'c' ? K.gold : c.k === 'w' ? K.violet : K.ink;
+      roundRect(ctx, CX + c.x, cy, c.w, 36, 18); ctx.fillStyle = bg; ctx.fill();
+      if (c.k === 's') { ctx.strokeStyle = K.frameSoft; ctx.lineWidth = 1; ctx.stroke(); }
+      text(ctx, c.s, CX + c.x + 13, cy + 25, `${c.k === 's' ? 400 : 700} 20px ${FB}`, fg);
+    });
+    const y0 = wy + headH;
+
+    if (land) {
+      setCol(left[0], left[1]);
+      y = shareResources(ctx, d, y0) + G;
+      y = shareStats(ctx, d, y) + G;
+      shareFooter(ctx, Math.max(y, y0 + bodyH - SH.foot)); // QR code 貼齊左欄底部
+      setCol(right[0], right[1]);
+      y = shareChart(ctx, d, y0, gh) + G;
+      shareTable(ctx, d, y);
+    } else {
+      y = shareResources(ctx, d, y0) + G;
+      y = shareStats(ctx, d, y) + G;
+      y = shareChart(ctx, d, y, gh) + G;
+      y = shareTable(ctx, d, y) + G;
+      shareFooter(ctx, y);
+    }
+    setCol(FX, FW);
     return cv;
   }
 
   let shareBlob = null, shareUrl = '';
+  // 分享圖方向，預設橫式，記在 ui 設定裡
+  const shareMode = () => (ui.shareMode === 'portrait' ? 'portrait' : 'landscape');
+  function paintShareMode() {
+    $('shareMode').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === shareMode() ? 'true' : 'false'));
+  }
   const shareName = () => { const n = new Date(); return '原神期望抽數-' + n.getFullYear() + String(n.getMonth() + 1).padStart(2, '0') + String(n.getDate()).padStart(2, '0') + '.png'; };
   async function openShare() {
     if (!shareData || !shareData.has) return;
@@ -1903,9 +1963,13 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     $('shareImg').hidden = true; $('shareWait').hidden = false; $('shareWait').textContent = '圖片產生中…';
     $('shareDl').disabled = true; $('shareSys').hidden = true; $('copyMsg').textContent = '';
     paintQrSmall();
-    if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+    paintShareMode();
+    if (!dlg.open) { if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', ''); }
+    const ticket = (openShare.ticket = (openShare.ticket || 0) + 1);
     try {
-      const cv = await renderShare();
+      const cv = await renderShare(shareMode());
+      if (ticket !== openShare.ticket) return; // 等圖的時候又切換了方向，交給後來那次
+      $('shareImg').alt = '這次計算結果的分享圖 (' + (shareMode() === 'portrait' ? '直式' : '橫式') + ')';
       shareBlob = await new Promise((r) => cv.toBlob(r, 'image/png'));
       if (shareUrl) URL.revokeObjectURL(shareUrl);
       shareUrl = URL.createObjectURL(shareBlob);
@@ -1921,6 +1985,12 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     }
   }
   $('shareBtn').addEventListener('click', openShare);
+  $('shareMode').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b || b.dataset.v === shareMode()) return;
+    ui.shareMode = b.dataset.v; saveUi();
+    openShare();
+  });
   $('shareX').addEventListener('click', () => $('shareDlg').close());
   $('shareDlg').addEventListener('click', (e) => { if (e.target === $('shareDlg')) $('shareDlg').close(); });
   $('shareDl').addEventListener('click', () => {
