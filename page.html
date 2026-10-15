@@ -298,6 +298,18 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .advice.act { background: var(--gold-soft); }
 
 /* 分頁 */
+.tabbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.share-btn { font-size: .92rem; padding: 7px 18px 7px 7px; box-shadow: 0 2px 10px rgba(30, 40, 70, .18); }
+.share-btn:disabled { opacity: .5; cursor: not-allowed; }
+.gbtn:disabled { opacity: .5; cursor: not-allowed; filter: none; }
+.share-prev { display: grid; place-items: center; min-height: 160px; background: var(--sunken); border-radius: 6px; padding: 10px; }
+.share-prev img { display: block; max-width: 100%; max-height: 58vh; width: auto; height: auto; border-radius: 4px; box-shadow: 0 4px 16px rgba(30, 40, 70, .2); }
+.site-share { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; }
+#qrSmall { width: 123px; height: 123px; border-radius: 6px; border: 1px solid var(--frame); background: #fffaf0; }
+.site-text { display: grid; gap: 6px; min-width: 0; }
+.site-text b { font-family: var(--f-display); font-size: 1.05rem; }
+.site-text .url { font-family: var(--f-num); font-size: .85rem; color: var(--gold); word-break: break-all; user-select: all; }
+.site-act { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
 .tabs button { font: inherit; font-size: .92rem; font-weight: 500; padding: 7px 18px; border-radius: 999px; border: 1px solid var(--frame); background: var(--surface); color: var(--ink); cursor: pointer; }
 .tabs button[aria-selected="true"] { background: var(--btn); color: var(--btn-ink); border-color: var(--btn); font-weight: 700; }
@@ -320,10 +332,13 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     <p class="lede">輸入想抽的角色命座與專武精煉、目前墊了幾抽，直接算出完整的抽數機率分布，並估計你手上的原石夠不夠。結果是精確計算，不是隨機模擬，每次算出來都一樣。</p>
   </header>
 
-  <nav class="tabs" role="tablist" aria-label="頁面">
-    <button type="button" role="tab" id="tabBtnCalc" aria-controls="tabCalc" aria-selected="true">計算</button>
-    <button type="button" role="tab" id="tabBtnRules" aria-controls="tabRules" aria-selected="false">抽卡規則</button>
-  </nav>
+  <div class="tabbar">
+    <nav class="tabs" role="tablist" aria-label="頁面">
+      <button type="button" role="tab" id="tabBtnCalc" aria-controls="tabCalc" aria-selected="true">計算</button>
+      <button type="button" role="tab" id="tabBtnRules" aria-controls="tabRules" aria-selected="false">抽卡規則</button>
+    </nav>
+    <button type="button" class="gbtn share-btn" id="shareBtn"><span class="ic"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><circle cx="12" cy="3.5" r="2" fill="currentColor"/><circle cx="4" cy="8" r="2" fill="currentColor"/><circle cx="12" cy="12.5" r="2" fill="currentColor"/><path d="M10.3 4.5 5.7 7M5.7 9l4.6 2.5" stroke="currentColor" stroke-width="1.4" fill="none"/></svg></span>分享結果</button>
+  </div>
 
   <div class="layout" id="tabCalc" role="tabpanel" aria-labelledby="tabBtnCalc">
     <form class="panel frame" id="form" autocomplete="off">
@@ -372,7 +387,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
             </div>
           </div>
           <div class="field">
-            <span class="lab-row"><label for="chC">明光計數</label><span class="info-wrap"><button type="button" class="info" aria-label="明光計數說明" aria-expanded="false">!</button><span class="info-pop" role="tooltip">明光計數是推測模型裡的狀態：小保底歪一次加 1，贏一次減 1，最多 3。官方只確認連續三輪「先歪，再靠大保底拿到 UP」之後，下一顆五星必定觸發捕獲明光。不確定就選 0。</span></span></span>
+            <span class="lab-row"><label for="chC">明光計數</label><span class="info-wrap"><button type="button" class="info" aria-label="明光計數說明" aria-expanded="false">!</button><span class="info-pop" role="tooltip">明光計數是推測模型裡的狀態：小保底歪一次加 1，贏一次減 1，最多 3。官方只確認連續三輪「先歪，再靠大保底拿到 UP」之後，下一顆五星必定觸發捕獲明光。歪了一定是大保底，所以勾「目前是大保底」時會自動調成至少 1。不確定的話，小保底選 0，大保底選 1。</span></span></span>
             <div class="page-slide mini">
               <input type="range" id="chC" min="0" max="3" step="1" value="1">
               <div class="page-ticks" data-for="chC"><button type="button" data-v="0" style="left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * 0)" aria-label="0">0</button><button type="button" data-v="1" style="left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * 0.333333)" aria-label="1">1</button><button type="button" data-v="2" style="left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * 0.666667)" aria-label="2">2</button><button type="button" data-v="3" style="left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * 1)" aria-label="3">3</button></div>
@@ -501,18 +516,6 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
         </div>
       </fieldset>
 
-      <hr>
-
-      <fieldset>
-        <legend>進階</legend>
-        <div class="field">
-          <span class="lab-row"><label for="crModel">捕獲明光模型</label><span class="info-wrap"><button type="button" class="info" aria-label="捕獲明光模型說明" aria-expanded="false">!</button><span class="info-pop" role="tooltip">官方公布小保底抽到 UP 的綜合機率是 55%，但沒有公開中間各階段的機率。保守模型算出的長期勝率約 55.6%，最接近官方，社群推測模型約 57.9%，所以預設用保守模型。</span></span></span>
-          <select id="crModel">
-            <option value="conservative" selected>保守：連續三輪歪後必中</option>
-            <option value="community">社群推測：連歪 2 次後 75% 不歪</option>
-          </select>
-        </div>
-      </fieldset>
     </form>
 
     <div class="results">
@@ -598,6 +601,15 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
             <li>捕獲明光 (5.0 起)：只在小保底時參與判定，每次祈願基礎觸發機率 0.018%，小保底 UP 綜合機率 55%</li>
             <li>連續三輪「先歪，再靠大保底拿到 UP」(共 6 顆五星) 後，下一顆五星必定觸發</li>
             <li>中間各階段的機率官方沒有公開，網頁的明光計數是推測模型</li>
+          </ul>
+        </div>
+        <div>
+          <h3>捕獲明光模型 (網頁用保守模型)</h3>
+          <ul>
+            <li>明光計數：小保底歪一次加 1，贏一次減 1，最多 3。歪了之後一定是大保底，所以勾「目前是大保底」時，計數會自動至少調成 1 (還是可以自己改)</li>
+            <li>保守模型：計數到 3 才必定觸發明光，其他時候照 50/50。長期小保底勝率約 55.6%，最接近官方的 55%</li>
+            <li>社群推測模型：計數 2 時本來會歪的有一半觸發明光 (等於 75% 不歪)，長期勝率約 57.9%，比官方高，所以不採用</li>
+            <li>網頁一律用保守模型計算，規劃時寧可多估一點抽數</li>
           </ul>
         </div>
         <div>
@@ -698,6 +710,33 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   </form>
 </dialog>
 
+<dialog class="hist" id="shareDlg" aria-labelledby="shareTitle">
+  <div class="hist-in frame">
+    <div class="hist-head">
+      <h2 id="shareTitle"><span>✦</span>分享結果</h2>
+      <button type="button" class="hist-x" id="shareX" aria-label="關閉">✕</button>
+    </div>
+    <div class="share-prev">
+      <p class="note" id="shareWait">圖片產生中…</p>
+      <img id="shareImg" alt="這次計算結果的分享圖" hidden>
+    </div>
+    <div class="hist-actions">
+      <button type="button" class="gbtn" id="shareDl" disabled><span class="ic">↓</span>下載圖片</button>
+      <button type="button" class="gbtn light" id="shareSys" hidden><span class="ic">↗</span>分享圖片</button>
+    </div>
+    <p class="note" style="text-align: center">手機也可以長按上面的圖片儲存。</p>
+    <hr>
+    <div class="site-share">
+      <canvas id="qrSmall" role="img" aria-label="網站的 QR code"></canvas>
+      <div class="site-text">
+        <b>把這個網站分享給朋友</b>
+        <span class="url" id="siteUrl">twl-benchen.github.io/genshin-wish</span>
+        <span class="site-act"><button type="button" class="gbtn small light" id="copyUrl"><span class="ic">⧉</span>複製網址</button><span class="note" id="copyMsg" role="status"></span></span>
+      </div>
+    </div>
+  </div>
+</dialog>
+
 <script>
 /*ENGINE*/
 </script>
@@ -706,7 +745,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   'use strict';
   const E = window.GachaEngine;
   const $ = (id) => document.getElementById(id);
-  const ids = ['chT', 'chPity', 'chC', 'chG', 'ch2On', 'chT2', 'wpT', 'wp2On', 'wpT2', 'wpStrat', 'wpPity', 'wpF', 'wpG', 'bPrimo', 'bFate', 'bStar', 'crModel', 'rfOn', 'rfC6', 'rfCons', 'order'];
+  const ids = ['chT', 'chPity', 'chC', 'chG', 'ch2On', 'chT2', 'wpT', 'wp2On', 'wpT2', 'wpStrat', 'wpPity', 'wpF', 'wpG', 'bPrimo', 'bFate', 'bStar', 'rfOn', 'rfC6', 'rfCons', 'order'];
   const KEY = 'genshin-pulls-v1';
   const fmt = (n) => Math.round(n).toLocaleString('zh-TW');
   const pctTxt = (p) => (p >= 0.9995 ? '100' : p <= 0.0005 && p > 0 ? '<0.1' : (p * 100).toFixed(1)) + '%';
@@ -813,8 +852,11 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       $(id).value = b.dataset.v; paintMini(id); schedule();
     });
   });
-  // 舊版存過「關閉」明光模型，選項已移除
-  if ($('crModel').selectedIndex < 0) $('crModel').value = 'conservative';
+  // 勾「目前是大保底」代表上次小保底歪了，明光計數至少是 1；只在勾下去的當下調整，之後使用者還是可以改回 0
+  function bumpRadiance() {
+    if ($('chG').checked && $('chC').value === '0') { $('chC').value = '1'; paintMini('chC'); }
+  }
+  $('chG').addEventListener('change', bumpRadiance);
 
   // ---- 圓框驚嘆號說明：點一下開關，滑鼠移上去也會顯示 ----
   const canHover = window.matchMedia && window.matchMedia('(hover: hover)').matches;
@@ -913,7 +955,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     return {
       character: {
         targets: [C1, C2], pity: clampInt(v.chPity, 0, 89), guaranteed: v.chG,
-        radiance: clampInt(v.chC, 0, 3), cr: E.CR_PRESETS[v.crModel] ? E.CR_PRESETS[v.crModel].cr : E.CR_PRESETS.conservative.cr,
+        radiance: clampInt(v.chC, 0, 3), cr: E.CR_PRESETS.conservative.cr, // 一律用保守模型，說明在規則頁
       },
       weapon: {
         targets: [W1, W2], pity: clampInt(v.wpPity, 0, 76), fate: clampInt(v.wpF, 0, 1), guaranteed: v.wpG,
@@ -1131,7 +1173,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   $('hist').addEventListener('close', () => {
     if ($('hist').returnValue !== 'apply') return;
     const pity = Math.min(selPity(), HIST[hs.pool].max);
-    if (hs.pool === 'char') { $('chPity').value = pity; $('chG').checked = hs.what === 'std'; }
+    if (hs.pool === 'char') { $('chPity').value = pity; $('chG').checked = hs.what === 'std'; bumpRadiance(); }
     else {
       const s = weaponFromHist(hs.what, hs.when);
       $('wpPity').value = pity; $('wpF').value = String(s.fate); $('wpG').checked = s.guaranteed; paintMini('wpF');
@@ -1238,26 +1280,35 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       : `<div class="stat" style="grid-column: 1 / -1"><span class="k">尚未設定目標</span><span class="s">在左側選擇想抽的角色或武器數量。</span></div>`;
 
     const [W1, W2] = opt.weapon.targets, WT = W1 + W2;
+    const shareRows = [];
     const rowsHtml = res.rows.map((r, i) => {
       const s = E.stats(useNet ? r.net : r.dist);
       const p = s.within(opt.budget);
       const cons = r.n - 1 === 6 ? '滿命' : (r.n - 1) + ' 命';
-      let label;
+      let tag, text;
       if (r.kind === 'char') {
-        const who = opt.two.ch ? (r.who === 'd' ? '角色二' : '角色一') + '第 ' + r.n + ' 隻' : '第 ' + r.n + ' 隻角色';
-        label = `<span class="tag"><i class="c">${cons}</i>${who}</span>`;
+        tag = cons;
+        text = opt.two.ch ? (r.who === 'd' ? '角色二' : '角色一') + '第 ' + r.n + ' 隻' : '第 ' + r.n + ' 隻角色';
       } else if (opt.two.wp) {
         // 兩把都要時，先到手的是哪一把由運氣決定，所以只算第幾把「還需要的」UP 武器
-        label = `<span class="tag"><i class="w">${r.n}/${WT}</i>${r.n === WT ? '兩把武器全部到齊' : '第 ' + r.n + ' 把需要的 UP 武器'}</span>`;
+        tag = r.n + '/' + WT;
+        text = r.n === WT ? '兩把武器全部到齊' : '第 ' + r.n + ' 把需要的 UP 武器';
       } else {
-        label = `<span class="tag"><i class="w">精 ${r.n}</i>${W1 > 0 ? '第 ' + r.n + ' 把武器' : '另一把 UP 第 ' + r.n + ' 把'}</span>`;
+        tag = '精 ' + r.n;
+        text = W1 > 0 ? '第 ' + r.n + ' 把武器' : '另一把 UP 第 ' + r.n + ' 把';
       }
+      const kind = r.kind === 'char' ? 'c' : 'w';
+      const label = `<span class="tag"><i class="${kind}">${tag}</i>${text}</span>`;
+      shareRows.push({ kind, tag, text, mean: s.mean, p50: s.p50, p90: s.p90, max: s.max, p });
       return `<tr data-k="${r.who}"><td><span class="row-head"><button type="button" class="grip" data-i="${i}" aria-label="調整順序：拖動，或按上下鍵移動"></button>${label}</span></td><td class="num">${s.mean.toFixed(1)}</td><td class="num">${fmt(s.p50)}</td><td class="num">${fmt(s.p90)}</td><td class="num">${fmt(s.max)}</td>
         <td><span class="meter ${meterClass(p)}"><span class="bar"><b style="width:${(p * 100).toFixed(1)}%"></b></span><em>${pctTxt(p)}</em></span></td></tr>`;
     }).join('');
     $('tbody').innerHTML = rowsHtml || `<tr><td colspan="6" style="text-align:left;color:var(--muted)">還沒有目標。</td></tr>`;
 
     current = { st, budget: opt.budget, has };
+    shareData = { opt, st, raw, useNet, off, has, rows: shareRows, items: manualItems(opt) };
+    $('shareBtn').disabled = !has;
+    $('shareBtn').title = has ? '' : '先在左側設定想抽的角色或武器';
     drawChart();
   }
 
@@ -1520,6 +1571,379 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   svg2.addEventListener('pointermove', onWaitMove);
   svg2.addEventListener('pointerdown', onWaitMove);
   svg2.addEventListener('pointerleave', leaveWait);
+
+  // ---- 分享結果：用 canvas 畫一張仿遊戲視窗的圖，可以下載；附網站 QR code ----
+  const SITE = 'https://twl-benchen.github.io/genshin-wish/';
+  // 網站網址的 QR code (版本 4、容錯 M，用 segno 產生；網址改了要重新產生)
+  const SITE_QR = ['111111100110110001111001001111111','100000100011111111001010101000001','101110101100010011111001101011101','101110101011101010001110101011101','101110101100110101100100101011101','100000101111111110101110101000001','111111101010101010101010101111111','000000001001101100000110100000000','101111100001111101000010101111100','000101001000100010011101001101111','011110100110000110100100010010110','101001010101001100011110011011101','001100110110100000110101110011011','011011010001001110001010101000111','111000100000000000010010011001010','101010010000000010111101011011100','000010100100101001010011110110001','000001001010101011110001111101101','110101110011010101000010101110110','010010001001000011111000010111110','010000100000011010011111110111010','110010011111000101100101111100001','101000100110010110101000110110110','100111011100111100100110100011111','101101110001000101000011111110001','000000001100101000011100100010101','111111100111011100101101101010110','100000101111101000001111100011111','101110101001111100100100111111010','101110101000000110001011010010001','101110101011100000010101111101100','100000100010011010011100000011100','111111101001011001010011111100010'];
+  let shareData = null;
+
+  function manualItems(opt) {
+    if (opt.manual) return null;
+    return { primo: clampInt($('bPrimo').value, 0, 1e9), fate: clampInt($('bFate').value, 0, 1e7), star: clampInt($('bStar').value, 0, 1e8) };
+  }
+
+  function drawQR(ctx, x, y, module, dark, light) {
+    const n = SITE_QR.length, quiet = 4, size = (n + quiet * 2) * module;
+    ctx.fillStyle = light; ctx.fillRect(x, y, size, size);
+    ctx.fillStyle = dark;
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+      if (SITE_QR[r][c] === '1') ctx.fillRect(x + (c + quiet) * module, y + (r + quiet) * module, module, module);
+    }
+    return size;
+  }
+  function paintQrSmall() {
+    const cv = $('qrSmall'), n = SITE_QR.length + 8, mod = 3, dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+    cv.width = n * mod * dpr; cv.height = n * mod * dpr;
+    const ctx = cv.getContext('2d');
+    ctx.scale(dpr, dpr);
+    drawQR(ctx, 0, 0, mod, '#2f3441', '#fffaf0');
+  }
+
+  // 分享圖固定用亮色的羊皮紙配色，跟網頁目前的主題無關
+  const K = {
+    sky1: '#8fb6dd', sky2: '#dbe7f2', surface: '#f4efe6', sunken: '#ebe3d4', head: '#e4d4b2', frame: '#d3bc8e', frameSoft: '#e3d4b4',
+    ink: '#4a5366', muted: '#847b6c', line: '#ddd0b8', gold: '#bd6932', goldSoft: '#f3e2cb', heroA: '#8a4b20', heroB: '#b77630', heroInk: '#fff6e6',
+    violet: '#8d55c2', violetSoft: '#ece1f5', star: '#e0a93a', good: '#3f7f52', warn: '#a8701c', bad: '#b5483b',
+  };
+  const FD = '"Noto Serif TC", "Songti TC", "PMingLiU", serif';
+  const FB = '"Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif';
+  const FN = '"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace';
+  const SW = 1080, SM = 36, SP = 52; // 圖寬、外距、視窗內距
+  const CX = SM + SP, CW = SW - 2 * (SM + SP); // 內容區
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+  function text(ctx, s, x, y, font, color, align) {
+    ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align || 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText(s, x, y);
+    return ctx.measureText(s).width;
+  }
+  // 字太長就縮小字級
+  function fitFont(ctx, s, weight, size, family, maxW) {
+    let f = size;
+    do { ctx.font = `${weight} ${f}px ${family}`; if (ctx.measureText(s).width <= maxW) break; f -= 1; } while (f > 10);
+    return ctx.font;
+  }
+  function sectionTitle(ctx, s, y, right) {
+    text(ctx, '✦', CX, y, `600 26px ${FD}`, K.star);
+    text(ctx, s, CX + 34, y, `600 28px ${FD}`, K.ink);
+    if (right) text(ctx, right, CX + CW, y, `400 18px ${FB}`, K.muted, 'right');
+  }
+
+  // 目標與目前狀態的小標籤
+  function shareChips(d) {
+    const o = d.opt, [C1, C2] = o.character.targets, [W1, W2] = o.weapon.targets;
+    const cons = (n) => (n >= 7 ? '滿命' : (n - 1) + ' 命');
+    const goals = [], status = [];
+    if (C1 + C2 > 0) {
+      if (C1 > 0) goals.push(['c', (C2 > 0 ? '角色一 ' : 'UP 角色 ') + C1 + ' 隻 (' + cons(C1) + ')']);
+      if (C2 > 0) goals.push(['c', '角色二 ' + C2 + ' 隻 (' + cons(C2) + ')']);
+      status.push(['s', '角色池已墊 ' + o.character.pity + ' 抽'], ['s', o.character.guaranteed ? '大保底' : '小保底'], ['s', '明光計數 ' + o.character.radiance]);
+    }
+    if (W1 + W2 > 0) {
+      if (W1 > 0) goals.push(['w', '定軌武器 精 ' + W1]);
+      if (W2 > 0) goals.push(['w', '另一把 UP 精 ' + W2]);
+      if (W1 > 0 && W2 > 0) goals.push(['w', STRAT_NAME[o.weapon.strategy] || '最佳策略']);
+      status.push(['s', '武器池已墊 ' + o.weapon.pity + ' 抽'], ['s', '命定值 ' + o.weapon.fate]);
+      if (o.weapon.guaranteed) status.push(['s', '武器大保底']);
+    }
+    if (o.refund) status.push(['s', '已計入星輝返還']);
+    return goals.concat(status);
+  }
+  function layoutChips(ctx, chips) {
+    ctx.font = `500 20px ${FB}`;
+    let x = 0, row = 0;
+    return {
+      items: chips.map(([k, s]) => {
+        const w = ctx.measureText(s).width + 26;
+        if (x > 0 && x + w > CW) { x = 0; row++; }
+        const it = { k, s, x, row, w };
+        x += w + 10;
+        return it;
+      }),
+      rows: chips.length ? row + 1 : 0,
+    };
+  }
+
+  async function renderShare() {
+    const d = shareData;
+    if (!d || !d.has) return null;
+    const cv = document.createElement('canvas');
+    let ctx = cv.getContext('2d');
+    // 先載入畫圖要用的字型 (Google Fonts 的中文字是分段載入的，要指定實際會用到的字)
+    const sample = '原神期望抽數計算手上的資源原石糾纏之緣無主星輝可抽約一半機率在內運氣好九成最壞情況預算達成率已超過距離還差幾能目標每個里程碑累積你的隻角色二把武器全部到齊需要定軌另一命滿精墊小大保底明光計值星輝返還計入共折抵實付掃描或前往網址起來算看逐次採用社群擬合模型結果僅供參考與米哈遊官方無關順序排拖動策略缺得多分開最佳 0123456789,.%()/★✦';
+    try {
+      await Promise.race([
+        Promise.all([`800 52px ${FD}`, `600 28px ${FD}`, `400 20px ${FB}`, `500 20px ${FB}`, `700 20px ${FB}`, `600 40px ${FN}`, `400 20px ${FN}`].map((f) => document.fonts.load(f, sample))),
+        new Promise((r) => setTimeout(r, 3000)),
+      ]);
+    } catch (e) {}
+
+    const chips = layoutChips(ctx, shareChips(d));
+    const L = {
+      top: 64, title: 56, chips: chips.rows * 46, gap: 34,
+      res: 44 + 112, stats: 2 * 136 + 16, chart: 48 + 330, table: 48 + 48 + d.rows.length * 50, foot: 30 + 214, bottom: 52,
+    };
+    const winH = L.top + L.title + 20 + L.chips + L.gap + L.res + L.gap + L.stats + L.gap + L.chart + L.gap + L.table + L.gap + L.foot + L.bottom;
+    const H = winH + 2 * SM;
+    const scale = 2;
+    cv.width = SW * scale; cv.height = H * scale;
+    ctx = cv.getContext('2d');
+    ctx.scale(scale, scale);
+
+    // 天空背景與雲
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, K.sky1); sky.addColorStop(Math.min(0.6, 700 / H), K.sky2); sky.addColorStop(1, '#e4ecf4');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, SW, H);
+    [[160, 90, 260], [900, 60, 220], [620, 140, 180]].forEach(([x, y, r]) => {
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g; ctx.fillRect(x - r, y - r, 2 * r, 2 * r);
+    });
+
+    // 羊皮紙視窗：金色外框、內側細線、四角括號
+    const wx = SM, wy = SM, ww = SW - 2 * SM, wh = winH;
+    ctx.save();
+    ctx.shadowColor = 'rgba(30,40,70,.22)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 8;
+    roundRect(ctx, wx, wy, ww, wh, 6); ctx.fillStyle = K.surface; ctx.fill();
+    ctx.restore();
+    roundRect(ctx, wx, wy, ww, wh, 6); ctx.strokeStyle = K.frame; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = K.frameSoft; ctx.lineWidth = 1.5; ctx.strokeRect(wx + 12, wy + 12, ww - 24, wh - 24);
+    ctx.fillStyle = K.frame;
+    [[wx + 8, wy + 8, 1, 1], [wx + ww - 8, wy + 8, -1, 1], [wx + 8, wy + wh - 8, 1, -1], [wx + ww - 8, wy + wh - 8, -1, -1]].forEach(([x, y, sx, sy]) => {
+      ctx.fillRect(sx > 0 ? x : x - 24, sy > 0 ? y : y - 3, 24, 3);
+      ctx.fillRect(sx > 0 ? x : x - 3, sy > 0 ? y : y - 24, 3, 24);
+    });
+
+    let y = wy + L.top;
+    // 標題與日期
+    text(ctx, '✦', CX, y + 20, `800 44px ${FD}`, K.star);
+    text(ctx, '原神期望抽數計算', CX + 56, y + 22, `800 50px ${FD}`, K.ink);
+    const now = new Date();
+    const ds = now.getFullYear() + '/' + String(now.getMonth() + 1).padStart(2, '0') + '/' + String(now.getDate()).padStart(2, '0');
+    text(ctx, ds, CX + CW, y + 18, `400 20px ${FN}`, K.muted, 'right');
+    y += L.title + 20;
+
+    // 目標與狀態標籤
+    chips.items.forEach((c) => {
+      const cy = y + c.row * 46;
+      const bg = c.k === 'c' ? K.goldSoft : c.k === 'w' ? K.violetSoft : K.sunken;
+      const fg = c.k === 'c' ? K.gold : c.k === 'w' ? K.violet : K.ink;
+      roundRect(ctx, CX + c.x, cy, c.w, 36, 18); ctx.fillStyle = bg; ctx.fill();
+      if (c.k === 's') { ctx.strokeStyle = K.frameSoft; ctx.lineWidth = 1; ctx.stroke(); }
+      text(ctx, c.s, CX + c.x + 13, cy + 25, `${c.k === 's' ? 400 : 700} 20px ${FB}`, fg);
+    });
+    y += L.chips + L.gap;
+
+    // 手上的資源
+    sectionTitle(ctx, '手上的資源', y + 26);
+    y += 44;
+    const box = (x, w, label, value, sub, hi) => {
+      roundRect(ctx, x, y, w, 100, 6); ctx.fillStyle = hi ? K.goldSoft : K.sunken; ctx.fill();
+      ctx.strokeStyle = hi ? K.gold : K.frameSoft; ctx.lineWidth = hi ? 1.5 : 1; ctx.stroke();
+      text(ctx, label, x + 16, y + 30, `400 19px ${FB}`, K.muted);
+      ctx.font = fitFont(ctx, value, 600, 34, FN, w - 32);
+      ctx.fillStyle = hi ? K.gold : K.ink; ctx.textAlign = 'left'; ctx.fillText(value, x + 16, y + 72);
+      if (sub) text(ctx, sub, x + w - 14, y + 30, `400 16px ${FB}`, K.muted, 'right');
+    };
+    const budgetSub = '約 ' + fmt(d.opt.budget * 160) + ' 原石';
+    if (d.items) {
+      const bw = (CW - 3 * 14) / 4;
+      box(CX, bw, '原石', fmt(d.items.primo));
+      box(CX + (bw + 14), bw, '糾纏之緣', fmt(d.items.fate));
+      box(CX + 2 * (bw + 14), bw, '無主星輝', fmt(d.items.star));
+      box(CX + 3 * (bw + 14), bw, '可抽', fmt(d.opt.budget) + ' 抽', '', true);
+      text(ctx, budgetSub, CX + CW, y + 128, `400 17px ${FB}`, K.muted, 'right');
+    } else {
+      box(CX, CW, '可抽 (直接輸入的總抽數)', fmt(d.opt.budget) + ' 抽', budgetSub, true);
+    }
+    y += 112 + L.gap;
+
+    // 四個重點數字
+    const st = d.st, pB = st.within(d.opt.budget), short = Math.max(0, Math.ceil(st.mean) - d.opt.budget);
+    const cw2 = (CW - 16) / 2;
+    const card = (cx, cy, label, value, unit, sub, hero, valueColor) => {
+      roundRect(ctx, cx, cy, cw2, 136, 6);
+      if (hero) {
+        const g = ctx.createLinearGradient(cx, cy, cx + cw2, cy + 136);
+        g.addColorStop(0, K.heroA); g.addColorStop(1, K.heroB);
+        ctx.fillStyle = g;
+      } else ctx.fillStyle = K.surface;
+      ctx.fill(); ctx.strokeStyle = K.frame; ctx.lineWidth = 1.5; ctx.stroke();
+      const ink = hero ? K.heroInk : K.muted;
+      text(ctx, label, cx + 22, cy + 36, `500 20px ${FB}`, ink);
+      if (hero) text(ctx, '★★★★★', cx + cw2 - 18, cy + 32, `400 15px ${FB}`, 'rgba(255,246,230,.6)', 'right');
+      const vw = text(ctx, value, cx + 22, cy + 90, `600 52px ${FN}`, valueColor || (hero ? K.heroInk : K.ink));
+      if (unit) text(ctx, unit, cx + 22 + vw + 8, cy + 90, `500 22px ${FB}`, ink);
+      ctx.font = fitFont(ctx, sub, 400, 19, FB, cw2 - 44);
+      ctx.fillStyle = ink; ctx.textAlign = 'left'; ctx.fillText(sub, cx + 22, cy + 122);
+    };
+    const meterColor = (p) => (p >= 0.9 ? K.good : p >= 0.5 ? K.warn : K.bad);
+    card(CX, y, d.useNet ? '期望實付抽數' : '期望抽數', fmt(st.mean), '抽',
+      d.useNet ? '共抽約 ' + fmt(d.raw.mean) + ' 抽，星輝折抵 ' + fmt(d.raw.mean - st.mean) + ' 抽 (約 ' + d.off.toFixed(1) + ' 折)' : '約 ' + fmt(st.mean * 160) + ' 原石', true);
+    card(CX + cw2 + 16, y, '一半機率在', fmt(st.p50), '抽內', '運氣好 (10%) ' + fmt(st.p10) + ' 抽');
+    card(CX, y + 152, '九成機率在', fmt(st.p90), '抽內', '最壞情況 ' + fmt(st.max) + ' 抽');
+    card(CX + cw2 + 16, y + 152, '預算 ' + fmt(d.opt.budget) + ' 抽的達成率', pctTxt(pB), '', short > 0 ? '距離期望還差 ' + fmt(short) + ' 抽' : '已超過期望抽數', false, meterColor(pB));
+    y += L.stats + L.gap;
+
+    // 累積達成機率曲線
+    sectionTitle(ctx, d.useNet ? '實付幾抽能達成目標' : '幾抽內能達成目標', y + 26);
+    // 圖例
+    ctx.font = `400 18px ${FB}`;
+    const lg2 = '你的預算', lg1 = '累積達成機率';
+    const w2 = ctx.measureText(lg2).width, w1 = ctx.measureText(lg1).width;
+    let lx = CX + CW - w2;
+    text(ctx, lg2, lx, y + 24, `400 18px ${FB}`, K.muted); ctx.fillStyle = K.ink; ctx.fillRect(lx - 30, y + 16, 22, 3);
+    lx -= w1 + 52;
+    text(ctx, lg1, lx, y + 24, `400 18px ${FB}`, K.muted); ctx.fillStyle = K.gold; ctx.fillRect(lx - 30, y + 16, 22, 3);
+    y += 48;
+    {
+      const m = { l: 62, r: 14, t: 14, b: 40 }, gh = 330;
+      const cdf = st.cdf, budget = d.opt.budget;
+      let xMax = st.max;
+      for (let i = 0; i < cdf.length; i++) if (cdf[i] >= 0.9995) { xMax = i; break; }
+      xMax = Math.max(xMax, Math.min(budget, st.max) + 5, 10);
+      const step = niceStep(xMax);
+      xMax = Math.ceil(xMax / step) * step;
+      const X = (n) => CX + m.l + (n / xMax) * (CW - m.l - m.r);
+      const Y = (p) => y + m.t + (1 - p) * (gh - m.t - m.b);
+      ctx.lineWidth = 1;
+      [0, 0.25, 0.5, 0.75, 1].forEach((p) => {
+        ctx.strokeStyle = K.line; ctx.beginPath(); ctx.moveTo(CX + m.l, Y(p)); ctx.lineTo(CX + CW - m.r, Y(p)); ctx.stroke();
+        text(ctx, Math.round(p * 100) + '%', CX + m.l - 10, Y(p) + 6, `400 16px ${FN}`, K.muted, 'right');
+      });
+      for (let x = 0; x <= xMax + 1e-9; x += step) text(ctx, String(x), X(x), Y(0) + 28, `400 16px ${FN}`, K.muted, 'center');
+      const lim = Math.min(xMax, cdf.length - 1), bx = Math.min(budget, lim);
+      ctx.beginPath(); ctx.moveTo(X(0), Y(0));
+      for (let i = 0; i <= bx; i++) ctx.lineTo(X(i), Y(cdf[i]));
+      ctx.lineTo(X(bx), Y(0)); ctx.closePath();
+      ctx.fillStyle = 'rgba(189,105,50,.16)'; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(X(0), Y(0));
+      for (let i = 0; i <= lim; i++) ctx.lineTo(X(i), Y(cdf[i]));
+      if (lim < xMax) ctx.lineTo(X(xMax), Y(1));
+      ctx.strokeStyle = K.gold; ctx.lineWidth = 3.5; ctx.lineJoin = 'round'; ctx.stroke();
+      [[st.p50, '50%'], [st.p90, '90%']].forEach(([n, lab]) => {
+        if (n > xMax) return;
+        const py = Y(st.within(n));
+        ctx.setLineDash([4, 5]); ctx.strokeStyle = K.muted; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(X(n), Y(0)); ctx.lineTo(X(n), py); ctx.stroke(); ctx.setLineDash([]);
+        ctx.beginPath(); ctx.arc(X(n), py, 6, 0, Math.PI * 2); ctx.fillStyle = K.surface; ctx.fill();
+        ctx.strokeStyle = K.gold; ctx.lineWidth = 3; ctx.stroke();
+        text(ctx, lab + ' · ' + n, X(n) + 10, py + 24, `600 17px ${FN}`, K.ink);
+      });
+      if (budget <= xMax) {
+        ctx.strokeStyle = K.ink; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(X(budget), Y(1) - 4); ctx.lineTo(X(budget), Y(0)); ctx.stroke();
+        const right = X(budget) > CX + CW - 170;
+        text(ctx, '預算 ' + budget + ' 抽', X(budget) + (right ? -8 : 8), Y(1) + 16, `600 17px ${FN}`, K.ink, right ? 'right' : 'left');
+      }
+    }
+    y += 330 + L.gap;
+
+    // 里程碑表
+    sectionTitle(ctx, '每個里程碑', y + 26, '抽數為累計，照排好的順序');
+    y += 48;
+    {
+      const cols = [
+        { t: '目標', x: 16, a: 'left' }, { t: d.useNet ? '期望實付' : '期望抽數', x: 446, a: 'right' },
+        { t: '一半機率', x: 556, a: 'right' }, { t: '九成機率', x: 666, a: 'right' }, { t: '預算內達成', x: CW - 16, a: 'right' },
+      ];
+      const rowH = 50, th = 48, tw = CW, th0 = y;
+      ctx.fillStyle = K.head; ctx.fillRect(CX, y, tw, th);
+      cols.forEach((c) => text(ctx, c.t, CX + c.x, y + 31, `700 18px ${FB}`, K.ink, c.a));
+      y += th;
+      d.rows.forEach((r, i) => {
+        if (i % 2) { ctx.fillStyle = 'rgba(235,227,212,.5)'; ctx.fillRect(CX, y, tw, rowH); }
+        ctx.font = `600 16px ${FN}`;
+        const tgw = ctx.measureText(r.tag).width + 18;
+        roundRect(ctx, CX + 16, y + 12, tgw, 27, 5); ctx.fillStyle = r.kind === 'c' ? K.goldSoft : K.violetSoft; ctx.fill();
+        text(ctx, r.tag, CX + 25, y + 31, `600 16px ${FN}`, r.kind === 'c' ? K.gold : K.violet);
+        ctx.font = fitFont(ctx, r.text, 500, 20, FB, 446 - 120 - (16 + tgw + 12));
+        ctx.fillStyle = K.ink; ctx.textAlign = 'left'; ctx.fillText(r.text, CX + 16 + tgw + 12, y + 32);
+        text(ctx, r.mean.toFixed(1), CX + 446, y + 32, `400 19px ${FN}`, K.ink, 'right');
+        text(ctx, fmt(r.p50), CX + 556, y + 32, `400 19px ${FN}`, K.ink, 'right');
+        text(ctx, fmt(r.p90), CX + 666, y + 32, `400 19px ${FN}`, K.ink, 'right');
+        const mx = CX + 700, mw = 100;
+        roundRect(ctx, mx, y + 21, mw, 9, 4.5); ctx.fillStyle = K.sunken; ctx.fill(); ctx.strokeStyle = K.line; ctx.lineWidth = 1; ctx.stroke();
+        if (r.p > 0) { roundRect(ctx, mx, y + 21, Math.max(9, mw * r.p), 9, 4.5); ctx.fillStyle = meterColor(r.p); ctx.fill(); }
+        text(ctx, pctTxt(r.p), CX + CW - 16, y + 32, `600 19px ${FN}`, meterColor(r.p), 'right');
+        y += rowH;
+      });
+      // 格線
+      ctx.strokeStyle = K.line; ctx.lineWidth = 1;
+      for (let i = 0; i <= d.rows.length; i++) { const ly = th0 + th + i * rowH; ctx.beginPath(); ctx.moveTo(CX, ly); ctx.lineTo(CX + tw, ly); ctx.stroke(); }
+      ctx.strokeStyle = K.frameSoft; ctx.strokeRect(CX, th0, tw, y - th0);
+    }
+    y += L.gap;
+
+    // 頁尾：分隔線、QR code、網址
+    const dg = ctx.createLinearGradient(CX, 0, CX + CW, 0);
+    dg.addColorStop(0, 'rgba(211,188,142,0)'); dg.addColorStop(0.5, K.frame); dg.addColorStop(1, 'rgba(211,188,142,0)');
+    ctx.fillStyle = dg; ctx.fillRect(CX, y, CW, 1.5);
+    y += 30;
+    roundRect(ctx, CX - 4, y - 4, 213, 213, 8); ctx.fillStyle = '#fffaf0'; ctx.fill(); ctx.strokeStyle = K.frame; ctx.lineWidth = 1.5; ctx.stroke();
+    drawQR(ctx, CX, y, 5, '#2f3441', '#fffaf0');
+    const fx = CX + 240;
+    text(ctx, '一起來算算看要幾抽', fx, y + 62, `600 34px ${FD}`, K.ink);
+    text(ctx, SITE.replace('https://', '').replace(/\/$/, ''), fx, y + 106, `600 22px ${FN}`, K.gold);
+    text(ctx, '掃描 QR code 或前往網址，輸入你的墊抽和原石', fx, y + 144, `400 18px ${FB}`, K.muted);
+    text(ctx, '逐抽機率採用社群擬合模型，結果僅供參考，與米哈遊官方無關。', fx, y + 176, `400 16px ${FB}`, K.muted);
+    return cv;
+  }
+
+  let shareBlob = null, shareUrl = '';
+  const shareName = () => { const n = new Date(); return '原神期望抽數-' + n.getFullYear() + String(n.getMonth() + 1).padStart(2, '0') + String(n.getDate()).padStart(2, '0') + '.png'; };
+  async function openShare() {
+    if (!shareData || !shareData.has) return;
+    const dlg = $('shareDlg');
+    $('shareImg').hidden = true; $('shareWait').hidden = false; $('shareWait').textContent = '圖片產生中…';
+    $('shareDl').disabled = true; $('shareSys').hidden = true; $('copyMsg').textContent = '';
+    paintQrSmall();
+    if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+    try {
+      const cv = await renderShare();
+      shareBlob = await new Promise((r) => cv.toBlob(r, 'image/png'));
+      if (shareUrl) URL.revokeObjectURL(shareUrl);
+      shareUrl = URL.createObjectURL(shareBlob);
+      $('shareImg').src = shareUrl;
+      $('shareImg').hidden = false; $('shareWait').hidden = true;
+      $('shareDl').disabled = false;
+      try {
+        const file = new File([shareBlob], shareName(), { type: 'image/png' });
+        $('shareSys').hidden = !(navigator.canShare && navigator.canShare({ files: [file] }));
+      } catch (e) {}
+    } catch (e) {
+      $('shareWait').textContent = '圖片產生失敗，請重新整理後再試一次。';
+    }
+  }
+  $('shareBtn').addEventListener('click', openShare);
+  $('shareX').addEventListener('click', () => $('shareDlg').close());
+  $('shareDlg').addEventListener('click', (e) => { if (e.target === $('shareDlg')) $('shareDlg').close(); });
+  $('shareDl').addEventListener('click', () => {
+    if (!shareUrl) return;
+    const a = document.createElement('a');
+    a.href = shareUrl; a.download = shareName();
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+  $('shareSys').addEventListener('click', async () => {
+    try {
+      const file = new File([shareBlob], shareName(), { type: 'image/png' });
+      await navigator.share({ files: [file], title: '原神期望抽數計算', text: SITE });
+    } catch (e) {}
+  });
+  $('copyUrl').addEventListener('click', () => {
+    const done = (ok) => { $('copyMsg').textContent = ok ? '已複製' : '請手動選取網址複製'; };
+    try {
+      navigator.clipboard.writeText(SITE).then(() => done(true), () => { selectUrl(); done(false); });
+    } catch (e) { selectUrl(); done(false); }
+  });
+  function selectUrl() {
+    try { const r = document.createRange(); r.selectNodeContents($('siteUrl')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e) {}
+  }
 
   const redrawAll = () => { drawChart(); drawWait(); };
   let timer = 0;
