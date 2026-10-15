@@ -1930,9 +1930,9 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     const { st, budget, free } = current;
     $('lgFree').hidden = !(free < budget);
     const W = Math.max(320, Math.round($('chartBox').clientWidth || 800));
-    const H = W < 520 ? 240 : 300;
+    const H = W < 520 ? 258 : 318;
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-    const m = { l: 46, r: 40, t: 14, b: 32 }; // 右邊留空間放 x 軸單位
+    const m = { l: 46, r: 40, t: 32, b: 32 }; // 右邊留空間放 x 軸單位，上面留空間放「預算 N 抽」
     const cdf = st.cdf;
     // x 軸右端就是最壞情況 (最多要幾抽)，刻度取整數間隔，最後再標出最壞情況的抽數
     const xMax = Math.max(st.max, 10);
@@ -1996,9 +1996,12 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       if (budget > xMax || X(budget) - X(free) > 70) label(X(free) - 6, m.t + 30, '課金前 ' + free, 'end');
     }
     if (budget <= xMax) {
-      el('line', { x1: X(budget), x2: X(budget), y1: m.t, y2: Y(0), stroke: c('--ink'), 'stroke-width': 1.5 });
-      const right = X(budget) > W - 120;
-      label(X(budget) + (right ? -6 : 6), m.t + 12, '預算 ' + budget + ' 抽', right ? 'end' : 'start');
+      el('line', { x1: X(budget), x2: X(budget), y1: m.t - 4, y2: Y(0), stroke: c('--ink'), 'stroke-width': 1.5 });
+      // 「預算 N 抽」放在預算線正上方，太靠左右邊界時往內推
+      const bl = el('text', { x: X(budget), y: m.t - 10, 'text-anchor': 'middle', 'font-weight': 700, style: 'fill:' + c('--ink') });
+      bl.textContent = '預算 ' + budget + ' 抽';
+      const hw = (bl.getComputedTextLength ? bl.getComputedTextLength() : 80) / 2;
+      bl.setAttribute('x', Math.max(m.l + hw, Math.min(W - 2 - hw, X(budget))));
       // 預算和曲線的交點：曲線左上方是空白，標籤預設放左邊，太靠左才放右邊
       const pb = st.within(budget), by = Y(pb);
       el('circle', { cx: X(budget), cy: by, r: 5, fill: c('--ink'), stroke: c('--surface'), 'stroke-width': 2 });
@@ -2006,7 +2009,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       const bt = el('text', { x: X(budget) + (left ? -10 : 10), y: by - 8, 'text-anchor': left ? 'end' : 'start', 'font-weight': 700, style: 'fill:' + c('--ink') + ';paint-order:stroke;stroke:' + c('--surface') + ';stroke-width:4px' });
       bt.textContent = budget + ' 抽 · ' + pctTxt(pb);
     } else {
-      label(X(xMax), m.t + 12, '預算 ' + budget + ' 抽 →', 'end');
+      label(W - 2, m.t - 10, '預算 ' + budget + ' 抽 →', 'end');
     }
 
     const hover = el('g', { visibility: 'hidden' });
@@ -2466,7 +2469,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     lx -= w1 + 52;
     text(ctx, lg1, lx, y + 24, `400 18px ${FB}`, K.muted); ctx.fillStyle = K.gold; ctx.fillRect(lx - 30, y + 16, 22, 3);
     y += SH.chartHead;
-    const m = { l: 62, r: 72, t: 14, b: 40 }; // 右邊留空間放 x 軸單位
+    const m = { l: 62, r: 72, t: 42, b: 40 }; // 右邊留空間放 x 軸單位，上面留空間放「預算 N 抽」
     const cdf = st.cdf, budget = d.opt.budget;
     const xMax = Math.max(st.max, 10); // 右端是最壞情況
     const step = niceStep(xMax);
@@ -2502,8 +2505,11 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     if (budget <= xMax) {
       ctx.strokeStyle = K.ink; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(X(budget), Y(1) - 4); ctx.lineTo(X(budget), Y(0)); ctx.stroke();
-      const right = X(budget) > CX + CW - 170;
-      text(ctx, '預算 ' + budget + ' 抽', X(budget) + (right ? -8 : 8), Y(1) + 16, `600 17px ${FN}`, K.ink, right ? 'right' : 'left');
+      // 「預算 N 抽」放在預算線正上方，太靠左右邊界時往內推
+      const bTxt = '預算 ' + budget + ' 抽';
+      ctx.font = `700 17px ${FN}`;
+      const hw = ctx.measureText(bTxt).width / 2;
+      text(ctx, bTxt, Math.max(CX + m.l + hw, Math.min(CX + CW - hw, X(budget))), Y(1) - 14, `700 17px ${FN}`, K.ink, 'center');
       const pb = st.within(budget), by = Y(pb), left = X(budget) - 170 > CX + m.l;
       ctx.beginPath(); ctx.arc(X(budget), by, 7, 0, Math.PI * 2); ctx.fillStyle = K.ink; ctx.fill();
       ctx.strokeStyle = K.surface; ctx.lineWidth = 3; ctx.stroke();
