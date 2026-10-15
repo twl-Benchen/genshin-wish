@@ -229,6 +229,8 @@ code { font-family: var(--f-num); font-size: .88em; }
 .seg button[aria-pressed="true"] { background: var(--btn); color: var(--btn-ink); font-weight: 700; }
 .seg button:hover { color: var(--ink); }
 .seg button[aria-pressed="true"]:hover { color: var(--btn-ink); }
+#waitView button { white-space: nowrap; }
+@media (max-width: 520px) { #waitView { display: flex; width: 100%; } #waitView button { flex: 1; padding-inline: 4px; font-size: .78rem; } }
 .seg.full { display: flex; } .seg.full button { flex: 1; padding-inline: 4px; }
 #wait { display: block; width: 100%; height: auto; touch-action: pan-y; }
 #wait text { font-family: var(--f-num); font-size: 11px; fill: var(--muted); }
@@ -615,6 +617,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
             <button type="button" data-v="hazard" aria-pressed="false">條件機率</button>
             <button type="button" data-v="pmf" aria-pressed="true">首金分布</button>
             <button type="button" data-v="cdf" aria-pressed="false">累計出金率</button>
+            <button type="button" data-v="up" aria-pressed="false">首個 UP</button>
           </div>
         </div>
       </div>
@@ -2012,7 +2015,17 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     hazard: '條件機率：前面一直沒出金的人，在這一抽出金的比例。',
     pmf: '首金分布：下一顆五星剛好落在第幾抽的機率，每根柱子是一抽。',
     cdf: '累計出金率：到這一抽為止已經出金的比例。',
+    up: '',
   };
+  // 首個 UP 的說明依卡池和保底狀態不同
+  function upDesc(md) {
+    if (md.isChar) return md.sure
+      ? '首個 UP：抽到第一隻當期 UP 角色的抽數分布。' + ($('chG').checked ? '目前是大保底，下一顆五星必定是 UP' : '明光計數 3，下一顆五星必定觸發捕獲明光') + '，所以只有一個峰。'
+      : '首個 UP：抽到第一隻當期 UP 角色的抽數分布。左邊的峰是第一顆五星就是 UP，右邊的峰是先歪了常駐，要再等一顆五星。';
+    return md.sure
+      ? '首個 UP：抽到第一把定軌武器的抽數分布。命定值是 1，下一把五星必定是定軌，所以只有一個峰。'
+      : '首個 UP：抽到第一把定軌武器的抽數分布。左邊的峰是第一把五星就是定軌，右邊的峰是先抽到另一把 UP 或常駐，命定值變 1 後下一把必定是定軌。';
+  }
 
   function setupSeg(id, key) {
     $(id).addEventListener('click', (e) => {
@@ -2051,7 +2064,33 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       pmf[n] = j >= 1 && j < d.length ? d[j] : 0;
       acc += pmf[n]; cdf[n] = acc; mean += pmf[n] * n;
     }
-    return { isChar, hz, max, pity, pmf, cdf, mean };
+    const out = { isChar, hz, max, pity, pmf, cdf, mean };
+    if (waitState.view === 'up') {
+      // 首個 UP：用引擎算「目標 1 隻/1 把」的里程碑分布，index = 再抽幾抽，換成含墊抽的第幾抽
+      const ms = isChar
+        ? E.characterMilestones({ targets: [1, 0], pity, guaranteed: $('chG').checked, radiance: clampInt($('chC').value, 0, 3), cr: E.CR_PRESETS.conservative.cr })
+        : E.weaponMilestones({ targets: [1, 0], pity, fate: clampInt($('wpF').value, 0, 1), guaranteed: $('wpG').checked, strategy: 'optimal' });
+      const dd = ms[0];
+      // 第一顆五星就是 UP 的機率
+      let first;
+      if (isChar) {
+        const cr = E.CR_PRESETS.conservative.cr, c0 = clampInt($('chC').value, 0, 3);
+        first = $('chG').checked ? 1 : 0.5 + 0.5 * (cr[c0] || 0);
+      } else {
+        first = clampInt($('wpF').value, 0, 1) ? 1 : $('wpG').checked ? 0.5 : 0.375;
+      }
+      // 最壞情況：必中時是一顆五星的硬保底，否則要兩顆五星
+      const umax = first >= 1 ? max : 2 * max;
+      const upmf = new Float64Array(umax + 1), ucdf = new Float64Array(umax + 1);
+      let a = 0, um = 0;
+      for (let n = 1; n <= umax; n++) {
+        const j = n - pity;
+        upmf[n] = j >= 1 && j < dd.length ? dd[j] : 0;
+        a += upmf[n]; ucdf[n] = a; um += upmf[n] * n;
+      }
+      Object.assign(out, { up: true, umax, upmf, ucdf, umean: um, first, sure: first >= 1 });
+    }
+    return out;
   }
 
   function drawWait() {
@@ -2060,7 +2099,8 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     const md = waitModel();
     const { max, pity, pmf, cdf } = md;
     const view = waitState.view;
-    $('waitDesc').textContent = VIEW_DESC[view] + (pity > 0 ? ' 目前從已墊 ' + pity + ' 抽開始算。' : '');
+    $('waitDesc').textContent = (view === 'up' ? upDesc(md) : VIEW_DESC[view]) + (pity > 0 ? ' 目前從已墊 ' + pity + ' 抽開始算。' : '');
+    if (view === 'up') { drawUp(md); return; }
 
     const W = Math.max(320, Math.round($('waitBox').clientWidth || 800));
     const H = W < 520 ? 220 : 260;
@@ -2134,6 +2174,67 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     $('waitFacts').innerHTML = facts.map(([k, v]) => `<span>${k} <b>${v}</b></span>`).join('');
   }
 
+  // 首個 UP 的分布：柱狀圖，x 軸到最壞情況，用虛線分開「第一顆就是 UP」和「先歪再等一顆」兩段
+  function drawUp(md) {
+    const { pity, umax, upmf, ucdf, max } = md;
+    const W = Math.max(320, Math.round($('waitBox').clientWidth || 800));
+    const H = W < 520 ? 220 : 260;
+    svg2.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    const m = { l: 46, r: 14, t: 14, b: 30 };
+    let pk = 0, pkN = 1;
+    for (let n = 1; n <= umax; n++) if (upmf[n] > pk) { pk = upmf[n]; pkN = n; }
+    const stp = pk > 0.2 ? 0.1 : pk > 0.08 ? 0.04 : pk > 0.04 ? 0.02 : 0.01;
+    const yMax = Math.min(1, Math.ceil((pk * 1.15) / stp) * stp);
+    const slot = (W - m.l - m.r) / umax;
+    const X = (n) => m.l + (n - 0.5) * slot;
+    const Y = (p) => m.t + (1 - p / yMax) * (H - m.t - m.b);
+    const css = getComputedStyle(document.documentElement);
+    const c = (name) => css.getPropertyValue(name).trim();
+    [0, 0.25, 0.5, 0.75, 1].map((k) => k * yMax).forEach((p) => {
+      el('line', { x1: m.l, x2: W - m.r, y1: Y(p), y2: Y(p), stroke: c('--line'), 'stroke-width': 1 }, svg2);
+      const t = el('text', { x: m.l - 8, y: Y(p) + 4, 'text-anchor': 'end' }, svg2);
+      t.textContent = (p * 100).toFixed(yMax < 0.2 ? 1 : 0).replace(/\.0$/, '') + '%';
+    });
+    const xt = [1];
+    const stepX = md.isChar ? 30 : 25;
+    for (let n = stepX; n < umax - stepX / 2; n += stepX) xt.push(n);
+    if (!xt.includes(max)) xt.push(max);
+    xt.push(umax);
+    xt.sort((a, b) => a - b).forEach((n, i, arr) => {
+      if (i > 0 && X(n) - X(arr[i - 1]) < 26) return;
+      const t = el('text', { x: X(n), y: H - m.b + 18, 'text-anchor': 'middle', 'font-weight': n === umax ? 700 : 400 }, svg2); t.textContent = n;
+    });
+    // 第一顆五星最晚在第 max 抽出現，之後的部分一定是先歪了
+    if (!md.sure && max < umax) {
+      const bx = m.l + max * slot;
+      el('line', { x1: bx, x2: bx, y1: m.t, y2: Y(0), stroke: c('--muted'), 'stroke-dasharray': '3 4', 'stroke-width': 1 }, svg2);
+      const t1 = el('text', { x: bx - 6, y: m.t + 12, 'text-anchor': 'end' }, svg2); t1.textContent = (md.isChar ? '第一顆就是 UP ' : '第一把就是定軌 ') + pctTxt(md.first);
+      const t2 = el('text', { x: bx + 6, y: m.t + 12, 'text-anchor': 'start' }, svg2); t2.textContent = (md.isChar ? '先歪' : '先抽到別把') + ' ' + pctTxt(1 - md.first);
+    }
+    const bw = Math.max(1, slot * 0.72);
+    for (let n = 1; n <= umax; n++) {
+      if (upmf[n] <= 0) continue;
+      el('rect', { x: X(n) - bw / 2, y: Y(upmf[n]), width: bw, height: Math.max(0.5, Y(0) - Y(upmf[n])), fill: c('--gold'), 'fill-opacity': 0.9 }, svg2);
+    }
+    if (pity > 0) {
+      el('rect', { x: m.l, y: m.t, width: pity * slot, height: Y(0) - m.t, fill: c('--muted'), 'fill-opacity': 0.08 }, svg2);
+      const t = el('text', { x: m.l + 6, y: Y(0) - 8 }, svg2); t.textContent = '已墊 ' + pity + ' 抽';
+    }
+    const hover = el('g', { visibility: 'hidden' }, svg2);
+    el('line', { y1: m.t, y2: Y(0), stroke: c('--muted'), 'stroke-width': 1 }, hover);
+    el('circle', { r: 4.5, fill: c('--gold'), stroke: c('--surface'), 'stroke-width': 2 }, hover);
+    wgeom = { W, m, slot, max: umax, X, Y, val: (n) => upmf[n], hover, md };
+    const q = (p) => { for (let n = 1; n <= umax; n++) if (ucdf[n] >= p) return n; return umax; };
+    const facts = [
+      ['平均第', Math.round(md.umean * 10) / 10 + ' 抽'],
+      ['一半機率在', q(0.5) + ' 抽內'],
+      ['九成機率在', q(0.9) + ' 抽內'],
+      ['最壞情況', umax + ' 抽'],
+      ['機率最高', '第 ' + pkN + ' 抽 ' + (pk * 100).toFixed(2) + '%'],
+    ];
+    $('waitFacts').innerHTML = facts.map(([k, v]) => `<span>${k} <b>${v}</b></span>`).join('');
+  }
+
   function onWaitMove(ev) {
     if (!wgeom) return;
     const rect = svg2.getBoundingClientRect();
@@ -2147,7 +2248,9 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     wgeom.hover.setAttribute('visibility', 'visible');
     const tip = $('tip2');
     tip.hidden = false;
-    tip.textContent = '第 ' + n + ' 抽\n條件機率 ' + (Math.min(1, md.hz(n)) * 100).toFixed(1) + '%\n首金 ' + (md.pmf[n] * 100).toFixed(2) + '%\n累計 ' + pctTxt(md.cdf[n]);
+    tip.textContent = md.up
+      ? '第 ' + n + ' 抽\n首個 UP 落在這抽 ' + (md.upmf[n] * 100).toFixed(2) + '%\n到這抽已拿到 ' + pctTxt(md.ucdf[n])
+      : '第 ' + n + ' 抽\n條件機率 ' + (Math.min(1, md.hz(n)) * 100).toFixed(1) + '%\n首金 ' + (md.pmf[n] * 100).toFixed(2) + '%\n累計 ' + pctTxt(md.cdf[n]);
     const scale = rect.width / wgeom.W;
     tip.style.left = Math.max(60, Math.min(rect.width - 60, wgeom.X(n) * scale)) + 'px';
     tip.style.top = Math.max(40, wgeom.Y(wgeom.val(n)) * scale) + 'px';
