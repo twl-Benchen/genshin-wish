@@ -288,8 +288,18 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .info-pop a { color: var(--gold); font-weight: 700; text-underline-offset: 3px; word-break: break-word; }
 
 /* 目標選單 + 加一個目標的圓鈕 */
-.pick { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
-.addbtn { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--frame); background: var(--btn); color: var(--btn-ink); font: 700 1.15rem/1 var(--f-num); cursor: pointer; display: inline-grid; place-items: center; padding: 0; }
+.pick { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+.pick.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+.pk { display: grid; gap: 2px; min-width: 0; }
+.sublab { font-size: .74rem; color: var(--muted); }
+/* 沒有選目標時，墊抽、保底這些設定整塊變淡 */
+.pool-rest { display: grid; gap: 12px; transition: opacity .15s; }
+.pool-rest.idle { opacity: .4; }
+/* 明光計數、命定值的分段按鈕 */
+.num-seg { display: flex; height: 36px; }
+.num-seg button { flex: 1; font-family: var(--f-num); font-size: .92rem; padding: 0 4px; }
+.addbtn { height: 36px; padding: 0 12px; border-radius: 999px; border: 1.5px solid var(--frame); background: var(--btn); color: var(--btn-ink); font: 500 .82rem/1 var(--f-body); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.addbtn b { font: 700 1rem/1 var(--f-num); }
 .addbtn.rm { background: var(--surface); color: var(--muted); border-color: var(--frame-soft); }
 .addbtn:hover { filter: brightness(1.08); }
 .second { padding: 10px 12px; border: 1px dashed var(--frame); border-radius: 6px; display: grid; gap: 10px; }
@@ -347,8 +357,9 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       <fieldset>
         <legend><span class="dot c"></span>角色活動祈願</legend>
         <div class="field">
-          <label for="chT" id="chTLab">想抽到幾隻 UP 角色</label>
-          <div class="pick">
+          <span class="lab-row"><label for="chT" id="chTLab">想抽到幾隻 UP 角色</label><span class="info-wrap" id="ch2Info" hidden><button type="button" class="info" aria-label="兩隻角色說明" aria-expanded="false">!</button><span class="info-pop" role="tooltip">「角色活動祈願」和「角色活動祈願-2」共享墊抽、大保底和明光計數，每次出五星前都可以自己選在哪個池子抽，所以總抽數只看總共要幾隻 UP。兩隻角色的先後順序可以在右邊的里程碑表拖動調整。</span></span></span>
+          <div class="pick" id="chPick">
+            <div class="pk"><label class="sublab" for="chT" id="chSub1" hidden>角色一</label>
             <select id="chT">
               <option value="0">不抽角色</option>
               <option value="1">1 隻 (0 命)</option>
@@ -358,14 +369,8 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
               <option value="5">5 隻 (4 命)</option>
               <option value="6">6 隻 (5 命)</option>
               <option value="7">7 隻 (滿命)</option>
-            </select>
-            <button type="button" class="addbtn" id="chAdd" aria-label="再加一隻 UP 角色 (另一個角色活動祈願)" title="再加一隻 UP 角色">+</button>
-          </div>
-        </div>
-        <div class="second" id="ch2Row" hidden>
-          <div class="field">
-            <span class="lab-row"><label for="chT2">角色二 (另一個角色活動祈願) 想抽幾隻</label><span class="info-wrap"><button type="button" class="info" aria-label="兩隻角色說明" aria-expanded="false">!</button><span class="info-pop" role="tooltip">「角色活動祈願」和「角色活動祈願-2」共享墊抽、大保底和明光計數，每次出五星前都可以自己選在哪個池子抽，所以總抽數只看總共要幾隻 UP。兩隻角色的先後順序可以在右邊的里程碑表拖動調整。</span></span></span>
-            <div class="pick">
+            </select></div>
+            <div class="pk" id="ch2Box" hidden><label class="sublab" for="chT2">角色二</label>
               <select id="chT2">
                 <option value="1" selected>1 隻 (0 命)</option>
                 <option value="2">2 隻 (1 命)</option>
@@ -374,29 +379,29 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
                 <option value="5">5 隻 (4 命)</option>
                 <option value="6">6 隻 (5 命)</option>
                 <option value="7">7 隻 (滿命)</option>
-              </select>
-              <button type="button" class="addbtn rm" id="chRm" aria-label="移除角色二" title="移除角色二">−</button>
-            </div>
+              </select></div>
+            <button type="button" class="addbtn" id="chAdd" aria-label="再加一隻 UP 角色 (另一個角色活動祈願)"><b>+</b>另一個角色</button>
+            <button type="button" class="addbtn rm" id="chRm" aria-label="移除角色二" hidden>移除</button>
           </div>
           <input type="hidden" id="ch2On" value="0">
         </div>
+        <div class="pool-rest" id="chRest">
         <div class="row2">
           <div class="field">
             <label for="chPity">已墊抽數</label>
             <div class="inline">
-              <button type="button" class="gbtn small" data-hist="char" aria-label="從祈願紀錄推算角色池墊抽"><span class="ic">≡</span>看紀錄</button>
+              <button type="button" class="gbtn small" data-hist="char" aria-label="從祈願紀錄推算角色池墊抽"><span class="ic">≡</span>從紀錄算</button>
               <input type="number" id="chPity" min="0" max="89" value="20" inputmode="numeric">
             </div>
           </div>
           <div class="field">
-            <span class="lab-row"><label for="chC">明光計數</label><span class="info-wrap"><button type="button" class="info" aria-label="明光計數說明" aria-expanded="false">!</button><span class="info-pop" role="tooltip">明光計數是推測模型裡的狀態：小保底歪一次加 1，贏一次減 1，最多 3。官方只確認連續三輪「先歪，再靠大保底拿到 UP」之後，下一顆五星必定觸發捕獲明光。歪了一定是大保底，所以勾「目前是大保底」時會自動調成至少 1。不確定的話，小保底選 0，大保底選 1。</span></span></span>
-            <div class="page-slide mini">
-              <input type="range" id="chC" min="0" max="3" step="1" value="1">
-              <div class="page-ticks" data-for="chC"><button type="button" data-v="0" style="left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * 0)" aria-label="0">0</button><button type="button" data-v="1" style="left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * 0.333333)" aria-label="1">1</button><button type="button" data-v="2" style="left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * 0.666667)" aria-label="2">2</button><button type="button" data-v="3" style="left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * 1)" aria-label="3">3</button></div>
-            </div>
+            <span class="lab-row"><label for="chC">明光計數</label><span class="info-wrap"><button type="button" class="info" aria-label="明光計數說明" aria-expanded="false">!</button><span class="info-pop" role="tooltip">明光計數是推測模型裡的狀態：小保底歪一次加 1，贏一次減 1，最多 3。官方只確認連續三輪「先歪，再靠大保底拿到 UP」之後，下一顆五星必定觸發捕獲明光。歪了一定是大保底，所以勾「大保底」時會自動調成至少 1。不確定的話，小保底選 0，大保底選 1。</span></span></span>
+            <div class="seg num-seg" data-for="chC" role="group" aria-label="明光計數"><button type="button" data-v="0">0</button><button type="button" data-v="1">1</button><button type="button" data-v="2">2</button><button type="button" data-v="3">3</button></div>
+            <input type="hidden" id="chC" value="1">
           </div>
         </div>
-        <label class="check"><input type="checkbox" id="chG"> 目前是大保底 (上次五星歪了)</label>
+        <label class="check"><input type="checkbox" id="chG"> 大保底 (上次五星角色是常駐)</label>
+        </div>
       </fieldset>
 
       <hr>
@@ -405,7 +410,8 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
         <legend><span class="dot w"></span>武器活動祈願</legend>
         <div class="field">
           <label for="wpT" id="wpTLab">想抽到幾把定軌武器</label>
-          <div class="pick">
+          <div class="pick" id="wpPick">
+            <div class="pk"><label class="sublab" for="wpT" id="wpSub1" hidden>定軌的那把</label>
             <select id="wpT">
               <option value="0">不抽武器</option>
               <option value="1" selected>1 把 (精 1)</option>
@@ -413,24 +419,21 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
               <option value="3">3 把 (精 3)</option>
               <option value="4">4 把 (精 4)</option>
               <option value="5">5 把 (精 5)</option>
-            </select>
-            <button type="button" class="addbtn" id="wpAdd" aria-label="另一把 UP 武器也要" title="另一把 UP 武器也要">+</button>
-          </div>
-        </div>
-        <div class="second" id="wp2Row" hidden>
-          <div class="field">
-            <label for="wpT2">另一把 UP 武器想抽幾把</label>
-            <div class="pick">
+            </select></div>
+            <div class="pk" id="wp2Box" hidden><label class="sublab" for="wpT2">另一把 UP</label>
               <select id="wpT2">
                 <option value="1" selected>1 把 (精 1)</option>
                 <option value="2">2 把 (精 2)</option>
                 <option value="3">3 把 (精 3)</option>
                 <option value="4">4 把 (精 4)</option>
                 <option value="5">5 把 (精 5)</option>
-              </select>
-              <button type="button" class="addbtn rm" id="wpRm" aria-label="移除另一把 UP 武器" title="移除另一把 UP 武器">−</button>
-            </div>
+              </select></div>
+            <button type="button" class="addbtn" id="wpAdd" aria-label="另一把 UP 武器也要"><b>+</b>另一把武器</button>
+            <button type="button" class="addbtn rm" id="wpRm" aria-label="移除另一把 UP 武器" hidden>移除</button>
           </div>
+        </div>
+        <div class="pool-rest" id="wpRest">
+        <div class="second" id="wp2Row" hidden>
           <div class="field">
             <span class="lab-row"><label for="wpStrat">兩把都要時的定軌方式</label><span class="info-wrap"><button type="button" class="info" aria-label="定軌方式說明" aria-expanded="false">!</button><span class="info-pop" role="tooltip">5.0 起命定值只要 1 點，兩把 UP 都要的時候，歪到常駐武器 (有大保底、命定值 1) 不一定要繼續抽。先取消定軌再重新定軌，命定值歸 0，大保底還在，下一把五星一定是兩把 UP 之一，抽到哪一把都有用。兩把各 1 把時，這樣比繼續抽少 12%；從頭算省約 3%，各 5 把省約 1.4% (跟「定軌缺得多的那把」比)。最佳策略會在每把五星之前自動選最划算的做法，下面也會告訴你現在該怎麼做。<br><a href="https://www.bilibili.com/video/BV1UQzBYFEut" target="_blank" rel="noopener noreferrer">看影片：原神武器池重大概率漏洞，5.0 後最優抽卡策略解析 (一棵平衡樹)</a></span></span></span>
             <select id="wpStrat">
@@ -445,23 +448,22 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
           <div class="field">
             <label for="wpPity">已墊抽數</label>
             <div class="inline">
-              <button type="button" class="gbtn small" data-hist="weapon" aria-label="從祈願紀錄推算武器池墊抽"><span class="ic">≡</span>看紀錄</button>
+              <button type="button" class="gbtn small" data-hist="weapon" aria-label="從祈願紀錄推算武器池墊抽"><span class="ic">≡</span>從紀錄算</button>
               <input type="number" id="wpPity" min="0" max="76" value="0" inputmode="numeric">
             </div>
           </div>
           <div class="field">
             <span class="lab-row"><label for="wpF">命定值 (本期)</label><span class="info-wrap"><button type="button" class="info" aria-label="命定值說明" aria-expanded="false">!</button><span class="info-pop" role="tooltip">5.0 起命定值上限是 1。抽到的五星不是定軌那把 (另一把 UP 或常駐)，命定值變成 1，下一把五星必定是定軌；抽到定軌就歸 0。這期武器池結束、換定軌或取消定軌都會讓命定值歸 0，所以上一期留下的命定值不算，這裡要選 0。</span></span></span>
-            <div class="page-slide mini">
-              <input type="range" id="wpF" min="0" max="1" step="1" value="0">
-              <div class="page-ticks" data-for="wpF"><button type="button" data-v="0" style="left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * 0)" aria-label="0">0</button><button type="button" data-v="1" style="left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * 1)" aria-label="1">1</button></div>
-            </div>
+            <div class="seg num-seg" data-for="wpF" role="group" aria-label="命定值"><button type="button" data-v="0">0</button><button type="button" data-v="1">1</button></div>
+            <input type="hidden" id="wpF" value="0">
           </div>
         </div>
         <div class="check-row">
-          <label class="check"><input type="checkbox" id="wpG"> 上一把五星是常駐武器 (大保底)</label>
+          <label class="check"><input type="checkbox" id="wpG"> 大保底 (上次五星武器是常駐)</label>
           <span class="info-wrap"><button type="button" class="info" aria-label="武器大保底說明" aria-expanded="false">!</button><span class="info-pop" role="tooltip">武器池每出一把五星，75% 是兩把 UP 之一 (各 37.5%)，25% 是常駐武器。上一把是常駐的話，下一把五星必定是 UP，兩把各 50%。這個大保底會跨期保留，跟命定值不一樣。例如上一期命定值是 1、又是歪常駐留下來的，這一期命定值歸 0，但下一把五星還是 50% 是你要的那把。</span></span>
         </div>
         <p class="advice" id="wpAdvice" hidden></p>
+        </div>
       </fieldset>
 
       <hr>
@@ -608,7 +610,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
         <div>
           <h3>捕獲明光模型 (網頁用保守模型)</h3>
           <ul>
-            <li>明光計數：小保底歪一次加 1，贏一次減 1，最多 3。歪了之後一定是大保底，所以勾「目前是大保底」時，計數會自動至少調成 1 (還是可以自己改)</li>
+            <li>明光計數：小保底歪一次加 1，贏一次減 1，最多 3。歪了之後一定是大保底，所以勾「大保底」時，計數會自動至少調成 1 (還是可以自己改)</li>
             <li>保守模型：計數到 3 才必定觸發明光，其他時候照 50/50。長期小保底勝率約 55.6%，最接近官方的 55%</li>
             <li>社群推測模型：計數 2 時本來會歪的有一半觸發明光 (等於 75% 不歪)，長期勝率約 57.9%，比官方高，所以不採用</li>
             <li>網頁一律用保守模型計算，規劃時寧可多估一點抽數</li>
@@ -844,23 +846,22 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   paintBudgetMode();
   paintDemo();
 
-  // ---- 明光計數、命定值拉桿：拖動或點刻度 ----
+  // ---- 明光計數、命定值：分段按鈕 ----
   function paintMini(id) {
     const v = $(id).value;
-    document.querySelectorAll(`.page-ticks[data-for="${id}"] button`).forEach((b) => b.classList.toggle('on', b.dataset.v === v));
+    document.querySelectorAll(`.num-seg[data-for="${id}"] button`).forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === v ? 'true' : 'false'));
   }
-  document.querySelectorAll('.page-ticks[data-for]').forEach((box) => {
+  document.querySelectorAll('.num-seg[data-for]').forEach((box) => {
     const id = box.dataset.for;
-    if (!/^\d+$/.test($(id).value)) $(id).value = $(id).min; // 舊版存的值不合法時退回最小值
+    if (!box.querySelector(`button[data-v="${$(id).value}"]`)) $(id).value = '0'; // 舊版存的值不合法時退回 0
     paintMini(id);
-    $(id).addEventListener('input', () => paintMini(id));
     box.addEventListener('click', (e) => {
       const b = e.target.closest('button');
       if (!b) return;
       $(id).value = b.dataset.v; paintMini(id); schedule();
     });
   });
-  // 勾「目前是大保底」代表上次小保底歪了，明光計數至少是 1；只在勾下去的當下調整，之後使用者還是可以改回 0
+  // 勾「大保底」代表上次小保底歪了，明光計數至少是 1；只在勾下去的當下調整，之後使用者還是可以改回 0
   function bumpRadiance() {
     if ($('chG').checked && $('chC').value === '0') { $('chC').value = '1'; paintMini('chC'); }
   }
@@ -927,10 +928,12 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   // ---- 第二隻角色、另一把 UP 武器：按 + 加入，按 − 移除 ----
   function paintSecond() {
     const ch2 = $('ch2On').value === '1', wp2 = $('wp2On').value === '1';
-    $('ch2Row').hidden = !ch2; $('chAdd').hidden = ch2;
-    $('wp2Row').hidden = !wp2; $('wpAdd').hidden = wp2;
-    $('chTLab').textContent = ch2 ? '角色一想抽幾隻' : '想抽到幾隻 UP 角色';
-    $('wpTLab').textContent = wp2 ? '定軌的那把想抽幾把' : '想抽到幾把定軌武器';
+    // 兩個目標時選單排在同一行，左右兩塊
+    $('ch2Box').hidden = !ch2; $('chSub1').hidden = !ch2; $('ch2Info').hidden = !ch2;
+    $('chAdd').hidden = ch2; $('chRm').hidden = !ch2; $('chPick').classList.toggle('two', ch2);
+    $('wp2Box').hidden = !wp2; $('wpSub1').hidden = !wp2; $('wp2Row').hidden = !wp2;
+    $('wpAdd').hidden = wp2; $('wpRm').hidden = !wp2; $('wpPick').classList.toggle('two', wp2);
+    $('wpTLab').textContent = wp2 ? '想抽到幾把 UP 武器' : '想抽到幾把定軌武器';
     // 只有第二個目標時，第一個選單的 0 改叫「這隻不抽」
     $('chT').options[0].textContent = ch2 ? '這隻不抽' : '不抽角色';
     $('wpT').options[0].textContent = wp2 ? '這把不抽' : '不抽武器';
@@ -956,6 +959,8 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     if (manual && bm.items) ITEMS.forEach((id) => { v[id] = bm.items[id]; });
     const C1 = clampInt(v.chT, 0, 7), C2 = v.ch2On === '1' ? clampInt(v.chT2, 0, 7) : 0;
     const W1 = clampInt(v.wpT, 0, 5), W2 = v.wp2On === '1' ? clampInt(v.wpT2, 0, 5) : 0;
+    $('chRest').classList.toggle('idle', C1 + C2 === 0);
+    $('wpRest').classList.toggle('idle', W1 + W2 === 0);
     const want = { c: C1, d: C2, w: W1 + W2 };
     v.order = reconcileOrder(v.order, want);
     $('order').value = v.order;
@@ -1212,8 +1217,10 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     if (!drag) return;
     const y = e.clientY;
     const prev = drag.tr.previousElementSibling, next = drag.tr.nextElementSibling;
-    if (prev) { const r = prev.getBoundingClientRect(); if (y < r.top + r.height / 2) { tbody.insertBefore(drag.tr, prev); return; } }
-    if (next) { const r = next.getBoundingClientRect(); if (y > r.top + r.height / 2) tbody.insertBefore(next, drag.tr); }
+    // 同一類 (例如角色一) 的里程碑保持先後，第 2 隻不會跑到第 1 隻上面
+    const k = drag.tr.dataset.k;
+    if (prev && prev.dataset.k !== k) { const r = prev.getBoundingClientRect(); if (y < r.top + r.height / 2) { tbody.insertBefore(drag.tr, prev); return; } }
+    if (next && next.dataset.k !== k) { const r = next.getBoundingClientRect(); if (y > r.top + r.height / 2) tbody.insertBefore(next, drag.tr); }
   });
   const endDrag = () => {
     if (!drag) return;
@@ -1230,7 +1237,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     e.preventDefault();
     const i = +g.dataset.i, j = e.key === 'ArrowUp' ? i - 1 : i + 1;
     const seq = $('order').value.split('');
-    if (j < 0 || j >= seq.length) return;
+    if (j < 0 || j >= seq.length || seq[i] === seq[j]) return; // 同一類不互換
     [seq[i], seq[j]] = [seq[j], seq[i]];
     commitOrder(seq.join(''), j);
   });
@@ -1282,7 +1289,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       <div class="stat hero"><span class="k">${useNet ? '期望實付抽數' : '期望抽數'}</span><span class="v">${fmt(st.mean)}<small>抽</small></span><span class="s">${useNet
         ? '共抽約 ' + fmt(raw.mean) + ' 抽，星輝折抵 ' + fmt(raw.mean - st.mean) + ' 抽 (約 ' + off.toFixed(1) + ' 折)'
         : '約 ' + fmt(st.mean * 160) + ' 原石'}</span></div>
-      <div class="stat"><span class="k">一半機率在</span><span class="v">${fmt(st.p50)}<small>抽內</small></span><span class="s">運氣好 (10%) ${fmt(st.p10)} 抽</span></div>
+      <div class="stat"><span class="k">一半機率在</span><span class="v">${fmt(st.p50)}<small>抽內</small></span><span class="s">一成機率在 ${fmt(st.p10)} 抽內</span></div>
       <div class="stat"><span class="k">九成機率在</span><span class="v">${fmt(st.p90)}<small>抽內</small></span><span class="s">最壞情況 ${fmt(st.max)} 抽</span></div>
       <div class="stat"><span class="k">預算 ${fmt(opt.budget)} 抽的達成率</span><span class="v" style="color: var(--${meterClass(pB)})">${pctTxt(pB)}</span><span class="s">${short > 0 ? '距離期望還差 ' + fmt(short) + ' 抽' : '已超過期望抽數'}</span></div>`
       : `<div class="stat" style="grid-column: 1 / -1"><span class="k">尚未設定目標</span><span class="s">在左側選擇想抽的角色或武器數量。</span></div>`;
@@ -1349,11 +1356,9 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
     const m = { l: 46, r: 40, t: 14, b: 32 }; // 右邊留空間放 x 軸單位
     const cdf = st.cdf;
-    let xMax = st.max;
-    for (let i = 0; i < cdf.length; i++) if (cdf[i] >= 0.9995) { xMax = i; break; }
-    xMax = Math.max(xMax, Math.min(budget, st.max) + 5, 10);
+    // x 軸右端就是最壞情況 (最多要幾抽)，刻度取整數間隔，最後再標出最壞情況的抽數
+    const xMax = Math.max(st.max, 10);
     const step = niceStep(xMax);
-    xMax = Math.ceil(xMax / step) * step;
     const X = (n) => m.l + (n / xMax) * (W - m.l - m.r);
     const Y = (p) => m.t + (1 - p) * (H - m.t - m.b);
 
@@ -1366,8 +1371,10 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       const t = el('text', { x: m.l - 8, y: Y(p) + 4, 'text-anchor': 'end' }); t.textContent = Math.round(p * 100) + '%';
     });
     for (let x = 0; x <= xMax + 1e-9; x += step) {
+      if (X(xMax) - X(x) < 34) continue; // 太靠近右端的刻度讓給最壞情況
       const t = el('text', { x: X(x), y: H - m.b + 18, 'text-anchor': 'middle' }); t.textContent = x;
     }
+    const tEnd = el('text', { x: X(xMax), y: H - m.b + 18, 'text-anchor': 'middle', 'font-weight': 700 }); tEnd.textContent = xMax;
     const unit = el('text', { x: W - 2, y: H - m.b + 18, 'text-anchor': 'end' }); unit.textContent = '抽數';
 
     // 曲線與預算內面積
@@ -1738,7 +1745,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     };
     card(CX, y, d.useNet ? '期望實付抽數' : '期望抽數', fmt(st.mean), '抽',
       d.useNet ? '共抽約 ' + fmt(d.raw.mean) + ' 抽，星輝折抵 ' + fmt(d.raw.mean - st.mean) + ' 抽 (約 ' + d.off.toFixed(1) + ' 折)' : '約 ' + fmt(st.mean * 160) + ' 原石', true);
-    card(CX + cw2 + 16, y, '一半機率在', fmt(st.p50), '抽內', '運氣好 (10%) ' + fmt(st.p10) + ' 抽');
+    card(CX + cw2 + 16, y, '一半機率在', fmt(st.p50), '抽內', '一成機率在 ' + fmt(st.p10) + ' 抽內');
     card(CX, y + 152, '九成機率在', fmt(st.p90), '抽內', '最壞情況 ' + fmt(st.max) + ' 抽');
     card(CX + cw2 + 16, y + 152, '預算 ' + fmt(d.opt.budget) + ' 抽的達成率', pctTxt(pB), '', short > 0 ? '距離期望還差 ' + fmt(short) + ' 抽' : '已超過期望抽數', false, meterColor(pB));
     return y + SH.stats;
@@ -1758,11 +1765,8 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     y += SH.chartHead;
     const m = { l: 62, r: 72, t: 14, b: 40 }; // 右邊留空間放 x 軸單位
     const cdf = st.cdf, budget = d.opt.budget;
-    let xMax = st.max;
-    for (let i = 0; i < cdf.length; i++) if (cdf[i] >= 0.9995) { xMax = i; break; }
-    xMax = Math.max(xMax, Math.min(budget, st.max) + 5, 10);
+    const xMax = Math.max(st.max, 10); // 右端是最壞情況
     const step = niceStep(xMax);
-    xMax = Math.ceil(xMax / step) * step;
     const X = (n) => CX + m.l + (n / xMax) * (CW - m.l - m.r);
     const Y = (p) => y + m.t + (1 - p) * (gh - m.t - m.b);
     ctx.lineWidth = 1;
@@ -1770,7 +1774,8 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       ctx.strokeStyle = K.line; ctx.beginPath(); ctx.moveTo(CX + m.l, Y(p)); ctx.lineTo(CX + CW - m.r, Y(p)); ctx.stroke();
       text(ctx, Math.round(p * 100) + '%', CX + m.l - 10, Y(p) + 6, `400 16px ${FN}`, K.muted, 'right');
     });
-    for (let x = 0; x <= xMax + 1e-9; x += step) text(ctx, String(x), X(x), Y(0) + 28, `400 16px ${FN}`, K.muted, 'center');
+    for (let x = 0; x <= xMax + 1e-9; x += step) if (X(xMax) - X(x) >= 48) text(ctx, String(x), X(x), Y(0) + 28, `400 16px ${FN}`, K.muted, 'center');
+    text(ctx, String(xMax), X(xMax), Y(0) + 28, `700 16px ${FN}`, K.ink, 'center');
     text(ctx, '抽數', CX + CW, Y(0) + 28, `400 16px ${FB}`, K.muted, 'right');
     const lim = Math.min(xMax, cdf.length - 1), bx = Math.min(budget, lim);
     ctx.beginPath(); ctx.moveTo(X(0), Y(0));
@@ -1864,7 +1869,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     const cv = document.createElement('canvas');
     let ctx = cv.getContext('2d');
     // 先載入畫圖要用的字型 (Google Fonts 的中文字是分段載入的，要指定實際會用到的字)
-    const sample = '原神期望抽數計算手上的資源原石糾纏之緣無主星輝可抽約一半機率在內運氣好九成最壞情況預算達成率已超過距離還差幾能目標每個里程碑累積你的隻角色二把武器全部到齊需要定軌另一命滿精墊小大保底明光計值星輝返還計入共折抵實付掃描或前往網址起來算看逐次採用社群擬合模型結果僅供參考與米哈遊官方無關順序排拖動策略缺得多分開最佳 0123456789,.%()/★✦';
+    const sample = '原神期望抽數計算手上的資源原石糾纏之緣無主星輝可抽約一半機率在內一成九成最壞情況預算達成率已超過距離還差幾能目標每個里程碑累積你的隻角色二把武器全部到齊需要定軌另一命滿精墊小大保底明光計值星輝返還計入共折抵實付掃描或前往網址起來算看逐次採用社群擬合模型結果僅供參考與米哈遊官方無關順序排拖動策略缺得多分開最佳 0123456789,.%()/★✦';
     try {
       await Promise.race([
         Promise.all([`800 52px ${FD}`, `600 28px ${FD}`, `400 20px ${FB}`, `500 20px ${FB}`, `700 20px ${FB}`, `600 40px ${FN}`, `400 20px ${FN}`].map((f) => document.fonts.load(f, sample))),
