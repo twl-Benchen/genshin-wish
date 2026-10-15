@@ -1,4 +1,5 @@
 # 原神期望抽數計算
+<img width="1896" height="1078" alt="image" src="https://github.com/user-attachments/assets/615f1632-1046-469e-b758-31bcd9f2593d" />
 
 **連結:https://twl-benchen.github.io/genshin-wish/**
 
