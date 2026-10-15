@@ -1341,7 +1341,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   }
   function paintNeed(opt, st, has) {
     const box = $('tuNeed');
-    if (!has || $('tuBox').hidden) { box.hidden = true; return; }
+    if (!has || $('tuBox').hidden || opt.topup.units <= 0) { box.hidden = true; return; }
     const item = (lab, n) => {
       const u = unitsFor(opt.topup, n);
       const body = u === 0 ? '<span class="ok">免費就夠了</span>'
