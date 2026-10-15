@@ -178,6 +178,7 @@ hr { border: 0; height: 1px; background: linear-gradient(90deg, transparent, var
 .stat .s { font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 /* 期望抽數做成五星物品卡的橙金底 */
 .stat.hero { background: linear-gradient(150deg, var(--hero-a), var(--hero-b)); border-color: var(--frame); color: var(--hero-ink); position: relative; overflow: hidden; }
+.sum-note { grid-column: 1 / -1; margin: -4px 0 0; font-size: .8rem; color: var(--muted); }
 .stat.hero::after { content: "★★★★★"; position: absolute; right: 10px; top: 8px; font-size: .62rem; letter-spacing: 1px; color: var(--hero-ink); opacity: .55; }
 .stat.hero .k, .stat.hero .s, .stat.hero .v small { color: var(--hero-ink); opacity: .9; }
 .card { padding: 22px; display: grid; gap: 12px; min-width: 0; }
@@ -199,6 +200,19 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .gtable th, .gtable td { border: 1px solid var(--line); }
 .gtable th { background: var(--head); }
 #plan { min-width: 520px; }
+@media (max-width: 600px) {
+  /* 手機：拿掉進度條、允許換行，達成率那欄不用左右滑就看得到 */
+  #plan { min-width: 0; }
+  #plan th, #plan td { padding-inline: 6px; }
+  #plan th { white-space: normal; letter-spacing: 0; }
+  #plan td:first-child { white-space: normal; font-size: .85rem; }
+  #plan .tag .tx, #plan th .nw { white-space: nowrap; }
+  #plan .row-head, #plan .tag { gap: 4px; }
+  #plan .tag { flex-wrap: wrap; }
+  #plan .meter { grid-template-columns: auto; }
+  #plan .meter .bar { display: none; }
+  #plan .meter em { min-width: 0; }
+}
 th, td { text-align: right; padding: 9px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 th { font-size: .8rem; font-weight: 700; color: var(--ink); letter-spacing: .04em; }
 th:first-child, td:first-child { text-align: left; }
@@ -372,7 +386,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
 <div class="wrap">
   <header>
     <h1><span class="star">✦</span> 原神期望抽數計算</h1>
-    <p class="lede">輸入想抽的角色命座與專武精煉、目前墊了幾抽，直接算出完整的抽數機率分布，並估計你手上的原石夠不夠。結果是精確計算，不是隨機模擬，每次算出來都一樣。</p>
+    <p class="lede">輸入想抽的目標和手上的資源，算出抽到的機率。</p>
   </header>
 
   <div class="tabbar">
@@ -484,14 +498,14 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
             </div>
           </div>
           <div class="field">
-            <span class="lab-row"><label for="wpF">命定值 (本期)</label><span class="info-wrap"><button type="button" class="info" aria-label="命定值說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">抽到的五星不是定軌那把 (另一把 UP 或常駐)，命定值變成 1，下一把五星必定是定軌；抽到定軌就歸 0。這期武器池結束、換定軌或取消定軌都會讓命定值歸 0，所以上一期留下的命定值不算，這裡要選 0。</span></span></span>
+            <span class="lab-row"><label for="wpF">命定值 (本期)</label><span class="info-wrap"><button type="button" class="info" aria-label="命定值說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">照遊戲裡「神鑄定軌」畫面顯示的命定值選就好。新的一期一定是 0，上一期留下的不算。</span></span></span>
             <div class="seg num-seg" data-for="wpF" role="group" aria-label="命定值"><button type="button" data-v="0">0</button><button type="button" data-v="1">1</button></div>
             <input type="hidden" id="wpF" value="0">
           </div>
         </div>
         <div class="check-row">
           <label class="check"><input type="checkbox" id="wpG"> 大保底 (上次五星武器是常駐)</label>
-          <span class="info-wrap"><button type="button" class="info" aria-label="武器大保底說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">武器池每出一把五星，75% 是兩把 UP 之一 (各 37.5%)，25% 是常駐武器。上一把是常駐的話，下一把五星必定是 UP，兩把各 50%。這個大保底會跨期保留，跟命定值不一樣。例如上一期命定值是 1、又是歪常駐留下來的，這一期命定值歸 0，但下一把五星還是 50% 是你要的那把。</span></span>
+          <span class="info-wrap"><button type="button" class="info" aria-label="武器大保底說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">上一把五星武器是常駐武器就勾。這個會跨期保留，就算是上一期歪的也要勾。</span></span>
         </div>
         <p class="advice" id="wpAdvice" hidden></p>
         </div>
@@ -545,7 +559,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
         <div class="sub" id="rfBox" hidden>
           <div class="check-row">
             <label class="check"><input type="checkbox" id="rfOn"> 計入抽卡過程中返還的星輝</label>
-            <span class="info-wrap"><button type="button" class="info" aria-label="星輝返還說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">按第幾顆星就是幾命。重複的四星角色返還 2 顆星輝，滿命後 5 顆；重複的五星角色 10 顆，滿命後 25 顆；四星武器 2 顆，五星武器 10 顆。</span></span>
+            <span class="info-wrap"><button type="button" class="info" aria-label="星輝返還說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">抽到重複的角色和武器會拿回星輝，可以再換抽。勾了之後結果會扣掉這些抽數，比較接近實際要花的；想保守估計就不要勾。下面的設定用預設值就好。</span></span>
           </div>
           <div class="field">
             <span class="lab" id="rfC6Lab">四星角色大約有幾成已經滿命</span>
@@ -596,7 +610,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
         </div>
         <div class="tbl-wrap">
           <table class="gtable" id="plan">
-            <thead><tr><th>目標</th><th id="thMean">期望抽數</th><th>一半機率</th><th>九成機率</th><th>最多</th><th>預算內達成</th></tr></thead>
+            <thead><tr><th>目標</th><th id="thMean">期望抽數</th><th>九成機率</th><th>最多</th><th id="thBudget">預算內達成率</th></tr></thead>
             <tbody id="tbody"></tbody>
           </table>
         </div>
@@ -719,7 +733,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
           </ul>
         </div>
       </div>
-      <p class="note">「角色活動祈願」與「角色活動祈願-2」共享抽數和大保底狀態，跟武器池互相獨立，保底會跨期繼承。逐抽機率是社群依大量抽卡紀錄擬合的結果，不是官方逐抽表，實際可能略有出入。</p>
+      <p class="note">結果是用機率分布精確計算出來的，不是隨機模擬，每次算出來都一樣。「角色活動祈願」與「角色活動祈願-2」共享抽數和大保底狀態，跟武器池互相獨立，保底會跨期繼承。逐抽機率是社群依大量抽卡紀錄擬合的結果，不是官方逐抽表，實際可能略有出入。</p>
     </section>
   </div>
 </div>
@@ -1829,20 +1843,19 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     const raw = useNet ? E.stats(res.total) : st;
     const has = res.rows.length > 0;
     const off = useNet && raw.mean > 0 ? (st.mean / raw.mean) * 10 : 10;
-    $('rfState').textContent = useNet ? (has ? '已計入 · 約 ' + off.toFixed(1) + ' 折' : '已計入') : '未計入';
+    $('rfState').textContent = useNet ? (has ? '已計入 · 約 ' + fmt(raw.mean - st.mean) + ' 抽' : '已計入') : '未計入';
     $('rfState').classList.toggle('on', useNet);
     $('thMean').textContent = useNet ? '期望實付' : '期望抽數';
+    $('thBudget').innerHTML = '<span class="nw">' + fmt(opt.budget) + ' 抽內</span><span class="nw">達成率</span>';
     $('chartTitle').textContent = useNet ? '實付幾抽能達成目標' : '幾抽內能達成目標';
     const pB = st.within(opt.budget);
     const short = Math.max(0, Math.ceil(st.mean) - opt.budget);
 
     $('summary').innerHTML = has ? `
-      <div class="stat hero"><span class="k">${useNet ? '期望實付抽數' : '期望抽數'}</span><span class="v">${fmt(st.mean)}<small>抽</small></span><span class="s">${useNet
-        ? '共抽約 ' + fmt(raw.mean) + ' 抽，星輝折抵 ' + fmt(raw.mean - st.mean) + ' 抽 (約 ' + off.toFixed(1) + ' 折)'
-        : '約 ' + fmt(st.mean * 160) + ' 原石'}</span></div>
+      <div class="stat hero"><span class="k">${useNet ? '期望實付抽數' : '期望抽數'}</span><span class="v">${fmt(st.mean)}<small>抽</small></span><span class="s">約 ${fmt(st.mean * 160)} 原石</span></div>
       <div class="stat"><span class="k">一半機率在</span><span class="v">${fmt(st.p50)}<small>抽內</small></span><span class="s">一成機率在 ${fmt(st.p10)} 抽內</span></div>
       <div class="stat"><span class="k">九成機率在</span><span class="v">${fmt(st.p90)}<small>抽內</small></span><span class="s">最壞情況 ${fmt(st.max)} 抽</span></div>
-      <div class="stat"><span class="k">預算 ${fmt(opt.budget)} 抽的達成率</span><span class="v" style="color: var(--${meterClass(pB)})">${pctTxt(pB)}</span><span class="s">${short > 0 ? '距離期望還差 ' + fmt(short) + ' 抽' : '已超過期望抽數'}</span>${tuPulls > 0 ? `<span class="s">含課金 ${fmt(tuPulls)} 抽，課金前 ${pctTxt(st.within(opt.free))}</span>` : ''}</div>`
+      <div class="stat"><span class="k">預算 ${fmt(opt.budget)} 抽的達成率</span><span class="v" style="color: var(--${meterClass(pB)})">${pctTxt(pB)}</span><span class="s">${short > 0 ? '距離期望還差 ' + fmt(short) + ' 抽' : '已超過期望抽數'}</span>${tuPulls > 0 ? `<span class="s">含課金 ${fmt(tuPulls)} 抽，課金前 ${pctTxt(st.within(opt.free))}</span>` : ''}</div>${useNet ? `<p class="sum-note">已扣掉抽卡過程拿回的星輝 (約 ${fmt(raw.mean - st.mean)} 抽)</p>` : ''}`
       : `<div class="stat" style="grid-column: 1 / -1"><span class="k">尚未設定目標</span><span class="s">在左側選擇想抽的角色或武器數量。</span></div>`;
 
     const [W1, W2] = opt.weapon.targets, WT = W1 + W2;
@@ -1864,12 +1877,12 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
         text = W1 > 0 ? '第 ' + r.n + ' 把武器' : '另一把 UP 第 ' + r.n + ' 把';
       }
       const kind = r.kind === 'char' ? 'c' : 'w';
-      const label = `<span class="tag"><i class="${kind}">${tag}</i>${text}</span>`;
+      const label = `<span class="tag"><i class="${kind}">${tag}</i><span class="tx">${text}</span></span>`;
       shareRows.push({ kind, tag, text, mean: s.mean, p50: s.p50, p90: s.p90, max: s.max, p });
-      return `<tr data-k="${r.who}"><td><span class="row-head"><button type="button" class="grip" data-i="${i}" aria-label="調整順序：拖動，或按上下鍵移動"></button>${label}</span></td><td class="num">${s.mean.toFixed(1)}</td><td class="num">${fmt(s.p50)}</td><td class="num">${fmt(s.p90)}</td><td class="num">${fmt(s.max)}</td>
+      return `<tr data-k="${r.who}"><td><span class="row-head"><button type="button" class="grip" data-i="${i}" aria-label="調整順序：拖動，或按上下鍵移動"></button>${label}</span></td><td class="num">${fmt(s.mean)}</td><td class="num">${fmt(s.p90)}</td><td class="num">${fmt(s.max)}</td>
         <td><span class="meter ${meterClass(p)}"><span class="bar"><b style="width:${(p * 100).toFixed(1)}%"></b></span><em>${pctTxt(p)}</em></span></td></tr>`;
     }).join('');
-    $('tbody').innerHTML = rowsHtml || `<tr><td colspan="6" style="text-align:left;color:var(--muted)">還沒有目標。</td></tr>`;
+    $('tbody').innerHTML = rowsHtml || `<tr><td colspan="5" style="text-align:left;color:var(--muted)">還沒有目標。</td></tr>`;
 
     current = { st, budget: opt.budget, free: opt.free, has };
     paintNeed(opt, st, has);
@@ -1974,6 +1987,12 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       el('line', { x1: X(budget), x2: X(budget), y1: m.t, y2: Y(0), stroke: c('--ink'), 'stroke-width': 1.5 });
       const right = X(budget) > W - 120;
       label(X(budget) + (right ? -6 : 6), m.t + 12, '預算 ' + budget + ' 抽', right ? 'end' : 'start');
+      // 預算和曲線的交點：曲線左上方是空白，標籤預設放左邊，太靠左才放右邊
+      const pb = st.within(budget), by = Y(pb);
+      el('circle', { cx: X(budget), cy: by, r: 5, fill: c('--ink'), stroke: c('--surface'), 'stroke-width': 2 });
+      const left = X(budget) - 110 > m.l;
+      const bt = el('text', { x: X(budget) + (left ? -10 : 10), y: by - 8, 'text-anchor': left ? 'end' : 'start', 'font-weight': 700, style: 'fill:' + c('--ink') + ';paint-order:stroke;stroke:' + c('--surface') + ';stroke-width:4px' });
+      bt.textContent = budget + ' 抽 · ' + pctTxt(pb);
     } else {
       label(X(xMax), m.t + 12, '預算 ' + budget + ' 抽 →', 'end');
     }
@@ -2414,7 +2433,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       ctx.fillStyle = ink; ctx.textAlign = 'left'; ctx.fillText(sub, cx + 22, cy + 122);
     };
     card(CX, y, d.useNet ? '期望實付抽數' : '期望抽數', fmt(st.mean), '抽',
-      d.useNet ? '共抽約 ' + fmt(d.raw.mean) + ' 抽，星輝折抵 ' + fmt(d.raw.mean - st.mean) + ' 抽 (約 ' + d.off.toFixed(1) + ' 折)' : '約 ' + fmt(st.mean * 160) + ' 原石', true);
+      d.useNet ? '已扣掉拿回的星輝 (約 ' + fmt(d.raw.mean - st.mean) + ' 抽)' : '約 ' + fmt(st.mean * 160) + ' 原石', true);
     card(CX + cw2 + 16, y, '一半機率在', fmt(st.p50), '抽內', '一成機率在 ' + fmt(st.p10) + ' 抽內');
     card(CX, y + 152, '九成機率在', fmt(st.p90), '抽內', '最壞情況 ' + fmt(st.max) + ' 抽');
     card(CX + cw2 + 16, y + 152, '預算 ' + fmt(d.opt.budget) + ' 抽的達成率', pctTxt(pB), '', short > 0 ? '距離期望還差 ' + fmt(short) + ' 抽' : '已超過期望抽數', false, meterColor(pB));
@@ -2471,6 +2490,10 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       ctx.beginPath(); ctx.moveTo(X(budget), Y(1) - 4); ctx.lineTo(X(budget), Y(0)); ctx.stroke();
       const right = X(budget) > CX + CW - 170;
       text(ctx, '預算 ' + budget + ' 抽', X(budget) + (right ? -8 : 8), Y(1) + 16, `600 17px ${FN}`, K.ink, right ? 'right' : 'left');
+      const pb = st.within(budget), by = Y(pb), left = X(budget) - 170 > CX + m.l;
+      ctx.beginPath(); ctx.arc(X(budget), by, 7, 0, Math.PI * 2); ctx.fillStyle = K.ink; ctx.fill();
+      ctx.strokeStyle = K.surface; ctx.lineWidth = 3; ctx.stroke();
+      text(ctx, budget + ' 抽 · ' + pctTxt(pb), X(budget) + (left ? -14 : 14), by - 12, `700 18px ${FN}`, K.ink, left ? 'right' : 'left');
     }
     return y + gh;
   }
@@ -2483,7 +2506,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     const xMeter = CW - 104 - T.meter, xP90 = xMeter - 34, xP50 = xP90 - (big ? 130 : 110), xMean = xP50 - (big ? 130 : 110);
     const cols = [
       { t: '目標', x: 16, a: 'left' }, { t: d.useNet ? '期望實付' : '期望抽數', x: xMean, a: 'right' },
-      { t: '一半機率', x: xP50, a: 'right' }, { t: '九成機率', x: xP90, a: 'right' }, { t: '預算內達成', x: CW - 16, a: 'right' },
+      { t: '九成機率', x: xP50, a: 'right' }, { t: '最多', x: xP90, a: 'right' }, { t: fmt(d.opt.budget) + ' 抽內達成率', x: CW - 16, a: 'right' },
     ];
     const rowH = T.row, th = T.head, tw = CW, th0 = y, mid = rowH / 2; // mid：列的垂直中線
     ctx.fillStyle = K.head; ctx.fillRect(CX, y, tw, th);
@@ -2498,9 +2521,9 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       const base = y + mid + T.num * 0.36;
       ctx.font = fitFont(ctx, r.text, 500, T.fs, FB, xMean - 120 - (16 + tgw + 12));
       ctx.fillStyle = K.ink; ctx.textAlign = 'left'; ctx.fillText(r.text, CX + 16 + tgw + 12, base);
-      text(ctx, r.mean.toFixed(1), CX + xMean, base, `400 ${T.num}px ${FN}`, K.ink, 'right');
-      text(ctx, fmt(r.p50), CX + xP50, base, `400 ${T.num}px ${FN}`, K.ink, 'right');
-      text(ctx, fmt(r.p90), CX + xP90, base, `400 ${T.num}px ${FN}`, K.ink, 'right');
+      text(ctx, fmt(r.mean), CX + xMean, base, `400 ${T.num}px ${FN}`, K.ink, 'right');
+      text(ctx, fmt(r.p90), CX + xP50, base, `400 ${T.num}px ${FN}`, K.ink, 'right');
+      text(ctx, fmt(r.max), CX + xP90, base, `400 ${T.num}px ${FN}`, K.ink, 'right');
       const mx = CX + xMeter, mw = T.meter;
       roundRect(ctx, mx, y + mid - 4.5, mw, 9, 4.5); ctx.fillStyle = K.sunken; ctx.fill(); ctx.strokeStyle = K.line; ctx.lineWidth = 1; ctx.stroke();
       if (r.p > 0) { roundRect(ctx, mx, y + mid - 4.5, Math.max(9, mw * r.p), 9, 4.5); ctx.fillStyle = meterColor(r.p); ctx.fill(); }
