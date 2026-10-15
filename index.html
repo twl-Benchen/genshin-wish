@@ -136,6 +136,11 @@ input:focus-visible, select:focus-visible, button:focus-visible, .check input:fo
 hr { border: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--frame), transparent); margin: 0; }
 .ex { display: inline-block; font-family: var(--f-body); font-size: .72rem; letter-spacing: .06em; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; font-weight: 400; }
 .inline { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px; }
+/* 表單同一行的控制項一律 40px 高：選值的 (選單、輸入框、分段按鈕) 用 6px 圓角，按了會動作的按鈕用膠囊 */
+#form { --ctl: 40px; }
+#form .field select, #form .field input[type=number], #form .inline .gbtn, #form .addbtn, #form .num-seg { height: var(--ctl); }
+#form .field select, #form .field input[type=number] { padding-block: 0; }
+#form .seg { border-radius: 6px; }
 
 /* 按鈕：遊戲裡的深石板色膠囊鈕 */
 .gbtn {
@@ -179,6 +184,8 @@ hr { border: 0; height: 1px; background: linear-gradient(90deg, transparent, var
 /* 期望抽數做成五星物品卡的橙金底 */
 .stat.hero { background: linear-gradient(150deg, var(--hero-a), var(--hero-b)); border-color: var(--frame); color: var(--hero-ink); position: relative; overflow: hidden; }
 .sum-note { grid-column: 1 / -1; margin: -4px 0 0; font-size: .8rem; color: var(--muted); }
+.stat.hero { outline: 1px solid rgba(255, 246, 230, .45); outline-offset: -6px; }
+.stat.hero.goal::after { content: none; }
 .stat.hero::after { content: "★★★★★"; position: absolute; right: 10px; top: 8px; font-size: .62rem; letter-spacing: 1px; color: var(--hero-ink); opacity: .55; }
 .stat.hero .k, .stat.hero .s, .stat.hero .v small { color: var(--hero-ink); opacity: .9; }
 .card { padding: 22px; display: grid; gap: 12px; min-width: 0; }
@@ -200,6 +207,9 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .gtable th, .gtable td { border: 1px solid var(--line); }
 .gtable th { background: var(--head); }
 #plan { min-width: 520px; }
+/* 里程碑表：表頭和數字欄置中，目標那欄的內容維持靠左 */
+#plan th, #plan td.num, #plan td:last-child { text-align: center; }
+#plan .meter { justify-content: center; }
 @media (max-width: 600px) {
   /* 手機：拿掉進度條、允許換行，達成率那欄不用左右滑就看得到 */
   #plan { min-width: 0; }
@@ -1855,7 +1865,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       <div class="stat hero"><span class="k">${useNet ? '期望實付抽數' : '期望抽數'}</span><span class="v">${fmt(st.mean)}<small>抽</small></span><span class="s">約 ${fmt(st.mean * 160)} 原石</span></div>
       <div class="stat"><span class="k">一半機率在</span><span class="v">${fmt(st.p50)}<small>抽內</small></span><span class="s">一成機率在 ${fmt(st.p10)} 抽內</span></div>
       <div class="stat"><span class="k">九成機率在</span><span class="v">${fmt(st.p90)}<small>抽內</small></span><span class="s">最壞情況 ${fmt(st.max)} 抽</span></div>
-      <div class="stat"><span class="k">預算 ${fmt(opt.budget)} 抽的達成率</span><span class="v" style="color: var(--${meterClass(pB)})">${pctTxt(pB)}</span><span class="s">${short > 0 ? '距離期望還差 ' + fmt(short) + ' 抽' : '已超過期望抽數'}</span>${tuPulls > 0 ? `<span class="s">含課金 ${fmt(tuPulls)} 抽，課金前 ${pctTxt(st.within(opt.free))}</span>` : ''}</div>${useNet ? `<p class="sum-note">已扣掉抽卡過程拿回的星輝 (約 ${fmt(raw.mean - st.mean)} 抽)</p>` : ''}`
+      <div class="stat hero goal"><span class="k">預算 ${fmt(opt.budget)} 抽的達成率</span><span class="v">${pctTxt(pB)}</span><span class="s">${short > 0 ? '距離期望還差 ' + fmt(short) + ' 抽' : '已超過期望抽數'}</span>${tuPulls > 0 ? `<span class="s">含課金 ${fmt(tuPulls)} 抽，課金前 ${pctTxt(st.within(opt.free))}</span>` : ''}</div>${useNet ? `<p class="sum-note">已扣掉抽卡過程拿回的星輝 (約 ${fmt(raw.mean - st.mean)} 抽)</p>` : ''}`
       : `<div class="stat" style="grid-column: 1 / -1"><span class="k">尚未設定目標</span><span class="s">在左側選擇想抽的角色或武器數量。</span></div>`;
 
     const [W1, W2] = opt.weapon.targets, WT = W1 + W2;
@@ -2424,9 +2434,10 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
         ctx.fillStyle = g;
       } else ctx.fillStyle = K.surface;
       ctx.fill(); ctx.strokeStyle = K.frame; ctx.lineWidth = 1.5; ctx.stroke();
+      if (hero) { roundRect(ctx, cx + 7, cy + 7, cw2 - 14, 122, 3); ctx.strokeStyle = 'rgba(255,246,230,.45)'; ctx.lineWidth = 1.5; ctx.stroke(); }
       const ink = hero ? K.heroInk : K.muted;
       text(ctx, label, cx + 22, cy + 36, `500 20px ${FB}`, ink);
-      if (hero) text(ctx, '★★★★★', cx + cw2 - 18, cy + 32, `400 15px ${FB}`, 'rgba(255,246,230,.6)', 'right');
+      if (hero && !valueColor) text(ctx, '★★★★★', cx + cw2 - 18, cy + 32, `400 15px ${FB}`, 'rgba(255,246,230,.6)', 'right');
       const vw = text(ctx, value, cx + 22, cy + 90, `600 52px ${FN}`, valueColor || (hero ? K.heroInk : K.ink));
       if (unit) text(ctx, unit, cx + 22 + vw + 8, cy + 90, `500 22px ${FB}`, ink);
       ctx.font = fitFont(ctx, sub, 400, 19, FB, cw2 - 44);
@@ -2436,7 +2447,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       d.useNet ? '已扣掉拿回的星輝 (約 ' + fmt(d.raw.mean - st.mean) + ' 抽)' : '約 ' + fmt(st.mean * 160) + ' 原石', true);
     card(CX + cw2 + 16, y, '一半機率在', fmt(st.p50), '抽內', '一成機率在 ' + fmt(st.p10) + ' 抽內');
     card(CX, y + 152, '九成機率在', fmt(st.p90), '抽內', '最壞情況 ' + fmt(st.max) + ' 抽');
-    card(CX + cw2 + 16, y + 152, '預算 ' + fmt(d.opt.budget) + ' 抽的達成率', pctTxt(pB), '', short > 0 ? '距離期望還差 ' + fmt(short) + ' 抽' : '已超過期望抽數', false, meterColor(pB));
+    card(CX + cw2 + 16, y + 152, '預算 ' + fmt(d.opt.budget) + ' 抽的達成率', pctTxt(pB), '', short > 0 ? '距離期望還差 ' + fmt(short) + ' 抽' : '已超過期望抽數', true, K.heroInk);
     return y + SH.stats;
   }
 
