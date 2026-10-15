@@ -568,7 +568,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
         </button>
         <div class="sub" id="rfBox" hidden>
           <div class="check-row">
-            <label class="check"><input type="checkbox" id="rfOn"> 計入抽卡過程中返還的星輝</label>
+            <label class="check"><input type="checkbox" id="rfOn" checked> 計入抽卡過程中返還的星輝</label>
             <span class="info-wrap"><button type="button" class="info" aria-label="星輝返還說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">抽到重複的角色和武器會拿回星輝，可以再換抽。勾了之後結果會扣掉這些抽數，比較接近實際要花的；想保守估計就不要勾。下面的設定用預設值就好。</span></span>
           </div>
           <div class="field">
@@ -599,7 +599,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
 
       <section class="card frame">
         <div class="card-head">
-          <h2 id="chartTitle">幾抽內能達成目標</h2>
+          <h2 id="chartTitle">準備幾抽能達成目標</h2>
           <div class="legend">
             <span><i class="sw" style="background: var(--gold)"></i>累積達成機率</span>
             <span><i class="sw" style="background: var(--ink)"></i>你的預算</span>
@@ -620,7 +620,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
         </div>
         <div class="tbl-wrap">
           <table class="gtable" id="plan">
-            <thead><tr><th>目標</th><th id="thMean">期望抽數</th><th>九成機率</th><th>最多</th><th id="thBudget">預算內達成率</th></tr></thead>
+            <thead><tr><th>目標</th><th id="thMean">需準備 (平均)</th><th>九成機率</th><th>最多</th><th id="thBudget">預算內達成率</th></tr></thead>
             <tbody id="tbody"></tbody>
           </table>
         </div>
@@ -739,7 +739,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
             <li>五星：精確追蹤途中歪了幾次，常駐角色等機率出現，會依你填的命座逐次升命</li>
             <li>達成目標那一顆五星的返還，只能拿去抽後面的武器</li>
             <li>第一次抽到的角色不返還星輝</li>
-            <li>開啟星輝返還後，結果改用「實付抽數」，也就是總抽數扣掉途中返還的星輝換成的抽數</li>
+            <li>星輝返還預設開啟，結果顯示「需準備抽數」，也就是總抽數扣掉途中返還的星輝換成的抽數；關掉時需準備抽數就等於總抽數</li>
           </ul>
         </div>
       </div>
@@ -1544,6 +1544,8 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   let ui = { rfOpen: false, rfSeen: false };
   try { Object.assign(ui, JSON.parse(localStorage.getItem(UIKEY) || '{}')); } catch (e) {}
   const saveUi = () => { try { localStorage.setItem(UIKEY, JSON.stringify(ui)); } catch (e) {} };
+  // 星輝返還改成預設勾選：以前存過「沒勾」的人也套用一次，之後照使用者自己的選擇
+  if (!ui.rfDefaultOn) { ui.rfDefaultOn = true; ui.rfSeen = true; $('rfOn').checked = true; saveUi(); }
 
   function setRfOpen(open) {
     $('rfToggle').setAttribute('aria-expanded', open ? 'true' : 'false');
@@ -1855,14 +1857,14 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     const off = useNet && raw.mean > 0 ? (st.mean / raw.mean) * 10 : 10;
     $('rfState').textContent = useNet ? (has ? '已計入 · 約 ' + fmt(raw.mean - st.mean) + ' 抽' : '已計入') : '未計入';
     $('rfState').classList.toggle('on', useNet);
-    $('thMean').textContent = useNet ? '期望實付' : '期望抽數';
+    $('thMean').textContent = '需準備 (平均)';
     $('thBudget').innerHTML = '<span class="nw">' + fmt(opt.budget) + ' 抽內</span><span class="nw">達成率</span>';
-    $('chartTitle').textContent = useNet ? '實付幾抽能達成目標' : '幾抽內能達成目標';
+    $('chartTitle').textContent = '準備幾抽能達成目標';
     const pB = st.within(opt.budget);
     const short = Math.max(0, Math.ceil(st.mean) - opt.budget);
 
     $('summary').innerHTML = has ? `
-      <div class="stat hero"><span class="k">${useNet ? '期望實付抽數' : '期望抽數'}</span><span class="v">${fmt(st.mean)}<small>抽</small></span><span class="s">約 ${fmt(st.mean * 160)} 原石</span></div>
+      <div class="stat hero"><span class="k">期望需準備抽數</span><span class="v">${fmt(st.mean)}<small>抽</small></span><span class="s">約 ${fmt(st.mean * 160)} 原石</span></div>
       <div class="stat"><span class="k">一半機率在</span><span class="v">${fmt(st.p50)}<small>抽內</small></span><span class="s">一成機率在 ${fmt(st.p10)} 抽內</span></div>
       <div class="stat"><span class="k">九成機率在</span><span class="v">${fmt(st.p90)}<small>抽內</small></span><span class="s">最壞情況 ${fmt(st.max)} 抽</span></div>
       <div class="stat goal"><span class="k">預算 ${fmt(opt.budget)} 抽的達成率</span><span class="v" style="color: var(--${meterClass(pB)})">${pctTxt(pB)}</span><span class="s">${short > 0 ? '距離期望還差 ' + fmt(short) + ' 抽' : '已超過期望抽數'}</span>${tuPulls > 0 ? `<span class="s">含課金 ${fmt(tuPulls)} 抽，課金前 ${pctTxt(st.within(opt.free))}</span>` : ''}</div>${useNet ? `<p class="sum-note">已扣掉抽卡過程拿回的星輝 (約 ${fmt(raw.mean - st.mean)} 抽)</p>` : ''}`
@@ -2444,7 +2446,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       ctx.font = fitFont(ctx, sub, 400, 19, FB, cw2 - 44);
       ctx.fillStyle = ink; ctx.textAlign = 'left'; ctx.fillText(sub, cx + 22, cy + 122);
     };
-    card(CX, y, d.useNet ? '期望實付抽數' : '期望抽數', fmt(st.mean), '抽',
+    card(CX, y, '期望需準備抽數', fmt(st.mean), '抽',
       d.useNet ? '已扣掉拿回的星輝 (約 ' + fmt(d.raw.mean - st.mean) + ' 抽)' : '約 ' + fmt(st.mean * 160) + ' 原石', true);
     card(CX + cw2 + 16, y, '一半機率在', fmt(st.p50), '抽內', '一成機率在 ' + fmt(st.p10) + ' 抽內');
     card(CX, y + 152, '九成機率在', fmt(st.p90), '抽內', '最壞情況 ' + fmt(st.max) + ' 抽');
@@ -2455,7 +2457,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   // 累積達成機率曲線，gh = 圖的高度
   function shareChart(ctx, d, y, gh) {
     const st = d.st;
-    sectionTitle(ctx, d.useNet ? '實付幾抽能達成目標' : '幾抽內能達成目標', y + 26);
+    sectionTitle(ctx, '準備幾抽能達成目標', y + 26);
     ctx.font = `400 18px ${FB}`;
     const lg2 = '你的預算', lg1 = '累積達成機率';
     const w2 = ctx.measureText(lg2).width, w1 = ctx.measureText(lg1).width;
@@ -2517,7 +2519,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     y += 48;
     const xMeter = CW - 104 - T.meter, xP90 = xMeter - 34, xP50 = xP90 - (big ? 130 : 110), xMean = xP50 - (big ? 130 : 110);
     const cols = [
-      { t: '目標', x: 16, a: 'left' }, { t: d.useNet ? '期望實付' : '期望抽數', x: xMean, a: 'right' },
+      { t: '目標', x: 16, a: 'left' }, { t: '需準備 (平均)', x: xMean, a: 'right' },
       { t: '九成機率', x: xP50, a: 'right' }, { t: '最多', x: xP90, a: 'right' }, { t: fmt(d.opt.budget) + ' 抽內達成率', x: CW - 16, a: 'right' },
     ];
     const rowH = T.row, th = T.head, tw = CW, th0 = y, mid = rowH / 2; // mid：列的垂直中線
@@ -2574,7 +2576,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     const cv = document.createElement('canvas');
     let ctx = cv.getContext('2d');
     // 先載入畫圖要用的字型 (Google Fonts 的中文字是分段載入的，要指定實際會用到的字)
-    const sample = '原神期望抽數計算手上的資源原石糾纏之緣無主星輝可抽約一半機率在內一成九成最壞情況預算達成率已超過距離還差幾能目標每個里程碑累積你的隻角色二把武器全部到齊需要定軌另一命滿精墊小大保底明光計值星輝返還計入共折抵實付掃描或前往網址起來算看逐次採用社群擬合模型結果僅供參考與米哈遊官方無關順序排拖動策略缺得多分開最佳 0123456789,.%()/★✦';
+    const sample = '原神期望抽數計算手上的資源原石糾纏之緣無主星輝可抽約一半機率在內一成九成最壞情況預算達成率已超過距離還差幾能目標每個里程碑累積你的隻角色二把武器全部到齊需要定軌另一命滿精墊小大保底明光計值星輝返還計入共折抵實付掃描或前往網址起來算看逐次採用社群擬合模型結果僅供參考與米哈遊官方無關順序排拖動策略缺得多分開最佳 0123456789,.%()/★✦準備平均拿回扣掉卡';
     try {
       await Promise.race([
         Promise.all([`800 52px ${FD}`, `600 28px ${FD}`, `400 20px ${FB}`, `500 20px ${FB}`, `700 20px ${FB}`, `600 40px ${FN}`, `400 20px ${FN}`].map((f) => document.fonts.load(f, sample))),
