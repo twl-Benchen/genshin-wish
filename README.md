@@ -1,7 +1,7 @@
 # 原神期望抽數計算
 **連結：https://twl-benchen.github.io/genshin-wish/**
+<img width="1299" height="1552" alt="twl-benchen github io_genshin-wish_ (1)" src="https://github.com/user-attachments/assets/c399a4bb-3bc3-4dcc-8292-21a17aec5edd" />
 
-<img width="1293" height="1665" alt="twl-benchen github io_genshin-wish_" src="https://github.com/user-attachments/assets/32f8c17f-9a7e-4125-a551-444c4b5329bf" />
 輸入想抽的角色命座、武器精煉、目前墊了幾抽和手上的資源，算出完整的抽數機率分布：期望抽數、一半機率和九成機率要幾抽、最壞情況，以及手上的原石夠不夠。
 
 結果是精確計算出來的，不是隨機模擬，每次算出來都一樣。
