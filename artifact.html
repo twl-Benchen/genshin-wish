@@ -295,9 +295,15 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 @media (min-width: 701px) { .sc-avatars > :first-child { margin-left: auto; } .sc-avatars > :last-child { margin-right: auto; } }
 .sc-av { flex: none; position: relative; width: 68px; height: 68px; border-radius: 50%; padding: 0; border: 3px solid var(--frame-soft); background: linear-gradient(160deg, #6b5b8f, #3b3556); cursor: pointer; }
 .sc-av.q5 { background: linear-gradient(160deg, #b5793a, #7a4a22); }
+.relic-tip { position: fixed; z-index: 50; pointer-events: none; display: grid; gap: 3px; padding: 9px 12px; border-radius: 6px; border: 1px solid var(--frame); background: var(--surface); color: var(--ink); box-shadow: 0 8px 24px rgba(30, 40, 70, .25); font-size: .82rem; white-space: nowrap; }
+.relic-tip b { font-family: var(--f-display); font-size: .88rem; margin-bottom: 2px; }
+.relic-tip div { display: grid; grid-template-columns: 6.5em auto; gap: 8px; }
+.relic-tip .nm { color: var(--muted); }
+.relic-tip .pr { font-family: var(--f-num); }
+.relic-tip em { font-style: normal; color: var(--gold); }
 .sc-av img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
 .sc-av .lv { position: absolute; right: -4px; bottom: -2px; font: 600 .7rem var(--f-num); background: #2b3142; color: #ece5d8; border-radius: 6px; padding: 0 5px; }
-.sc-av[aria-selected="true"] { border-color: var(--good); box-shadow: 0 4px 0 -1px var(--focus); }
+.sc-av[aria-selected="true"] { border-color: var(--good); }
 
 /* 角色卡：仿 Enka 的三欄 (立繪、武器與屬性、聖遺物)，底色跟著元素 */
 .sc-card { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .9fr) minmax(0, 1.25fr); gap: 0; min-height: 540px; border-radius: 10px; overflow: hidden; color: #fff;
@@ -375,7 +381,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .plan-tbl .muted { color: var(--muted); font-weight: 400; }
 .plan-auto { margin: 0; }
 .apply-box { display: grid; justify-items: center; gap: 6px; margin-top: 4px; }
-.apply-btn { height: 48px; font-size: 1rem; padding: 6px 22px 6px 8px; }
+.apply-btn { height: 48px; min-width: min(260px, 100%); font-size: 1rem; padding: 6px 30px 6px 8px; }
 .apply-btn .ic { width: 34px; height: 34px; background: var(--frame); border-color: var(--frame); color: var(--btn); }
 .apply-btn .ic svg { width: 18px; height: 18px; }
 .plan-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -478,7 +484,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       <div id="warn"></div>
 
       <section class="card frame">
-        <h2>每個詞條升級跳幾次</h2>
+        <h2>每個詞條升級跳幾次的機率</h2>
         <div class="tbl-wrap"><table class="gtable" id="tbl"></table></div>
         <p class="hint">金色格子是符合目標的次數 (最多跳幾次以內)，設數值目標時，淡金色代表跳這麼多次「有機會」到目標，最後一欄已經把數值的機率算進去。結果是把所有強化路徑和數值檔位逐一列舉的精確值，不是隨機模擬。</p>
       </section>
@@ -537,7 +543,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
           <li>機率是把所有升級跳的分配方式逐一列舉算出的精確值，不是隨機模擬。重塑後初始那一檔視為保留。</li>
           <li>「幾個詞條」都以平均一跳為單位：平均一跳是四個檔位的平均，大約是最高檔的 0.85 倍。例如暴擊傷害 7.8% 約 1.18 個詞條，最低檔約 0.82 個。</li>
           <li>批量模擬十萬顆是照順序連續重塑，一般重塑時會套用進度保底：每用 6 個啟聖之塵觸發一次保底 3 次，第 18 個觸發保底 4 次。上面的精確值只算單次一般重塑，所以批量模擬的成功率會高一點。</li>
-          <li>角色聖遺物的主要詞條會自動選：武器副詞條、沙杯冠的主詞條、五件聖遺物的副詞條，各自換成詞條數加總，取前三高；前三高沒有暴擊率也沒有暴擊傷害 (多半是輔助) 就只取前兩高。</li>
+          <li>角色聖遺物的主要詞條會自動選：武器副詞條、沙杯冠的主詞條、五件聖遺物的副詞條，各自換成詞條數加總，取前三高；前兩高沒有暴擊率也沒有暴擊傷害 (多半是輔助) 就只取前兩高。</li>
           <li>重塑方案的有效詞條數：主要詞條的詞條數加上次要詞條詞條數的一半，攻擊、生命、防禦固定值不算。都照一般重塑 (保底 2 次) 計算，選定詞條是最重要的兩個，結果比原本差可以不換。</li>
           <li>「減少歪」：升級跳落在主要、次要詞條的次數比現在多才算變好 (只看次數，不看檔位)，升級跳都沒歪的就是「已經最好」。</li>
           <li>「追提升」：有效詞條數比現在至少多 0.7 個才算變好，例如把歪掉的一跳拿回來，或是跳出夠多更高的檔位，只多零點幾個的檔位運氣不算。</li>
@@ -963,7 +969,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       b.classList.toggle('on', two ? v === S.g : v === 0);
     });
     const kind = { 2: '一般重塑', 3: '高階重塑', 4: '諭告重塑' }[S.g];
-    $('gHint').textContent = !two ? '先點右邊的金色圓圈選兩個副詞條，才能重塑。'
+    $('gHint').textContent = !two ? '先在上方選兩個副詞條，才能重塑。'
       : S.g === 0 ? '一般強化 (不重塑)，每次四個詞條機率相等。'
       : `${kind}：${name(lk[0])} 與 ${name(lk[1])} 合計至少升級跳 ${effG()} 次。`;
 
@@ -977,8 +983,12 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 
   $('initSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { S.init = +b.dataset.v; refresh(true); } });
   $('gSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b && !b.disabled) { S.g = +b.dataset.v; refresh(true); } });
+  let justDragged = false;
   $('rows').addEventListener('click', e => {
-    const lb = e.target.closest('.lockbtn');
+    // 點卡片的空白處也算點金色圓圈 (選定或取消)；剛拖動完放開的那一下不算
+    if (justDragged) return;
+    const card = e.target.closest('.subrow');
+    const lb = e.target.closest('.lockbtn') || (card && !e.target.closest('button, select, input, label, .num-seg, .mini-segs') ? card.querySelector('.lockbtn') : null);
     if (lb) { if (!lb.disabled) { const r = S.rows[+lb.dataset.i]; r.lock = !r.lock; refresh(true); } return; }
     const b = e.target.closest('button[data-k]'); if (!b) return;
     const r = S.rows[+b.dataset.i];
@@ -1031,6 +1041,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       if (!drag) return;
       drag.card.style.transform = ''; drag.card.classList.remove('dragging'); box.classList.remove('sorting');
       drag = null;
+      justDragged = true; setTimeout(() => { justDragged = false; }, 0);
       refresh(true);
     };
     box.addEventListener('pointerup', end);
@@ -1065,7 +1076,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     $('need80').textContent = isFinite(k80) ? `${k80.toLocaleString()} 顆` : '-';
     $('need80Desc').textContent = !isFinite(k80) ? '不可能達成'
       : k80 === 1 ? `${act} 1 顆就有 ${fmtP(success)} 機率成功`
-      : `${act} ${k80.toLocaleString()} 顆後至少成功 1 顆的機率 ${fmtP(1 - Math.pow(1 - success, k80))}`;
+      : '';
     $('nUp').textContent = n + ' 次';
     $('nUpDesc').textContent = S.init === 4 ? '初始 4 詞條' : '初始 3 詞條，+4 先新增詞條';
 
@@ -1324,7 +1335,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       ctx.font = fitFont(ctx, sub, 400, 15, FB, bw - 36); ctx.fillStyle = K.muted; ctx.fillText(sub, x + 18, y + 128);
     };
     box(CX + hw + gap, `八成機率成功，需要${d.act}`, isFinite(d.k80) ? `${d.k80.toLocaleString()} 顆` : '-',
-      !isFinite(d.k80) ? '不可能達成' : `${d.act} ${d.k80} 顆後至少成功 1 顆 ${fmtP(1 - Math.pow(1 - d.success, d.k80))}`);
+      !isFinite(d.k80) ? '不可能達成' : d.k80 === 1 ? `${d.act} 1 顆就有 ${fmtP(d.success)} 機率成功` : '');
     box(CX + hw + gap + bw + gap, '升級跳的次數', `${d.n} 次`, S.init === 4 ? '初始 4 詞條' : '初始 3 詞條，+4 先新增詞條');
     return y + H;
   }
@@ -1332,7 +1343,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   // 每個詞條升級跳幾次的機率表
   function shareTable(ctx, y) {
     const d = lastCalc, n = d.n;
-    sectionTitle(ctx, '每個詞條升級跳幾次', y + 26, '精確值');
+    sectionTitle(ctx, '每個詞條升級跳幾次的機率', y + 26, '精確值');
     y += 48;
     const w0 = Math.round(CW * 0.27), w1 = Math.round(CW * 0.17), rest = CW - w0 - w1, cw = rest / (n + 2);
     const xs = [0, w0, w0 + w1]; for (let k = 1; k <= n + 2; k++) xs.push(w0 + w1 + k * cw);
@@ -1354,8 +1365,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
         ctx.fillStyle = p === 0 ? 'rgba(132,123,108,.5)' : wgt > 0 ? K.gold : K.ink; ctx.textAlign = 'center';
         ctx.fillText(p === 0 ? '0' : fmtP(p), x + cw / 2, mid + 7);
       }
-      let tx = CX + 14;
-      if (r.lock) { drawStar(ctx, tx + 12, mid, 12); tx += 32; }
+      const tx = CX + 14 + 32;
+      if (r.lock) drawStar(ctx, CX + 14 + 12, mid, 12);
       ctx.font = fitFont(ctx, name(i), 500, 21, FB, w0 - (tx - CX) - 8); ctx.fillStyle = K.ink; ctx.textAlign = 'left'; ctx.fillText(name(i), tx, mid + 7);
       const g = goalText(r, n);
       ctx.font = fitFont(ctx, g, 400, 17, FB, w1 - 12); ctx.fillStyle = K.muted; ctx.textAlign = 'center'; ctx.fillText(g, CX + w0 + w1 / 2, mid + 6);
@@ -1671,8 +1682,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     // 換角色或剛查詢時：載入重塑方案，詞條明細預設選重塑方案裡最划算的那件 (沒有就選生之花)
     if (SC.pickBest) {
       loadPlan(av);
-      const best = planRows(relicsOf(av))[0];
-      SC.relic = best && isFinite(best.dust) ? best.i : 0;
+      SC.userPicked = false;
+      SC.relic = bestRelic(av);
       SC.pickBest = false;
     }
     const c = charInfo(av), pal = EL[c.e] || EL.None, fp = av.fightPropMap || {};
@@ -1742,7 +1753,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     const mv = m.statValue != null ? m.statValue : m.propValue;
     const subs = r.parsed.ok ? r.parsed.subs.map(s => ({ name: SHORT_SUB[s.stat], full: byId[s.stat].name, val: E.fmtValue(s.stat, s.total), dots: [s.initTier].concat(s.rolls), init: true }))
       : (f.reliquarySubstats || []).map(s => ({ name: propName(s.appendPropId), val: fmtProp(s.appendPropId, s.statValue != null ? s.statValue : s.propValue), dots: [] }));
-    return `<button type="button" class="sc-relic${SC.relic === i ? ' on' : ''}" data-r="${i}" aria-pressed="${SC.relic === i}" title="${r.slot}：點一下看詞條明細">
+    return `<button type="button" class="sc-relic${SC.relic === i ? ' on' : ''}" data-r="${i}" aria-pressed="${SC.relic === i}" >
       <div class="rl-main">
         <img src="${UI(f.icon || '')}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
         <span class="mn" title="${esc(propName(m.mainPropId || ''))}">${esc(SHORT_MAIN[m.mainPropId] || propName(m.mainPropId || ''))}</span>
@@ -1752,6 +1763,19 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       <div class="rl-subs">${subs.map(s => `<div class="rs"><span class="nm" title="${esc(s.full || s.name)}">${esc(s.name)}</span><b>+${esc(s.val)}</b>
         <span class="dots">${s.dots.map((t, k) => `<i class="t${t}${k === 0 ? ' first' : ''}"></i>`).join('')}</span></div>`).join('')}</div>
     </button>`;
+  }
+
+  // 重塑方案裡最划算的那件 (沒有就是生之花)
+  function bestRelic(av) {
+    const best = planRows(relicsOf(av))[0];
+    return best && isFinite(best.dust) ? best.i : 0;
+  }
+  // 使用者沒有自己點聖遺物時，詞條明細一直跟著重塑方案裡最划算的那件 (改主要詞條、模式時也跟著變)
+  function followBest() {
+    const av = (SC.data.avatarInfoList || [])[SC.sel];
+    if (!av || SC.userPicked) return;
+    const i = bestRelic(av);
+    if (i !== SC.relic) selectRelic(i);
   }
 
   // 點聖遺物：下方顯示每個詞條的初始數值與每次升級跳的數值，可以帶入計算
@@ -1801,7 +1825,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   const PLAN_STATS = ['cr', 'cd', 'em', 'er', 'atkp', 'hpp', 'defp'];
   /* 主要詞條預設自動選：武器副詞條、沙杯冠的主詞條、五件聖遺物的副詞條加總，
    * 每個詞條除以平均一跳 (四個檔位的平均，例如暴擊約 3.31%、精通約 19.82) 換成詞條數才能互相比較，取前三高；
-   * 前三高沒有暴擊率也沒有暴擊傷害 (多半是輔助) 就只取前兩高。次要詞條預設不選。
+   * 前兩高沒有暴擊率也沒有暴擊傷害 (多半是輔助) 就只取前兩高。次要詞條預設不選。
    * 使用者改過的照角色記在 localStorage artcalc-plan3 ({ 角色: { main, sec } })，按「恢復自動」清掉 */
   const PKEY = 'artcalc-plan3';
   const PROP_STAT = { FIGHT_PROP_CRITICAL: 'cr', FIGHT_PROP_CRITICAL_HURT: 'cd', FIGHT_PROP_ELEMENT_MASTERY: 'em', FIGHT_PROP_CHARGE_EFFICIENCY: 'er',
@@ -1825,8 +1849,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       else (r.f.reliquarySubstats || []).forEach(st => add(st.appendPropId, +(st.statValue != null ? st.statValue : st.propValue)));
     });
     const rank = PLAN_STATS.filter(id => sum[id] > 0).sort((a, b) => sum[b] - sum[a]);
-    const top3 = rank.slice(0, 3);
-    return top3.includes('cr') || top3.includes('cd') ? top3 : rank.slice(0, 2);
+    const top2 = rank.slice(0, 2);
+    return top2.includes('cr') || top2.includes('cd') ? rank.slice(0, 3) : top2;
   }
   function loadPlan(av) {
     const saved = planBy[avKey(av)];
@@ -1892,14 +1916,14 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   $('scPlan').addEventListener('click', e => {
     const P = SC.plan, b = e.target.closest('.pill');
     const mb = e.target.closest('#planMode button');
-    if (mb) { SC.planMode = mb.dataset.mode; try { localStorage.setItem('artcalc-planmode', SC.planMode); } catch (err) {} renderPlan(); return; }
-    if (e.target.id === 'planReset') { SC.plan.auto = true; savePlan(); loadPlan(SC.data.avatarInfoList[SC.sel]); renderPlan(); return; }
-    if (!b) { const tr = e.target.closest('tr[data-r]'); if (tr) selectRelic(+tr.dataset.r); return; }
+    if (mb) { SC.planMode = mb.dataset.mode; try { localStorage.setItem('artcalc-planmode', SC.planMode); } catch (err) {} renderPlan(); followBest(); return; }
+    if (e.target.id === 'planReset') { SC.plan.auto = true; savePlan(); loadPlan(SC.data.avatarInfoList[SC.sel]); renderPlan(); followBest(); return; }
+    if (!b) { const tr = e.target.closest('tr[data-r]'); if (tr) { SC.userPicked = true; selectRelic(+tr.dataset.r); } return; }
     P.auto = false;
     const kind = b.dataset.kind, id = b.dataset.v, list = P[kind];
     if (list.includes(id)) list.splice(list.indexOf(id), 1);
     else { list.push(id); if (kind === 'main') P.sec = P.sec.filter(x => x !== id); }
-    savePlan(); renderPlan();
+    savePlan(); renderPlan(); followBest();
   });
 
   function applyRelic(p, label, cost, icon) {
@@ -1935,10 +1959,36 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     document.querySelectorAll('.sc-av').forEach(x => x.setAttribute('aria-selected', x === b ? 'true' : 'false'));
     renderCard();
   });
+  // 滑鼠停在聖遺物上：顯示每個詞條的升級過程 (初始 +每次升級跳)，只在有滑鼠的裝置
+  const tip = document.createElement('div');
+  tip.className = 'relic-tip'; tip.hidden = true; tip.setAttribute('role', 'tooltip');
+  document.body.appendChild(tip);
+  const canHover = window.matchMedia && window.matchMedia('(hover: hover)').matches;
+  $('scCard').addEventListener('mouseover', e => {
+    if (!canHover) return;
+    const b = e.target.closest('.sc-relic'); if (!b || b === tip.owner) return;
+    const av = (SC.data.avatarInfoList || [])[SC.sel], r = av && relicsOf(av)[+b.dataset.r];
+    if (!r || !r.parsed.ok) { tip.hidden = true; tip.owner = null; return; }
+    const p = r.parsed;
+    tip.innerHTML = `<b>${r.slot}的升級過程</b>` + p.subs.map((x, k) => {
+      const t = byId[x.stat].tiers, added = p.init === 3 && k === 3;
+      return `<div><span class="nm">${byId[x.stat].name}</span><span class="pr">${E.fmtValue(x.stat, t[x.initTier])}${added ? ' (+4 出現)' : ''}${x.rolls.map(v => ` <em>+${E.fmtValue(x.stat, t[v])}</em>`).join('')}</span></div>`;
+    }).join('');
+    tip.owner = b; tip.hidden = false;
+    const rc = b.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight, vw = document.documentElement.clientWidth;
+    let left = rc.left - tw - 10, top = rc.top + rc.height / 2 - th / 2;
+    if (left < 8) { left = Math.min(vw - tw - 8, Math.max(8, rc.left)); top = rc.bottom + 8; }
+    tip.style.left = left + 'px'; tip.style.top = Math.max(8, top) + 'px';
+  });
+  $('scCard').addEventListener('mouseout', e => {
+    const b = e.target.closest('.sc-relic');
+    if (b && !b.contains(e.relatedTarget)) { tip.hidden = true; tip.owner = null; }
+  });
+  window.addEventListener('scroll', () => { tip.hidden = true; tip.owner = null; }, { passive: true });
   $('scCard').addEventListener('click', e => {
     const b = e.target.closest('.sc-relic'); if (!b) return;
-    const i = +b.dataset.r;
-    selectRelic(i);
+    SC.userPicked = true;
+    selectRelic(+b.dataset.r);
   });
 
   try { const u = localStorage.getItem(UIDKEY); if (u) setUid(u); } catch (e) {}
