@@ -88,19 +88,20 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .art-top { background: linear-gradient(150deg, #8a4b20, #c27a35); color: #fff6e6; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
 .art-top .stars { color: #ffd86b; letter-spacing: 2px; font-size: .9rem; }
 .art-top .lv { font-family: var(--f-num); font-weight: 600; background: rgba(0, 0, 0, .3); border-radius: 4px; padding: 1px 9px; }
-.art-body { background: radial-gradient(120% 90% at 80% 0%, #5a3f2a, #2f2520 70%); color: #f1e9da; padding: 10px 12px 12px; display: grid; gap: 7px; }
-.asub { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto 22px; gap: 8px; align-items: center; min-height: 40px; padding: 0 10px; border: 1px solid rgba(211, 188, 142, .55); border-radius: 3px; background: rgba(20, 14, 10, .25); font-size: .98rem; }
+.art-body { background: #ece5d8; color: #495366; padding: 6px 14px 8px; }
+.asub { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto 24px; gap: 8px; align-items: center; min-height: 40px; border-bottom: 1px dashed #cfc6b4; font-size: .98rem; }
+.asub:last-child { border-bottom: 0; }
 .asub .mk { display: grid; place-items: center; }
-.asub .mk i { width: 6px; height: 6px; border-radius: 50%; background: #c9bda6; }
+.asub .mk i { width: 6px; height: 6px; border-radius: 50%; background: #495366; }
 /* 升級跳的次數：黃色圓圈 */
-.asub .mk b { width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(160deg, #f6dc9a, #d9a43a); color: #4a3418; font: 700 .78rem/20px var(--f-num); text-align: center; box-shadow: 0 0 0 1px rgba(255, 240, 200, .5); }
+.asub .mk b { width: 21px; height: 21px; border-radius: 50%; background: linear-gradient(160deg, #f6dc9a, #d9a43a); color: #3d2a10; font: 900 .86rem/21px 'Arial Black', 'Noto Sans TC', system-ui, sans-serif; -webkit-text-stroke: .4px #3d2a10; text-align: center; box-shadow: 0 0 0 1px rgba(160, 110, 40, .45); }
 .asub .val { font-family: var(--f-num); font-weight: 600; text-align: right; }
-.asub .lk svg { width: 20px; height: 20px; display: block; }
+.asub .lk svg { width: 22px; height: 22px; display: block; }
 .asub .lk .c { fill: url(#lk-gold); stroke: #f6dc9a; stroke-width: 1.5; }
 .asub .lk .s { fill: #fff8e4; }
 .asub.pending { opacity: .45; }
 .asub.flash { animation: fl .8s ease; }
-@keyframes fl { from { background: rgba(255, 216, 107, .35); } to { background: rgba(20, 14, 10, .25); } }
+@keyframes fl { from { background: #ffe7a6; } to { background: transparent; } }
 .tally { font-size: .85rem; color: var(--muted); }
 .verdict { font-size: .9rem; }
 .verdict .ok { color: var(--good); font-weight: 700; } .verdict .ng { color: var(--bad); font-weight: 700; }
@@ -153,7 +154,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
       <fieldset>
         <legend><span class="dot"></span>副詞條與目標</legend>
         <div class="subrows" id="rows"></div>
-        <p class="hint">右邊的金色圓圈是重塑時的選定詞條，要選兩個。目標可以設「升級跳的次數」(初始那 1 次不算) 或「最後的數值」，0 次代表沒有要求。</p>
+        <p class="hint">右邊的金色圓圈是重塑時的選定詞條，要選兩個。目標可以設「最多跳幾次」(只算升級跳，初始那 1 次不算) 或「最後的數值」至少多少。選最大的次數代表沒有限制，選 0 代表這個詞條升級時一次都不能跳。</p>
       </fieldset>
       <hr>
       <fieldset>
@@ -181,7 +182,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
       <section class="card frame">
         <h2>每個詞條升級跳幾次</h2>
         <div class="tbl-wrap"><table class="gtable" id="tbl"></table></div>
-        <p class="hint">金色格子是符合目標的次數，設數值目標時，淡金色代表跳這麼多次「有機會」到目標，最後一欄已經把數值的機率算進去。結果是把所有強化路徑和數值檔位逐一列舉的精確值，不是隨機模擬。</p>
+        <p class="hint">金色格子是符合目標的次數 (最多跳幾次以內)，設數值目標時，淡金色代表跳這麼多次「有機會」到目標，最後一欄已經把數值的機率算進去。結果是把所有強化路徑和數值檔位逐一列舉的精確值，不是隨機模擬。</p>
       </section>
 
       <section class="card frame">
@@ -226,13 +227,13 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 (() => {
   const E = window.ArtifactEngine;
   const byId = E.byId;
-  const KEY = 'artcalc-v2';
+  const KEY = 'artcalc-v3';
   const $ = id => document.getElementById(id);
-  const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle class="c" cx="12" cy="12" r="10.25"/><path class="s" d="M12 4.6 13.5 10.5 19.4 12 13.5 13.5 12 19.4 10.5 13.5 4.6 12 10.5 10.5Z"/></svg>';
+  const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle class="c" cx="12" cy="12" r="10.25"/><path class="s" d="M12 3.6Q13.2 10.8 20.4 12Q13.2 13.2 12 20.4Q10.8 13.2 3.6 12Q10.8 10.8 12 3.6Z"/></svg>';
 
   // 每列：stat 副詞條、lock 是否選定、mode 目標種類 (cnt 升級跳次數 / val 數值)、
-  // jumps 至少升級跳幾次、init 初始那一檔 (-1 隨機，0..3 第七到第十檔)、target 數值目標 (畫面單位，見 E.toDisp)
-  const row = (stat, lock) => ({ stat, lock, mode: 'cnt', jumps: 0, init: -1, target: null });
+  // max 最多升級跳幾次 (大於等於 N 代表沒有限制)、init 初始那一檔 (-1 隨機，0..3 第七到第十檔)、target 數值目標 (畫面單位，見 E.toDisp)
+  const row = (stat, lock) => ({ stat, lock, mode: 'cnt', max: 5, init: -1, target: null });
   let S = { init: 4, g: 2, rows: [row('cr', true), row('cd', true), row('atkp', false), row('er', false)], comboOn: true, cJumps: 3 };
   try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.rows && s.rows.length === 4) S = Object.assign(S, s); } catch (e) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
@@ -248,7 +249,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 
   function clamp() {
     S.rows.forEach(r => {
-      r.jumps = Math.max(0, Math.min(r.jumps | 0, N()));
+      r.max = Math.max(0, Math.min(r.max == null ? 5 : r.max | 0, 5));
       if (r.mode !== 'val') r.mode = 'cnt';
       if (!(r.init >= -1 && r.init <= 3)) r.init = -1;
       if (r.target == null || !isFinite(r.target)) r.target = defTarget(r.stat);
@@ -257,10 +258,11 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
     if (locked().length > 2) S.rows.forEach((r, i) => { if (i > 1) r.lock = false; });
   }
 
+  const cap = r => Math.min(r.max, N());
   // 第 i 列在總次數 c (含初始) 下符合目標的機率
   function rowProb(i, c) {
     const r = S.rows[i];
-    if (r.mode === 'cnt') return c - 1 >= r.jumps ? 1 : 0;
+    if (r.mode === 'cnt') return c - 1 <= cap(r) ? 1 : 0;
     return E.probAtLeast(r.stat, c - 1, r.init < 0 ? null : r.init, r.target);
   }
   function weight(c) {
@@ -295,7 +297,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
       const tag = S.init === 3 && i === 3 ? ' <span class="tag">+4 出現</span>' : '';
       const t = byId[r.stat].tiers;
       const body = r.mode === 'cnt'
-        ? `<div class="num-seg" role="group" aria-label="${name(i)}至少升級跳幾次">${numSeg('jumps', i, r.jumps)}</div>`
+        ? `<div class="num-seg" role="group" aria-label="${name(i)}最多跳幾次">${numSeg('max', i, cap(r))}</div>`
         : `<div class="valrow">
             <label>初始那一檔<select data-i="${i}" data-k="init" aria-label="${name(i)}初始數值">
               <option value="-1"${r.init < 0 ? ' selected' : ''}>隨機</option>
@@ -309,7 +311,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
           <button type="button" class="lockbtn" data-i="${i}" aria-pressed="${r.lock}" aria-label="選定詞條" title="${r.lock ? '取消選定' : '設為重塑的選定詞條'}"${dis ? ' disabled' : ''}>${STAR}</button>
         </div>
         <div class="cond">
-          <div class="cond-head"><span>${r.mode === 'cnt' ? '至少升級跳幾次' : '最後的數值'}${tag}</span>
+          <div class="cond-head"><span>${r.mode === 'cnt' ? '最多跳幾次' : '最後的數值'}${tag}</span>
             <span class="mini-segs" role="group" aria-label="目標種類"><button type="button" data-i="${i}" data-k="mode" data-v="cnt" class="${r.mode === 'cnt' ? 'on' : ''}">次數</button><button type="button" data-i="${i}" data-k="mode" data-v="val" class="${r.mode === 'val' ? 'on' : ''}">數值</button></span>
           </div>
           ${body}
@@ -343,7 +345,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
     if (lb) { if (!lb.disabled) { const r = S.rows[+lb.dataset.i]; r.lock = !r.lock; refresh(true); } return; }
     const b = e.target.closest('button[data-k]'); if (!b) return;
     const r = S.rows[+b.dataset.i];
-    if (b.dataset.k === 'jumps') { r.jumps = +b.dataset.v; refresh(false); }
+    if (b.dataset.k === 'max') { r.max = +b.dataset.v; refresh(false); }
     if (b.dataset.k === 'mode' && r.mode !== b.dataset.v) { r.mode = b.dataset.v; refresh(false); }
   });
   $('rows').addEventListener('change', e => {
@@ -378,7 +380,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
     h += '<th>符合目標</th></tr>';
     S.rows.forEach((r, i) => {
       let inP = 0;
-      const goal = r.mode === 'cnt' ? (r.jumps ? `至少跳 ${r.jumps} 次` : '沒有要求') : `至少 ${E.dispText(r.stat, r.target)}`;
+      const goal = r.mode === 'cnt' ? (cap(r) < n ? `最多跳 ${cap(r)} 次` : '沒有限制') : `至少 ${E.dispText(r.stat, r.target)}`;
       h += `<tr><td class="name">${name(i)}${r.lock ? ' <span class="tag" style="background:var(--gold-soft);color:var(--gold)">選定</span>' : ''}<br><span style="font-size:.74rem;color:var(--muted)">${goal}</span></td>`;
       for (let k = 0; k <= n; k++) {
         const p = marginal[i][k + 1], w = rowProb(i, k + 1);
@@ -391,8 +393,10 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
     $('tbl').innerHTML = h;
 
     const w = [];
-    const minSum = S.rows.reduce((a, r) => a + (r.mode === 'cnt' ? r.jumps : 0), 0);
-    if (minSum > n) w.push(`四個詞條的升級跳次數要求加起來是 ${minSum} 次，但總共只會跳 ${n} 次，不可能達成。`);
+    const maxSum = S.rows.reduce((a, r) => a + (r.mode === 'cnt' ? cap(r) : n), 0);
+    if (maxSum < n) w.push(`四個詞條最多跳的次數加起來只有 ${maxSum} 次，但一定會跳滿 ${n} 次，不可能達成。`);
+    const lk2 = locked();
+    if (S.comboOn && lk2.length === 2 && lk2.reduce((a, i) => a + (S.rows[i].mode === 'cnt' ? cap(S.rows[i]) : n), 0) < S.cJumps) w.push(`兩個選定詞條最多跳的次數加起來不到合計要求的 ${S.cJumps} 次，不可能達成。`);
     S.rows.forEach((r, i) => {
       if (r.mode === 'val' && E.probAtLeast(r.stat, n, r.init < 0 ? null : r.init, r.target) <= 0) w.push(`${name(i)}就算 ${n} 次全跳最高檔也到不了 ${E.dispText(r.stat, r.target)}。`);
     });
@@ -429,7 +433,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
   function simOk() {
     const lk = locked();
     if (S.comboOn && lk.length === 2 && sim.counts[lk[0]] + sim.counts[lk[1]] - 2 < S.cJumps) return false;
-    return S.rows.every((r, i) => (r.mode === 'cnt' ? sim.counts[i] - 1 >= r.jumps : E.toDisp(r.stat, sim.vals[i]) >= r.target));
+    return S.rows.every((r, i) => (r.mode === 'cnt' ? sim.counts[i] - 1 <= cap(r) : E.toDisp(r.stat, sim.vals[i]) >= r.target));
   }
   function finish() {
     while (sim.level < 20) upgrade();
@@ -470,7 +474,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
       let good = true;
       for (let i = 0; i < 4 && good; i++) {
         const r = S.rows[i];
-        if (r.mode === 'cnt') { good = c[i] - 1 >= r.jumps; continue; }
+        if (r.mode === 'cnt') { good = c[i] - 1 <= cap(r); continue; }
         let hsum = r.init >= 0 ? byId[r.stat].tiers[r.init] : E.rollValue(r.stat);
         for (let k = 1; k < c[i]; k++) hsum += E.rollValue(r.stat);
         good = E.toDisp(r.stat, hsum) >= r.target;
