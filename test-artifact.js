@@ -184,5 +184,28 @@ eq('成功率 10%，八成要幾顆', E.trialsFor(0.1, 0.8), 16);
   eq('進度保底 每次 2 個：第 3、6 次高階，第 9 次諭告', seq(2), '223223224');
 }
 
+// 15. 符合目標的條件抽樣 (sampleSuccess)
+{
+  // 極端：暴傷 6 次全最高檔 46.6%，用抽樣一定抽得到
+  const o = { init: 4, guarantee: 2, locked: [0, 1] };
+  const vals = [{ stat: 'cr', init: null, target: null }, { stat: 'cd', init: null, target: 466 }, { stat: 'atkp', init: null, target: null }, { stat: 'er', init: null, target: null }];
+  const x = E.sampleSuccess(o, () => true, vals);
+  eq('條件抽樣 暴傷 46.6% 的次數', x && x.counts[1], 6);
+  eq('條件抽樣 暴傷 46.6% 的數值', x && E.fmtValue('cd', x.vals[1]), '46.6%');
+  eq('條件抽樣 不可能時回傳 null', E.sampleSuccess(o, () => true, [vals[0], { stat: 'cd', init: null, target: 470 }, vals[2], vals[3]]), null);
+  // 跟「一直重試直到符合」的分布比較：暴擊至少 7.0%、充能最多跳 1 次，看暴擊的平均次數
+  const v2 = [{ stat: 'cr', init: 1, target: 70 }, { stat: 'cd', init: null, target: null }, { stat: 'atkp', init: null, target: null }, { stat: 'er', init: null, target: null }];
+  const cnt = c => c[3] - 1 <= 1;
+  let a = 0, na = 0, b = 0, nb = 0;
+  for (let t = 0; t < 60000; t++) { const y = E.sampleSuccess(o, cnt, v2); a += y.counts[0]; na++; }
+  while (nb < 60000) {
+    const c = E.simulateCounts(o); if (!cnt(c)) continue;
+    let h = E.byId.cr.tiers[1]; for (let k = 1; k < c[0]; k++) h += E.rollValue('cr');
+    if (E.toDisp('cr', h) < 70) continue;
+    b += c[0]; nb++;
+  }
+  check('條件抽樣 vs 重試 暴擊平均次數 (/10)', a / na / 10, b / nb / 10, 0.003);
+}
+
 console.log(fail ? `\n${fail} 項失敗` : '\n全部通過');
 process.exit(fail ? 1 : 0);

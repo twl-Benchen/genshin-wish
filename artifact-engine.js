@@ -265,7 +265,42 @@
     })(0, 0, 1);
   }
 
-  const api = { STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix, reshapeOdds, reshapeValue, RATIO, MIN_GAIN, UNIT, pityStep, avgRoll };
+  /* 從「符合目標」的結果裡依機率抽一顆 (精確的條件抽樣，不用一直重試，機率再低也抽得到)
+   * o：exact 的 opts (init, guarantee, locked)；cntOk(c)：次數條件 (最多跳幾次、合計) 符不符合
+   * vals：四個 { stat, init (初始那一檔 0..3，null 隨機), target (數值目標，畫面單位，null 沒有) }
+   * 1. 每組最終次數的權重 = 發生機率 × 每個數值目標達成的機率，依權重抽一組次數
+   * 2. 每個詞條在這個次數下，從「達成數值目標」的檔位組合裡平均抽一組 (每組檔位組合的機率本來就一樣)
+   * 回傳 { counts, vals (乘 100 的整數) }，不可能達成時回傳 null */
+  function sampleSuccess(o, cntOk, vals, rand) {
+    rand = rand || Math.random;
+    const lk = o.locked && o.locked.length === 2 ? o.locked : [];
+    const paths = []; let tot = 0;
+    E_each({ init: o.init, guarantee: lk.length ? o.guarantee : 0, locked: lk }, (c, p) => {
+      if (!cntOk(c)) return;
+      let w = p;
+      for (let i = 0; i < 4 && w > 0; i++) { const v = vals[i]; if (v.target != null) w *= probAtLeast(v.stat, c[i] - 1, v.init, v.target); }
+      if (w > 0) { paths.push([c.slice(), w]); tot += w; }
+    });
+    if (!(tot > 0)) return null;
+    let r = rand() * tot, pick = paths[paths.length - 1][0];
+    for (const [c, w] of paths) { if ((r -= w) <= 0) { pick = c; break; } }
+    const out = pick.map((cnt, i) => {
+      const v = vals[i], t = byId[v.stat].tiers;
+      const free = v.init == null ? cnt : cnt - 1, base = v.init == null ? 0 : t[v.init];
+      if (v.target == null) { let h = base; for (let k = 0; k < free; k++) h += t[Math.floor(rand() * 4)]; return h; }
+      // 列舉這個詞條所有檔位組合 (最多 4^6 = 4096 種)，只留達成目標的
+      const ok = [];
+      for (let m = 0; m < Math.pow(4, free); m++) {
+        let h = base, x = m;
+        for (let k = 0; k < free; k++) { h += t[x % 4]; x = Math.floor(x / 4); }
+        if (toDisp(v.stat, h) >= v.target) ok.push(h);
+      }
+      return ok[Math.floor(rand() * ok.length)];
+    });
+    return { counts: pick, vals: out };
+  }
+
+  const api = { sampleSuccess, STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix, reshapeOdds, reshapeValue, RATIO, MIN_GAIN, UNIT, pityStep, avgRoll };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.ArtifactEngine = api;
 })(typeof window !== 'undefined' ? window : this);
