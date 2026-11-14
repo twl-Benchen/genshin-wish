@@ -170,5 +170,18 @@ eq('成功率 10%，八成要幾顆', E.trialsFor(0.1, 0.8), 16);
   eq('沒有主要或次要詞條', E.reshapeValue(xiao.生之花, { em: 2 }, 2).reason, 'none');
 }
 
+// 14. 不歪模式 (只看次數) 與重塑進度保底
+{
+  const W = { cr: 2, cd: 2, er: 2, atkp: 2 };
+  const P = ids => E.parseRelic(ids, 21);
+  eq('不歪 魈 死之羽 升級跳全在主要詞條 → 0', E.reshapeValue(P([501224, 501202, 501234, 501061, 501222, 501202, 501203, 501221]), W, 2, 'count').pUp, 0);
+  const cup = E.reshapeValue(P([501202, 501222, 501234, 501053, 501221, 501204, 501224, 501054, 501203]), W, 2, 'count');
+  check('不歪 魈 空之杯 (攻擊歪一次) 變好 = 5 次都不落在攻擊', cup.pUp, 0.25);
+  eq('不歪 魈 空之杯 有效詞條數', cup.total, 7);
+  const seq = cost => { const st = { pts: 0, highs: 0 }, out = []; for (let i = 0; i < 18 / cost; i++) out.push(E.pityStep(st, cost)); return out.join(''); };
+  eq('進度保底 每次 1 個：第 6、12 個高階，第 18 個諭告', seq(1), '222223222223222224');
+  eq('進度保底 每次 2 個：第 3、6 次高階，第 9 次諭告', seq(2), '223223224');
+}
+
 console.log(fail ? `\n${fail} 項失敗` : '\n全部通過');
 process.exit(fail ? 1 : 0);

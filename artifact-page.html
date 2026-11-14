@@ -257,6 +257,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .plan-tbl td small { display: block; color: var(--muted); font-size: .7rem; font-weight: 400; }
 .plan-tbl .muted { color: var(--muted); font-weight: 400; }
 .plan-auto { margin: 0; }
+.cost-row { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--muted); flex-wrap: wrap; }
+.plan-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
 .plan-tbl tr[data-r] { cursor: pointer; }
 .plan-tbl tr.best td { background: var(--gold-soft); }
 .plan-tbl tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--gold); }
@@ -373,6 +375,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
               <button type="button" class="gbtn" id="bMain"></button>
               <button type="button" class="gbtn light" id="bBatch"><span class="ic">∑</span>批量模擬十萬顆</button>
             </div>
+            <div class="cost-row"><span>每次消耗</span><div class="seg" id="costSeg" role="group" aria-label="每次重塑消耗幾個啟聖之塵"><button type="button" data-v="1">花、羽 1 個</button><button type="button" data-v="2">沙、杯、冠 2 個</button></div></div>
             <div class="log" id="log"></div>
           </div>
         </div>
@@ -405,7 +408,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
           <li>一般情況下每次四個詞條的機率相等，各 1/4。</li>
           <li>重塑保底是「兩個選定詞條合計至少升級跳 N 次」：一般重塑 2 次。每用 1 個啟聖之塵累積 1 點進度，到 6 點時觸發高階重塑 (3 次)，觸發 2 次高階重塑後下一次改成諭告重塑 (4 次)。</li>
           <li>保底是最後才補：前面完全隨機，只有剩下的次數剛好等於還沒達成的保底次數時，才會強制跳到兩個選定詞條之一 (各 1/2)。所以保底只會把很差的結果拉上來，不會提高跳很多次的機率。</li>
-          <li>角色展示的「重塑方案」：有效詞條數 = 主要詞條每一次照檔位算 0.7、0.8、0.9、1 (第七到第十檔)，次要詞條算一半，含初始，攻擊、生命、防禦固定值都不算。重塑變好機率是「升級跳的有效詞條數比現在至少多 0.7 個」的機率，例如把歪掉的一跳拿回來 (最低檔就是 0.7)，或是升級跳都在有用詞條、但這次跳出夠多更高的檔位，只多零點幾個的檔位運氣不算 (結果比原本差可以不換)，大約需要幾次 = 1 ÷ 變好機率，都照一般重塑 (保底 2 次) 計算，選定詞條是最重要的兩個。排序時有考慮啟聖之塵的消耗：花、羽每次 1 個，沙、杯、冠每次 2 個，所以是比「大約需要幾次 × 每次消耗」誰最少。</li>
+          <li>角色展示的「重塑方案」右上角可以切換怎樣算變好。「不歪」(預設) 只看升級跳落在哪些詞條、不看檔位：有效詞條數是主要詞條的次數加上次要詞條的一半，落在主要、次要詞條的升級跳比現在多才算變好，升級跳都沒歪的就是「已經最好」。</li>
+          <li>「追高檔」：有效詞條數 = 主要詞條每一次照檔位算 0.7、0.8、0.9、1 (第七到第十檔)，次要詞條算一半，含初始，攻擊、生命、防禦固定值都不算。重塑變好機率是「升級跳的有效詞條數比現在至少多 0.7 個」的機率，例如把歪掉的一跳拿回來 (最低檔就是 0.7)，或是升級跳都在有用詞條、但這次跳出夠多更高的檔位，只多零點幾個的檔位運氣不算 (結果比原本差可以不換)，大約需要幾次 = 1 ÷ 變好機率，都照一般重塑 (保底 2 次) 計算，選定詞條是最重要的兩個。排序時有考慮啟聖之塵的消耗：花、羽每次 1 個，沙、杯、冠每次 2 個，所以是比「大約需要幾次 × 每次消耗」誰最少。</li>
           <li>每次 (含初始) 的數值是四個檔位之一，機率相等。遊戲內部取到小數點後兩位，畫面上百分比四捨五入到小數點後一位，固定值四捨五入到整數。例如暴擊傷害最高檔顯示 7.8%，實際是 7.77%，6 次都最高檔是 46.62%，顯示 46.6%。</li>
         </ul>
       </section>
@@ -464,7 +468,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   // 每列：stat 副詞條、lock 是否選定、mode 目標種類 (cnt 升級跳次數 / val 數值)、
   // max 最多升級跳幾次 (大於等於 N 代表沒有限制)、init 初始那一檔 (-1 隨機，0..3 第七到第十檔)、target 數值目標 (畫面單位，見 E.toDisp)
   const row = (stat, lock) => ({ stat, lock, mode: 'cnt', max: 5, init: -1, target: null });
-  let S = { init: 4, g: 2, rows: [row('cr', true), row('cd', true), row('atkp', false), row('er', false)], comboOn: false, cJumps: 3 };
+  let S = { init: 4, g: 2, rows: [row('cr', true), row('cd', true), row('atkp', false), row('er', false)], comboOn: false, cJumps: 3, cost: 2 };
   try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.rows && s.rows.length === 4) S = Object.assign(S, s); } catch (e) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 
@@ -486,6 +490,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       if (r.target != null && !isFinite(r.target)) r.target = null;
     });
     S.cJumps = Math.max(0, Math.min(S.cJumps | 0, N()));
+    S.cost = S.cost === 1 ? 1 : 2;
     if (locked().length > 2) S.rows.forEach((r, i) => { if (i > 1) r.lock = false; });
   }
 
@@ -751,11 +756,15 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     lg.scrollTop = lg.scrollHeight;
   }
   $('bMain').onclick = () => { batchHtml = ''; if (sim.level >= 20) newSim(); finish(); renderSim(); };
+  // 批量模擬：照順序連續重塑十萬次。一般重塑時套用重塑進度保底 (E.pityStep)：每用 6 個啟聖之塵觸發高階重塑 (保底 3 次)，第 18 個改成諭告重塑 (保底 4 次)
   $('bBatch').onclick = () => {
     const T = 100000, o = calcOpts();
+    const pity = effG() === 2, st = { pts: 0, highs: 0 }, kinds = { 2: 0, 3: 0, 4: 0 };
     let ok = 0;
     for (let t = 0; t < T; t++) {
-      const c = E.simulateCounts(o);
+      const g = pity ? E.pityStep(st, S.cost) : o.guarantee;
+      kinds[g] = (kinds[g] || 0) + 1;
+      const c = E.simulateCounts(Object.assign({}, o, { guarantee: g }));
       const lk = o.locked;
       if (S.comboOn && lk.length === 2 && c[lk[0]] + c[lk[1]] - 2 < S.cJumps) continue;
       let good = true;
@@ -769,9 +778,16 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       }
       if (good) ok++;
     }
-    batchHtml = `<div class="bt">批量模擬十萬顆，成功 ${ok.toLocaleString()} 顆，成功率 <b>${(ok / T * 100).toFixed(2)}%</b>。</div><div style="color:var(--muted)">精確值是 ${fmtP(lastP)}，兩者應該很接近。按「${$('bMain').textContent.replace('↻', '').trim()}」回到重塑紀錄。</div>`;
+    const dust = T * S.cost;
+    const per = ok ? (dust / ok).toFixed(1) : '-';
+    const note = pity
+      ? `連續重塑十萬次，每用 6 個啟聖之塵有一次高階重塑 (保底 3 次)，第 18 個是諭告重塑 (保底 4 次)。精確值只算一般重塑，所以會低一點：`
+      : `每次都照「${{ 0: '不重塑', 3: '高階重塑', 4: '諭告重塑' }[effG()] || '一般重塑'}」模擬，不套進度保底 (只有一般重塑會累積進度)。`;
+    batchHtml = `<div class="bt">批量模擬十萬顆，成功 ${ok.toLocaleString()} 顆，成功率 <b>${(ok / T * 100).toFixed(2)}%</b>${pity ? `，平均 ${per} 個啟聖之塵成功一次` : ''}。</div><div style="color:var(--muted)">${note}${pity ? '' : '精確值是 '}${fmtP(lastP)}。按「${$('bMain').textContent.replace('↻', '').trim()}」回到重塑紀錄。</div>`;
     renderSim();
   };
+  $('costSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.cost = +b.dataset.v; save(); renderCost(); });
+  function renderCost() { document.querySelectorAll('#costSeg button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.v === S.cost)); }
 
   // ---- 分頁：計算 / 重塑規則 / 角色展示 ----
   // 網址：#rules 開規則，#showcase 開角色展示，#uid-123456789 開角色展示並直接查這個 UID
@@ -794,6 +810,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   function refresh(resetSim) {
     renderSetup(); renderCalc();
     if (resetSim || !sim) { tally = { n: 0, ok: 0 }; batchHtml = ''; newSim(); }
+    renderCost();
     renderSim();
   }
 
@@ -1345,7 +1362,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       </table></div>
       <div class="btns"><button type="button" class="gbtn" id="scApply"${can ? '' : ' disabled'}><span class="ic">⇩</span>帶入重塑計算</button>
       <span class="hint" style="align-self:center">${can ? '會換成這四個詞條和初始詞條數，最多跳幾次照重塑方案：主要詞條不限制、次要詞條 2 次、其他 0 次。' : '要升到 +20 才能重塑。'}</span></div>`;
-    if (can) $('scApply').onclick = () => applyRelic(p, `${c.n}・${r.slot}`);
+    if (can) $('scApply').onclick = () => applyRelic(p, `${c.n}・${r.slot}`, DUST[r.slot] || 2);
   }
 
 
@@ -1365,6 +1382,9 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   let planBy = {};
   try { const v = JSON.parse(localStorage.getItem(PKEY)); if (v && typeof v === 'object') planBy = v; } catch (e) {}
   const avKey = av => `${av.avatarId}-${av.skillDepotId || 0}`;
+  // 怎樣算變好：count 不歪 (只看升級跳落在哪，預設)、tier 追高檔 (看檔位，至少多 0.7 個有效詞條)
+  SC.planMode = 'count';
+  try { if (localStorage.getItem('artcalc-planmode') === 'tier') SC.planMode = 'tier'; } catch (e) {}
   SC.plan = { main: ['cr', 'cd'], sec: [], auto: true };
   function autoMain(av) {
     const sum = Object.fromEntries(PLAN_STATS.map(id => [id, 0]));
@@ -1395,7 +1415,9 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   function renderPlan() {
     const P = SC.plan;
     const pills = (kind, list) => list.map(id => `<button type="button" class="pill${P[kind].includes(id) ? ' on' : ''}" data-kind="${kind}" data-v="${id}" aria-pressed="${P[kind].includes(id)}" title="${byId[id].name}">${SHORT_SUB[id]}</button>`).join('');
-    $('scPlan').innerHTML = `<h2>重塑方案</h2>
+    const mode = SC.planMode;
+    $('scPlan').innerHTML = `<div class="plan-head"><h2>重塑方案</h2>
+        <div class="seg" id="planMode" role="group" aria-label="怎樣算變好">${[['count', '不歪'], ['tier', '追高檔']].map(([v, t]) => `<button type="button" data-mode="${v}" aria-pressed="${mode === v}">${t}</button>`).join('')}</div></div>
       <p class="hint plan-auto">${P.auto ? '主要詞條已依這個角色的武器、沙杯冠主詞條和所有副詞條自動選好，可以再改。' : '主要詞條是你改過的設定。'}${P.auto ? '' : ' <button type="button" class="linkbtn" id="planReset">恢復自動</button>'}</p>
       <div class="pill-row"><span class="pill-lab">主要詞條</span><div class="pills">${pills('main', PLAN_STATS)}</div></div>
       <div class="pill-row"><span class="pill-lab">次要詞條</span><div class="pills">${pills('sec', PLAN_STATS.filter(id => !P.main.includes(id)))}</div></div>
@@ -1413,7 +1435,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     if (!SC.plan.main.length) { out.innerHTML = '<p class="hint">先選至少一個主要詞條。</p>'; return; }
     const rows = relics.map((r, i) => {
       if (!r.parsed.ok || r.parsed.level < 20) return null;
-      const v = E.reshapeValue(r.parsed, W, 2);
+      const v = E.reshapeValue(r.parsed, W, 2, SC.planMode);
       if (!v.ok) return null;
       const cost = DUST[r.slot] || 2;
       return { i, r, v, dust: v.tries * cost };
@@ -1430,11 +1452,15 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
         <td class="num">${x.v.pUp > 0 ? fmtP(x.v.pUp) : '<span class="muted">0%</span>'}</td>
         <td class="num"><b>${tries(x.v.tries)}</b></td></tr>`).join('')}
     </table></div>
-    <p class="hint">有效詞條數：主要詞條每次照檔位算 0.7 到 1，次要詞條算一半。重塑變好 = 升級跳的有效詞條數比現在至少多 0.7 個，例如把歪掉的一跳拿回來，或是跳出夠多更高的檔位。照一般重塑計算，排序有考慮啟聖之塵的消耗，詳細說明在「重塑規則」。</p>`;
+    <p class="hint">${SC.planMode === 'count'
+      ? '不歪：只看升級跳落在哪些詞條，不看檔位。有效詞條數是主要詞條的次數加上次要詞條的一半；重塑變好 = 落在主要、次要詞條的升級跳比現在多，升級跳都沒歪的就是「已經最好」。'
+      : '追高檔：有效詞條數照檔位算 (第七到第十檔 0.7 到 1)，次要詞條算一半。重塑變好 = 升級跳的有效詞條數比現在至少多 0.7 個，例如把歪掉的一跳拿回來，或是跳出夠多更高的檔位。'}照一般重塑計算，排序有考慮啟聖之塵的消耗，詳細說明在「重塑規則」。</p>`;
   }
 
   $('scPlan').addEventListener('click', e => {
     const P = SC.plan, b = e.target.closest('.pill');
+    const mb = e.target.closest('#planMode button');
+    if (mb) { SC.planMode = mb.dataset.mode; try { localStorage.setItem('artcalc-planmode', SC.planMode); } catch (err) {} renderPlan(); return; }
     if (e.target.id === 'planReset') { SC.plan.auto = true; savePlan(); loadPlan(SC.data.avatarInfoList[SC.sel]); renderPlan(); return; }
     if (!b) { const tr = e.target.closest('tr[data-r]'); if (tr) selectRelic(+tr.dataset.r); return; }
     P.auto = false;
@@ -1444,9 +1470,10 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     savePlan(); renderPlan();
   });
 
-  function applyRelic(p, label) {
+  function applyRelic(p, label, cost) {
     const old = S.rows;
     S.init = p.init;
+    S.cost = cost === 1 ? 1 : 2;
     S.rows = p.subs.map(s => {
       const prev = old.find(r => r.stat === s.stat);
       const r = prev ? Object.assign({}, prev) : row(s.stat, false);

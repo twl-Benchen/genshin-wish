@@ -205,10 +205,14 @@
     upCache.set(key, d);
     return d;
   }
-  function reshapeValue(parsed, weight, guarantee) {
+  /* mode：'tier' 追高檔 (上面說的，看檔位，至少多 0.7 個才算變好)
+   *       'count' 不歪 (只看升級跳的次數落在哪，不看檔位；有用詞條的升級跳比原本多就算變好，
+   *               升級跳全在主要詞條時不可能變好，畫面顯示「已經最好」)。有效詞條數也只算次數 */
+  function reshapeValue(parsed, weight, guarantee, mode) {
     if (!parsed || !parsed.ok || parsed.subs.length !== 4) return { ok: false };
     const w = parsed.subs.map(s => weight[s.stat] || 0);
     if (!w.some(x => x > 0)) return { ok: false, reason: 'none' };
+    if (mode === 'count') return reshapeCount(parsed, w, guarantee);
     const up = parsed.subs.reduce((a, s, i) => a + w[i] * s.rolls.reduce((b, t) => b + RATIO[t], 0), 0);
     const init = parsed.subs.reduce((a, s, i) => a + w[i] * RATIO[s.initTier], 0);
     const lock = [0, 1, 2, 3].sort((a, b) => w[b] - w[a] || a - b).slice(0, 2).sort((a, b) => a - b);
@@ -221,6 +225,29 @@
     pUp = Math.min(1, pUp);
     return { ok: true, total: (init + up) / 200, pUp, tries: pUp > 1e-12 ? 1 / pUp : Infinity, lock };
   }
+  function reshapeCount(parsed, w, guarantee) {
+    const now = parsed.subs.reduce((a, s, i) => a + w[i] * s.rolls.length, 0);
+    const total = parsed.subs.reduce((a, s, i) => a + w[i] * (1 + s.rolls.length), 0) / 2;
+    const lock = [0, 1, 2, 3].sort((a, b) => w[b] - w[a] || a - b).slice(0, 2).sort((a, b) => a - b);
+    let pUp = 0;
+    E_each({ init: parsed.init, guarantee: guarantee == null ? 2 : guarantee, locked: lock }, (c, p) => {
+      if (c.reduce((a, n, i) => a + w[i] * (n - 1), 0) > now) pUp += p;
+    });
+    pUp = Math.min(1, pUp);
+    return { ok: true, total, pUp, tries: pUp > 1e-12 ? 1 / pUp : Infinity, lock };
+  }
+
+  /* 重塑進度保底 (批量模擬用)：每用 1 個啟聖之塵累積 1 點，這次重塑讓進度滿 6 點時變成高階重塑 (保底 3 次)，
+   * 第 3 次觸發改成諭告重塑 (保底 4 次)，所以是第 6、12 個塵高階，第 18 個諭告，之後重新循環。
+   * st = { pts, highs } 會被更新，cost 是這次用幾個塵 (花、羽 1，沙、杯、冠 2)，回傳這次的保底次數 */
+  function pityStep(st, cost) {
+    st.pts += cost;
+    if (st.pts < 6) return 2;
+    st.pts -= 6;
+    if (++st.highs >= 3) { st.highs = 0; return 4; }
+    return 3;
+  }
+
   // 列舉每一組最終次數 (含初始 1 次) 和它的機率
   function E_each(o, fn) {
     const n = upgrades(o.init), lk = o.locked, X = Math.min(o.guarantee || 0, n);
@@ -232,7 +259,7 @@
     })(0, 0, 1);
   }
 
-  const api = { STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix, reshapeOdds, reshapeValue, RATIO, MIN_GAIN };
+  const api = { STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix, reshapeOdds, reshapeValue, RATIO, MIN_GAIN, pityStep };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.ArtifactEngine = api;
 })(typeof window !== 'undefined' ? window : this);
