@@ -1062,6 +1062,9 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   $('comboBox').addEventListener('click', e => { const b = e.target.closest('button[data-k="combo"]'); if (b) { S.cJumps = +b.dataset.v; refresh(false); } });
 
   /* ---------- 計算結果 ---------- */
+  // 八成機率那格的小字：重塑時換算成啟聖之塵 (每次 S.cost 個)
+  const need80Sub = (k80, act) => (!isFinite(k80) ? '不可能達成'
+    : act === '重塑' ? `約 ${(k80 * S.cost).toLocaleString()} 個啟聖之塵 (每次 ${S.cost} 個)` : '一般強化，不用啟聖之塵');
   let lastP = 0, lastCalc = null;
   function renderCalc() {
     const { success, marginal } = E.exact(calcOpts()), n = N();
@@ -1074,9 +1077,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     const k80 = E.trialsFor(success, 0.8);
     $('need80K').textContent = `八成機率成功，需要${act}`;
     $('need80').textContent = isFinite(k80) ? `${k80.toLocaleString()} 顆` : '-';
-    $('need80Desc').textContent = !isFinite(k80) ? '不可能達成'
-      : k80 === 1 ? `${act} 1 顆就有 ${fmtP(success)} 機率成功`
-      : '';
+    $('need80Desc').textContent = need80Sub(k80, act);
     $('nUp').textContent = n + ' 次';
     $('nUpDesc').textContent = S.init === 4 ? '初始 4 詞條' : '初始 3 詞條，+4 先新增詞條';
 
@@ -1335,7 +1336,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       ctx.font = fitFont(ctx, sub, 400, 15, FB, bw - 36); ctx.fillStyle = K.muted; ctx.fillText(sub, x + 18, y + 128);
     };
     box(CX + hw + gap, `八成機率成功，需要${d.act}`, isFinite(d.k80) ? `${d.k80.toLocaleString()} 顆` : '-',
-      !isFinite(d.k80) ? '不可能達成' : d.k80 === 1 ? `${d.act} 1 顆就有 ${fmtP(d.success)} 機率成功` : '');
+      need80Sub(d.k80, d.act));
     box(CX + hw + gap + bw + gap, '升級跳的次數', `${d.n} 次`, S.init === 4 ? '初始 4 詞條' : '初始 3 詞條，+4 先新增詞條');
     return y + H;
   }
