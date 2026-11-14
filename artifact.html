@@ -177,7 +177,8 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 .stat .v { font-family: var(--f-num); font-weight: 600; font-size: 2.4rem; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; }
 @media (max-width: 1040px) { .stat:not(.hero) .v { font-size: 1.85rem; } }
 .stat .s { font-size: .8rem; color: var(--muted); }
-.stat .v small { font-size: .5em; font-weight: 500; margin-right: 2px; }
+.stat .v small { font-family: var(--f-body); font-size: .5em; font-weight: 500; margin-left: .25em; }
+.stat .v small.pre { margin-left: 0; margin-right: .25em; }
 .stat.hero { background: linear-gradient(150deg, var(--hero-a), var(--hero-b)); color: var(--hero-ink); position: relative; overflow: hidden; }
 .stat.hero::after { content: "★★★★★"; position: absolute; right: 10px; top: 8px; font-size: .62rem; letter-spacing: 1px; opacity: .55; }
 .stat.hero .k, .stat.hero .s { color: var(--hero-ink); opacity: .9; }
@@ -1098,7 +1099,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     if (act !== '重塑') return { v: '-', s: '一般強化，不用啟聖之塵', t: '-' };
     if (!isFinite(k80)) return { v: '-', s: '不可能達成', t: '-' };
     const ver = k80 * S.cost / PER_VER, txt = ver < 10 ? String(+ver.toFixed(1)) : String(Math.round(ver));
-    return { v: `<small>大約</small> ${txt} 個版本`, t: `大約 ${txt} 個版本`, pre: '大約', main: `${txt} 個版本`, s: `≈${Math.round(ver * VER_DAYS).toLocaleString()} 天` };
+    return { v: `<small class="pre">大約</small>${txt}<small>個版本</small>`, t: `大約 ${txt} 個版本`, pre: '大約', main: txt, unit: '個版本', s: `≈${Math.round(ver * VER_DAYS).toLocaleString()} 天` };
   }
   let lastP = 0, lastCalc = null;
   function renderCalc() {
@@ -1111,7 +1112,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     $('pctDesc').textContent = success > 0 && success < 1 ? `大約每${act} ${(1 / success).toFixed(1)} 顆成功 1 顆` : (success >= 1 ? '一定成功' : '不可能達成');
     const k80 = E.trialsFor(success, 0.8);
     $('need80K').textContent = `八成機率成功，需要${act}`;
-    $('need80').textContent = isFinite(k80) ? `${k80.toLocaleString()} 顆` : '-';
+    $('need80').innerHTML = isFinite(k80) ? `${k80.toLocaleString()}<small>顆</small>` : '-';
     $('need80Desc').textContent = need80Sub(k80, act);
     const vt = versionTime(k80, act);
     $('nUp').innerHTML = vt.v; $('nUpDesc').textContent = vt.s;
@@ -1358,18 +1359,25 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     const hw = Math.round(CW * 0.42), bw = (CW - hw - 2 * gap) / 2;
     const vt = versionTime(d.k80, d.act);
     const desc = d.success > 0 && d.success < 1 ? `大約每${d.act} ${(1 / d.success).toFixed(1)} 顆成功 1 顆` : (d.success >= 1 ? '一定成功' : '不可能達成');
-    // 三格：[x, 寬, 標題, 數字前的小字, 數字, 小字, 是否第一格]
+    // 三格：[x, 寬, 標題, 數字前的小字, 數字, 小字, 是否第一格, 數字後的單位 (小字)]
+    const fin = isFinite(d.k80);
     const cells = [
-      [CX, hw, '全部條件同時符合', '', fmtP(d.success), desc, true],
-      [CX + hw + gap, bw, `八成機率成功，需要${d.act}`, '', isFinite(d.k80) ? `${d.k80.toLocaleString()} 顆` : '-', need80Sub(d.k80, d.act)],
-      [CX + hw + gap + bw + gap, bw, `每版本 ${PER_VER} 個羽毛`, vt.pre ? vt.pre + ' ' : '', vt.main || vt.t, vt.s],
+      [CX, hw, '全部條件同時符合', '', fmtP(d.success), desc, true, ''],
+      [CX + hw + gap, bw, `八成機率成功，需要${d.act}`, '', fin ? d.k80.toLocaleString() : '-', need80Sub(d.k80, d.act), false, fin ? '顆' : ''],
+      [CX + hw + gap + bw + gap, bw, `每版本 ${PER_VER} 個羽毛`, vt.pre || '', vt.main || vt.t, vt.s, false, vt.unit || ''],
     ];
-    const valW = (pre, v, f) => { ctx.font = `500 ${Math.round(f * 0.5)}px ${FB}`; const a = pre ? ctx.measureText(pre).width + 6 : 0; ctx.font = `600 ${f}px ${FN}`; return a + ctx.measureText(v).width; };
-    let V = 46; while (V > 20 && cells.some(c => valW(c[3], c[4], V) > c[1] - 40)) V--;
+    // 小字 (大約、單位) 是數字的一半大，跟數字之間空 0.25 個小字寬
+    const smallF = f => Math.round(f * 0.5);
+    const valW = (pre, v, f, unit) => {
+      ctx.font = `500 ${smallF(f)}px ${FB}`;
+      const gapW = smallF(f) * 0.25, a = pre ? ctx.measureText(pre).width + gapW : 0, u = unit ? ctx.measureText(unit).width + gapW : 0;
+      ctx.font = `600 ${f}px ${FN}`; return a + ctx.measureText(v).width + u;
+    };
+    let V = 46; while (V > 20 && cells.some(c => valW(c[3], c[4], V, c[7]) > c[1] - 40)) V--;
     ctx.font = `400 17px ${FB}`;
     const kF = Math.min(...cells.map(c => { let f = 17; ctx.font = `400 ${f}px ${FB}`; while (f > 12 && ctx.measureText(c[2]).width > c[1] - 40) { f--; ctx.font = `400 ${f}px ${FB}`; } return f; }));
     const sF = Math.min(...cells.map(c => { let f = 15; ctx.font = `400 ${f}px ${FB}`; while (f > 11 && ctx.measureText(c[5]).width > c[1] - 40) { f--; ctx.font = `400 ${f}px ${FB}`; } return f; }));
-    cells.forEach(([x, w, k, pre, v, sub, hero]) => {
+    cells.forEach(([x, w, k, pre, v, sub, hero, unit]) => {
       if (hero) {
         const g = ctx.createLinearGradient(x, y, x + w, y + H);
         g.addColorStop(0, K.heroA); g.addColorStop(1, K.heroB);
@@ -1378,8 +1386,10 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       const ink = hero ? K.heroInk : K.ink, soft = hero ? K.heroInk : K.muted;
       text(ctx, k, x + 20, y + 36, `${hero ? 500 : 400} ${kF}px ${FB}`, soft);
       let vx = x + 20;
-      if (pre) vx += text(ctx, pre, vx, y + 94, `500 ${Math.round(V * 0.5)}px ${FB}`, ink) + 6;
-      text(ctx, v, vx, y + 94, `600 ${V}px ${FN}`, ink);
+      const sf = smallF(V), gapW = sf * 0.25;
+      if (pre) vx += text(ctx, pre, vx, y + 94, `500 ${sf}px ${FB}`, ink) + gapW;
+      vx += text(ctx, v, vx, y + 94, `600 ${V}px ${FN}`, ink);
+      if (unit) text(ctx, unit, vx + gapW, y + 94, `500 ${sf}px ${FB}`, ink);
       text(ctx, sub, x + 20, y + 130, `400 ${sF}px ${FB}`, soft);
     });
     return y + H;
