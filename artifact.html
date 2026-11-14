@@ -363,6 +363,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .plan-tbl td, .plan-tbl th { font-size: .82rem; }
 .plan-tbl td small { display: block; color: var(--muted); font-size: .7rem; font-weight: 400; }
 .plan-tbl .muted { color: var(--muted); font-weight: 400; }
+.plan-auto { margin: 0; }
 .plan-tbl tr[data-r] { cursor: pointer; }
 .plan-tbl tr.best td { background: var(--gold-soft); }
 .plan-tbl tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--gold); }
@@ -1621,6 +1622,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       <div class="sc-relics">${relics.map((r, i) => relicHtml(r, i)).join('') || '<p class="muted">沒有裝備聖遺物</p>'}</div>
     </div>`;
     renderDetail(relics);
+    loadPlan(av);
     if (!$('scBottom').hidden) renderPlan();
   }
 
@@ -1675,7 +1677,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
         }).join('')}
       </table></div>
       <div class="btns"><button type="button" class="gbtn" id="scApply"${can ? '' : ' disabled'}><span class="ic">⇩</span>帶入重塑計算</button>
-      <span class="hint" style="align-self:center">${can ? '會換成這四個詞條和初始詞條數，初始那一檔也一起填好，選定詞條和目標保留原本的設定。' : '要升到 +20 才能重塑。'}</span></div>`;
+      <span class="hint" style="align-self:center">${can ? '會換成這四個詞條和初始詞條數，最多跳幾次照重塑方案：主要詞條不限制、次要詞條 2 次、其他 0 次。' : '要升到 +20 才能重塑。'}</span></div>`;
     if (can) $('scApply').onclick = () => applyRelic(p, `${c.n}・${r.slot}`);
   }
 
@@ -1686,15 +1688,48 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
    * 啟聖之塵：花、羽每次 1 個，沙、杯、冠每次 2 個 */
   const DUST = { 生之花: 1, 死之羽: 1, 時之沙: 2, 空之杯: 2, 理之冠: 2 };
   const PLAN_STATS = ['cr', 'cd', 'em', 'er', 'atkp', 'hpp', 'defp'];
-  const PKEY = 'artcalc-plan2';
-  SC.plan = { main: ['cr', 'cd'], sec: ['atkp'] };
-  try { const v = JSON.parse(localStorage.getItem(PKEY)); if (v && Array.isArray(v.main) && Array.isArray(v.sec)) SC.plan = { main: v.main.filter(x => PLAN_STATS.includes(x)), sec: v.sec.filter(x => PLAN_STATS.includes(x) && !v.main.includes(x)) }; } catch (e) {}
-  const savePlan = () => { try { localStorage.setItem(PKEY, JSON.stringify(SC.plan)); } catch (e) {} };
+  /* 主要詞條預設自動選：武器副詞條、沙杯冠的主詞條、五件聖遺物的副詞條加總，
+   * 每個詞條除以副詞條最高檔 (例如暴擊 3.89%、精通 23.31) 換成詞條數才能互相比較，取前三高；
+   * 前三高沒有暴擊率也沒有暴擊傷害 (多半是輔助) 就只取前兩高。次要詞條預設不選。
+   * 使用者改過的照角色記在 localStorage artcalc-plan3 ({ 角色: { main, sec } })，按「恢復自動」清掉 */
+  const PKEY = 'artcalc-plan3';
+  const PROP_STAT = { FIGHT_PROP_CRITICAL: 'cr', FIGHT_PROP_CRITICAL_HURT: 'cd', FIGHT_PROP_ELEMENT_MASTERY: 'em', FIGHT_PROP_CHARGE_EFFICIENCY: 'er',
+    FIGHT_PROP_ATTACK_PERCENT: 'atkp', FIGHT_PROP_HP_PERCENT: 'hpp', FIGHT_PROP_DEFENSE_PERCENT: 'defp' };
+  let planBy = {};
+  try { const v = JSON.parse(localStorage.getItem(PKEY)); if (v && typeof v === 'object') planBy = v; } catch (e) {}
+  const avKey = av => `${av.avatarId}-${av.skillDepotId || 0}`;
+  SC.plan = { main: ['cr', 'cd'], sec: [], auto: true };
+  function autoMain(av) {
+    const sum = Object.fromEntries(PLAN_STATS.map(id => [id, 0]));
+    const add = (prop, v) => { const id = PROP_STAT[prop]; if (id && isFinite(v)) sum[id] += v / (byId[id].tiers[3] / 100); };
+    const w = (av.equipList || []).find(e => e.weapon);
+    if (w) ((w.flat || {}).weaponStats || []).forEach(st => add(st.appendPropId, +(st.statValue != null ? st.statValue : st.propValue)));
+    relicsOf(av).forEach(r => {
+      const m = r.f.reliquaryMainstat || {};
+      if (r.order >= 2) add(m.mainPropId, +(m.statValue != null ? m.statValue : m.propValue));
+      if (r.parsed.ok) r.parsed.subs.forEach(x => { if (PLAN_STATS.includes(x.stat)) sum[x.stat] += x.total / byId[x.stat].tiers[3]; });
+      else (r.f.reliquarySubstats || []).forEach(st => add(st.appendPropId, +(st.statValue != null ? st.statValue : st.propValue)));
+    });
+    const rank = PLAN_STATS.filter(id => sum[id] > 0).sort((a, b) => sum[b] - sum[a]);
+    const top3 = rank.slice(0, 3);
+    return top3.includes('cr') || top3.includes('cd') ? top3 : rank.slice(0, 2);
+  }
+  function loadPlan(av) {
+    const saved = planBy[avKey(av)];
+    SC.plan = saved && Array.isArray(saved.main) ? { main: saved.main.filter(x => PLAN_STATS.includes(x)), sec: (saved.sec || []).filter(x => PLAN_STATS.includes(x) && !saved.main.includes(x)), auto: false }
+      : { main: autoMain(av), sec: [], auto: true };
+  }
+  const savePlan = () => {
+    const av = (SC.data.avatarInfoList || [])[SC.sel]; if (!av) return;
+    if (SC.plan.auto) delete planBy[avKey(av)]; else planBy[avKey(av)] = { main: SC.plan.main, sec: SC.plan.sec };
+    try { localStorage.setItem(PKEY, JSON.stringify(planBy)); } catch (e) {}
+  };
 
   function renderPlan() {
     const P = SC.plan;
     const pills = (kind, list) => list.map(id => `<button type="button" class="pill${P[kind].includes(id) ? ' on' : ''}" data-kind="${kind}" data-v="${id}" aria-pressed="${P[kind].includes(id)}" title="${byId[id].name}">${SHORT_SUB[id]}</button>`).join('');
     $('scPlan').innerHTML = `<h2>重塑方案</h2>
+      <p class="hint plan-auto">${P.auto ? '主要詞條已依這個角色的武器、沙杯冠主詞條和所有副詞條自動選好，可以再改。' : '主要詞條是你改過的設定。'}${P.auto ? '' : ' <button type="button" class="linkbtn" id="planReset">恢復自動</button>'}</p>
       <div class="pill-row"><span class="pill-lab">主要詞條</span><div class="pills">${pills('main', PLAN_STATS)}</div></div>
       <div class="pill-row"><span class="pill-lab">次要詞條</span><div class="pills">${pills('sec', PLAN_STATS.filter(id => !P.main.includes(id)))}</div></div>
       <div id="planOut"></div>`;
@@ -1733,7 +1768,9 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 
   $('scPlan').addEventListener('click', e => {
     const P = SC.plan, b = e.target.closest('.pill');
+    if (e.target.id === 'planReset') { SC.plan.auto = true; savePlan(); loadPlan(SC.data.avatarInfoList[SC.sel]); renderPlan(); return; }
     if (!b) { const tr = e.target.closest('tr[data-r]'); if (tr) selectRelic(+tr.dataset.r); return; }
+    P.auto = false;
     const kind = b.dataset.kind, id = b.dataset.v, list = P[kind];
     if (list.includes(id)) list.splice(list.indexOf(id), 1);
     else { list.push(id); if (kind === 'main') P.sec = P.sec.filter(x => x !== id); }
@@ -1747,6 +1784,9 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       const prev = old.find(r => r.stat === s.stat);
       const r = prev ? Object.assign({}, prev) : row(s.stat, false);
       r.init = s.initTier;
+      // 最多跳幾次：重塑方案的主要詞條 5 次 (不限制)、次要詞條 2 次、其他 0 次
+      r.mode = 'cnt';
+      r.max = SC.plan.main.includes(s.stat) ? 5 : SC.plan.sec.includes(s.stat) ? 2 : 0;
       return r;
     });
     // 選定詞條超過兩個時只留前兩個
