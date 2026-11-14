@@ -152,6 +152,103 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .site-text .url { font-family: var(--f-num); font-size: .85rem; color: var(--gold); word-break: break-all; user-select: all; }
 .site-act { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .rules { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; font-size: .9rem; }
+/* UID 查詢欄 */
+.uidbox { display: flex; height: 40px; border: 1px solid var(--frame-soft); border-radius: 999px; overflow: hidden; background: var(--sunken); }
+.uidbox input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font: 600 .95rem var(--f-num); padding: 0 14px; letter-spacing: .04em; }
+.uidbox input:focus-visible { outline: none; }
+.uidbox:focus-within { outline: 2px solid var(--focus); outline-offset: 1px; }
+.uid-go { flex: none; width: 46px; border: 0; background: var(--btn); color: var(--btn-ink); cursor: pointer; display: grid; place-items: center; }
+.uid-go svg { width: 18px; height: 18px; }
+.uid-go:hover { filter: brightness(1.1); }
+.apply-msg { margin: 0; font-size: .82rem; color: var(--good); font-weight: 700; }
+
+/* 角色展示分頁 */
+.showcase { display: grid; gap: 16px; min-width: 0; }
+.sc-top { padding: 16px 18px; display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 10px 18px; align-items: center; }
+@media (max-width: 700px) { .sc-top { grid-template-columns: minmax(0, 1fr); } }
+.sc-player { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; font-size: .88rem; color: var(--muted); min-width: 0; }
+.sc-player b { font-family: var(--f-display); font-size: 1.15rem; color: var(--ink); }
+.sc-player .sig { flex-basis: 100%; font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sc-player a { color: var(--gold); font-size: .8rem; }
+.sc-msg { margin: 0; font-size: .88rem; color: var(--muted); }
+.sc-msg.bad { color: var(--bad); }
+.sc-avatars { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 10px; scrollbar-width: thin; }
+.sc-av { flex: none; position: relative; width: 68px; height: 68px; border-radius: 50%; padding: 0; border: 3px solid var(--frame-soft); background: linear-gradient(160deg, #6b5b8f, #3b3556); cursor: pointer; }
+.sc-av.q5 { background: linear-gradient(160deg, #b5793a, #7a4a22); }
+.sc-av img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+.sc-av .lv { position: absolute; right: -4px; bottom: -2px; font: 600 .7rem var(--f-num); background: #2b3142; color: #ece5d8; border-radius: 6px; padding: 0 5px; }
+.sc-av[aria-selected="true"] { border-color: var(--good); box-shadow: 0 4px 0 -1px var(--focus); }
+
+/* 角色卡：仿 Enka 的三欄 (立繪、武器與屬性、聖遺物)，底色跟著元素 */
+.sc-card { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .9fr) minmax(0, 1.25fr); gap: 0; min-height: 540px; border-radius: 10px; overflow: hidden; color: #fff;
+  background: radial-gradient(120% 90% at 20% 30%, var(--el2), var(--el1) 70%); box-shadow: 0 8px 28px rgba(20, 28, 50, .3); }
+.sc-card::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(115deg, rgba(255, 255, 255, .025) 0 2px, transparent 2px 22px); }
+.sc-art { position: relative; min-height: 540px; overflow: hidden; }
+.sc-art .splash { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; transform: scale(1.35); transform-origin: 50% 30%;
+  -webkit-mask-image: linear-gradient(90deg, #000 72%, transparent); mask-image: linear-gradient(90deg, #000 72%, transparent); }
+.sc-name, .sc-lv, .sc-talents, .sc-uid { position: absolute; z-index: 1; text-shadow: 0 1px 4px rgba(0, 0, 0, .6); }
+.sc-name { left: 18px; top: 14px; display: flex; align-items: baseline; gap: 10px; }
+.sc-name b { font-family: var(--f-display); font-size: 1.7rem; }
+.sc-name span { font-size: .8rem; opacity: .85; }
+.sc-lv { left: 18px; top: 58px; font: 600 1rem var(--f-num); display: grid; gap: 4px; }
+.sc-lv .cons { font: 500 .8rem var(--f-body); background: rgba(0, 0, 0, .35); border-radius: 999px; padding: 1px 10px; justify-self: start; }
+.sc-talents { right: 12px; bottom: 54px; display: grid; gap: 10px; }
+.tl { position: relative; width: 50px; height: 50px; border-radius: 50%; background: rgba(0, 0, 0, .35); border: 1.5px solid rgba(255, 255, 255, .5); display: grid; place-items: center; }
+.tl img { width: 38px; height: 38px; }
+.tl span { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); font: 700 .75rem var(--f-num); background: #ece5d8; color: #2b3142; border-radius: 999px; padding: 0 7px; }
+.tl.up span { background: var(--el3); color: #10202a; }
+.sc-uid { left: 18px; bottom: 12px; font: 600 .8rem var(--f-num); opacity: .8; }
+.sc-mid { position: relative; z-index: 1; padding: 22px 16px; display: grid; gap: 14px; align-content: start; }
+.sc-weapon { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; align-items: center; }
+.sc-weapon img { width: 76px; height: 76px; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .4)); }
+.sc-weapon .wn { font-family: var(--f-display); font-size: 1.05rem; margin-bottom: 4px; }
+.wst { display: flex; flex-wrap: wrap; gap: 4px 6px; font-size: .78rem; margin-top: 3px; }
+.wst span { background: rgba(0, 0, 0, .28); border-radius: 4px; padding: 1px 7px; font-family: var(--f-num); }
+.wst .r { background: #e8c26a; color: #3b2a10; font-weight: 700; }
+.wst .stars { background: none; color: #ffd86b; padding: 0; letter-spacing: 1px; }
+.sc-stats { display: grid; gap: 2px; }
+.sc-stats .st { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 0 8px; padding: 6px 4px; border-bottom: 1px solid rgba(255, 255, 255, .12); font-size: .9rem; }
+.sc-stats .st b { font: 600 1rem var(--f-num); }
+.sc-stats .st small { grid-column: 2; text-align: right; font: .68rem var(--f-num); opacity: .7; }
+.sc-stats .st small em { font-style: normal; color: #9df29a; }
+.sc-set { display: flex; justify-content: space-between; align-items: center; background: rgba(0, 0, 0, .25); border-radius: 6px; padding: 7px 12px; font-size: .88rem; color: #b8f0a8; }
+.sc-set b { font-family: var(--f-num); background: rgba(0, 0, 0, .35); color: #fff; border-radius: 4px; padding: 0 7px; }
+.sc-set.muted { color: rgba(255, 255, 255, .6); }
+.sc-relics { position: relative; z-index: 1; padding: 14px 14px 14px 0; display: grid; gap: 8px; align-content: start; }
+.sc-relic { font: inherit; color: inherit; text-align: left; cursor: pointer; display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 8px; padding: 8px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, .14); background: rgba(0, 0, 0, .2); transition: background .15s, border-color .15s; }
+.sc-relic:hover { background: rgba(0, 0, 0, .3); }
+.sc-relic.on { border-color: var(--el3); background: rgba(0, 0, 0, .34); box-shadow: inset 0 0 0 1px var(--el3); }
+.rl-main { position: relative; display: grid; align-content: end; justify-items: end; min-height: 84px; padding: 2px 4px; }
+.rl-main img { position: absolute; left: -6px; top: -6px; width: 84px; height: 84px; opacity: .9; }
+.rl-main .mn { position: relative; font-size: .68rem; opacity: .85; }
+.rl-main b { position: relative; font: 600 1.25rem var(--f-num); text-shadow: 0 1px 4px rgba(0, 0, 0, .6); }
+.rl-foot { position: relative; display: flex; gap: 6px; align-items: center; font-size: .66rem; }
+.rl-foot .stars { color: #ffd86b; letter-spacing: 0; }
+.rl-foot .plus { font-family: var(--f-num); background: rgba(0, 0, 0, .45); border-radius: 4px; padding: 0 5px; }
+.rl-subs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; align-content: center; }
+.rs { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 0 6px; padding-bottom: 3px; border-bottom: 1px solid rgba(255, 255, 255, .12); min-width: 0; }
+.rs .nm { font-size: .7rem; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rs b { font: 600 .98rem var(--f-num); }
+.rs .dots { grid-column: 1 / -1; display: flex; gap: 3px; height: 5px; }
+.rs .dots i { width: 12px; height: 4px; border-radius: 2px; background: #fff; }
+.rs .dots i.t0 { opacity: .35; } .rs .dots i.t1 { opacity: .55; } .rs .dots i.t2 { opacity: .78; } .rs .dots i.t3 { opacity: 1; }
+.rs .dots i.first { width: 6px; }
+.sc-detail { gap: 10px; }
+.sc-tbl td small { color: var(--muted); font-size: .72rem; }
+.sc-tbl .muted { color: var(--muted); }
+@media (max-width: 1040px) {
+  .sc-card { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .sc-art { grid-row: span 2; }
+  .sc-relics { padding: 0 14px 14px; grid-column: 1 / -1; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+}
+@media (max-width: 640px) {
+  .sc-card { grid-template-columns: minmax(0, 1fr); }
+  .sc-art { grid-row: auto; min-height: 380px; }
+  .sc-art .splash { transform: scale(1.15); -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent); mask-image: linear-gradient(180deg, #000 70%, transparent); }
+  .sc-talents { bottom: 16px; display: flex; gap: 12px; }
+  .sc-relics { grid-template-columns: minmax(0, 1fr); padding: 0 10px 12px; }
+  .sc-relic { grid-template-columns: 96px minmax(0, 1fr); }
+}
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 
@@ -177,12 +274,20 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     <nav class="tabs" role="tablist" aria-label="頁面">
       <button type="button" role="tab" id="tabBtnCalc" aria-controls="tabCalc" aria-selected="true">計算</button>
       <button type="button" role="tab" id="tabBtnRules" aria-controls="tabRules" aria-selected="false">重塑規則</button>
+      <button type="button" role="tab" id="tabBtnShow" aria-controls="tabShow" aria-selected="false">角色展示</button>
     </nav>
     <button type="button" class="gbtn result-img-btn" id="resultImgBtn"><span class="ic"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><circle cx="12" cy="3.5" r="2" fill="currentColor"/><circle cx="4" cy="8" r="2" fill="currentColor"/><circle cx="12" cy="12.5" r="2" fill="currentColor"/><path d="M10.3 4.5 5.7 7M5.7 9l4.6 2.5" stroke="currentColor" stroke-width="1.4" fill="none"/></svg></span>分享結果</button>
   </div>
 
   <div class="layout" id="tabCalc" role="tabpanel" aria-labelledby="tabBtnCalc">
     <form class="panel frame" id="form" autocomplete="off" onsubmit="return false">
+      <fieldset>
+        <legend><span class="dot"></span>從遊戲讀取聖遺物</legend>
+        <div class="uidbox"><input type="text" id="uidInput" inputmode="numeric" maxlength="10" placeholder="輸入 UID" aria-label="UID"><button type="button" class="uid-go" id="uidGo" aria-label="查詢角色展示" title="查詢角色展示"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button></div>
+        <p class="hint">讀取遊戲內角色展示的聖遺物，點聖遺物就能帶入下面的計算。</p>
+        <p class="apply-msg" id="applyMsg" role="status" hidden></p>
+      </fieldset>
+      <hr>
       <fieldset>
         <legend><span class="dot"></span>初始詞條數</legend>
         <div class="segs" id="initSeg">
@@ -246,6 +351,17 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     </div>
   </div>
 
+  <div class="showcase" id="tabShow" role="tabpanel" aria-labelledby="tabBtnShow" hidden>
+    <div class="sc-top frame">
+      <div class="uidbox"><input type="text" id="uidInput2" inputmode="numeric" maxlength="10" placeholder="輸入 UID" aria-label="UID"><button type="button" class="uid-go" id="uidGo2" aria-label="查詢角色展示" title="查詢角色展示"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button></div>
+      <div class="sc-player" id="scPlayer"></div>
+    </div>
+    <p class="sc-msg" id="scMsg" role="status">輸入 UID 查詢遊戲裡「角色展示」的角色和聖遺物。資料來自 Enka.Network，遊戲裡要先打開「顯示角色詳情」。</p>
+    <div class="sc-avatars" id="scAvatars" role="tablist" aria-label="角色"></div>
+    <div id="scCard"></div>
+    <section class="card frame sc-detail" id="scDetail" hidden></section>
+  </div>
+
   <div class="rules-page" id="tabRules" role="tabpanel" aria-labelledby="tabBtnRules" hidden>
       <section class="card frame">
         <h2>重塑規則</h2>
@@ -296,6 +412,9 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 
 <script>
 /*ENGINE*/
+</script>
+<script>
+/*ENKA-DATA*/
 </script>
 <script>
 (() => {
@@ -619,24 +738,23 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     renderSim();
   };
 
-  // ---- 分頁：計算 / 重塑規則 (跟抽卡頁一樣) ----
+  // ---- 分頁：計算 / 重塑規則 / 角色展示 ----
+  // 網址：#rules 開規則，#showcase 開角色展示，#uid-123456789 開角色展示並直接查這個 UID
+  const TABS = [['calc', 'tabBtnCalc', 'tabCalc'], ['rules', 'tabBtnRules', 'tabRules'], ['show', 'tabBtnShow', 'tabShow']];
+  let curTab = 'calc';
   function showTab(name) {
-    const rules = name === 'rules';
-    $('tabCalc').hidden = rules;
-    $('tabRules').hidden = !rules;
-    $('tabBtnCalc').setAttribute('aria-selected', rules ? 'false' : 'true');
-    $('tabBtnRules').setAttribute('aria-selected', rules ? 'true' : 'false');
-    try { history.replaceState(null, '', rules ? '#rules' : location.pathname + location.search); } catch (e) {}
+    curTab = name;
+    TABS.forEach(([n, b, p]) => { $(p).hidden = n !== name; $(b).setAttribute('aria-selected', n === name ? 'true' : 'false'); });
+    $('resultImgBtn').hidden = name === 'show';
+    const hash = name === 'rules' ? '#rules' : name === 'show' ? (SC.uid ? '#uid-' + SC.uid : '#showcase') : '';
+    try { history.replaceState(null, '', hash || location.pathname + location.search); } catch (e) {}
   }
-  $('tabBtnCalc').addEventListener('click', () => showTab('calc'));
-  $('tabBtnRules').addEventListener('click', () => showTab('rules'));
+  TABS.forEach(([n, b]) => $(b).addEventListener('click', () => showTab(n)));
   document.querySelector('.tabs').addEventListener('keydown', e => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-    const toRules = $('tabBtnCalc').getAttribute('aria-selected') === 'true';
-    showTab(toRules ? 'rules' : 'calc');
-    $(toRules ? 'tabBtnRules' : 'tabBtnCalc').focus();
+    const k = TABS.findIndex(t => t[0] === curTab), next = TABS[(k + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length];
+    showTab(next[0]); $(next[1]).focus();
   });
-  if (location.hash === '#rules') showTab('rules');
 
   function refresh(resetSim) {
     renderSetup(); renderCalc();
@@ -980,5 +1098,249 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   });
 
   refresh(true);
+
+  /* ---------- 角色展示：用 UID 讀取遊戲內角色展示 (Enka.Network，經過自己的 Cloudflare Worker 中繼) ---------- */
+  const PROXY = 'https://enka-proxy.twl-benchen.workers.dev';
+  const UI = n => `https://enka.network/ui/${n}.png`;
+  const D = window.EnkaData;
+  const UIDKEY = 'artcalc-uid';
+  const SC = { uid: '', data: null, sel: 0, relic: -1, cache: new Map(), busy: false };
+  const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const loc = h => (h == null ? '' : D.loc[String(h)] || '');
+  // 元素配色：深、中、亮
+  const EL = {
+    Wind: ['#0f3b38', '#1f6e66', '#86e6d2'], Fire: ['#4a1c13', '#983a23', '#ffb88f'], Water: ['#132a4f', '#2c5b9c', '#a2ccff'],
+    Electric: ['#2b1b4c', '#5d3b98', '#d8b8ff'], Grass: ['#1c3916', '#3e7a2b', '#c2e88d'], Ice: ['#163a4e', '#3a7e9e', '#c3ecff'],
+    Rock: ['#3c2b10', '#8a6425', '#ffd98c'], None: ['#2b3142', '#4a5366', '#d3bc8e'],
+  };
+  const EL_PROP = { Fire: 40, Electric: 41, Water: 42, Grass: 43, Wind: 44, Rock: 45, Ice: 46 };
+  const EL_KEY = { 30: 'PHYSICAL', 40: 'FIRE', 41: 'ELEC', 42: 'WATER', 43: 'GRASS', 44: 'WIND', 45: 'ROCK', 46: 'ICE' };
+  const SLOT = { EQUIP_BRACER: ['生之花', 0], EQUIP_NECKLACE: ['死之羽', 1], EQUIP_SHOES: ['時之沙', 2], EQUIP_RING: ['空之杯', 3], EQUIP_DRESS: ['理之冠', 4] };
+  const isPctProp = id => /PERCENT|CRITICAL|CHARGE|ADD_HURT|HEAL_ADD/.test(id);
+  const propName = id => (loc(id) || id) + (/_PERCENT$/.test(id) ? '%' : '');
+  // 聖遺物卡片空間小，用短名稱
+  const SHORT_SUB = { cr: '暴擊', cd: '暴傷', er: '充能', em: '精通', atkp: '攻擊%', hpp: '生命%', defp: '防禦%', atk: '攻擊', hp: '生命', def: '防禦' };
+  const SHORT_MAIN = { FIGHT_PROP_HP: '生命', FIGHT_PROP_ATTACK: '攻擊', FIGHT_PROP_HP_PERCENT: '生命%', FIGHT_PROP_ATTACK_PERCENT: '攻擊%', FIGHT_PROP_DEFENSE_PERCENT: '防禦%',
+    FIGHT_PROP_ELEMENT_MASTERY: '精通', FIGHT_PROP_CHARGE_EFFICIENCY: '充能', FIGHT_PROP_CRITICAL: '暴擊', FIGHT_PROP_CRITICAL_HURT: '暴傷', FIGHT_PROP_HEAL_ADD: '治療',
+    FIGHT_PROP_PHYSICAL_ADD_HURT: '物傷', FIGHT_PROP_FIRE_ADD_HURT: '火傷', FIGHT_PROP_ELEC_ADD_HURT: '雷傷', FIGHT_PROP_WATER_ADD_HURT: '水傷', FIGHT_PROP_GRASS_ADD_HURT: '草傷',
+    FIGHT_PROP_WIND_ADD_HURT: '風傷', FIGHT_PROP_ROCK_ADD_HURT: '岩傷', FIGHT_PROP_ICE_ADD_HURT: '冰傷' };
+  const fmtProp = (id, v) => (isPctProp(id) ? (+v).toFixed(1) + '%' : Math.round(+v).toLocaleString('en-US'));
+
+  function charInfo(av) {
+    const c = D.chars[`${av.avatarId}-${av.skillDepotId}`] || D.chars[String(av.avatarId)];
+    return c || { n: '未知角色', e: 'None', q: 4, i: '', s: [], k: [], p: [], c: {} };
+  }
+  const iconOf = (c, av) => { const cos = av && av.costumeId && c.c[av.costumeId]; return cos || c.i; };
+
+  function setUid(v) { $('uidInput').value = v; $('uidInput2').value = v; }
+  async function loadUid(raw) {
+    const uid = String(raw || '').trim();
+    setUid(uid);
+    showTab('show');
+    if (!/^\d{9,10}$/.test(uid)) { scMsg('UID 是 9 或 10 位數字，請再確認一次。', true); return; }
+    if (SC.busy) return;
+    SC.uid = uid; SC.sel = 0; SC.relic = -1;
+    try { localStorage.setItem(UIDKEY, uid); } catch (e) {}
+    try { history.replaceState(null, '', '#uid-' + uid); } catch (e) {}
+    const hit = SC.cache.get(uid);
+    if (hit && hit.until > Date.now()) { SC.data = hit.data; renderShow(); return; }
+    SC.busy = true; SC.data = null; renderShow(); scMsg('讀取中…');
+    try {
+      const res = await fetch(`${PROXY}/uid/${uid}`);
+      if (!res.ok) {
+        const why = { 400: 'UID 格式不對。', 404: '找不到這個 UID 的玩家。', 424: '遊戲正在維護或剛改版，Enka 暫時讀不到資料，晚點再試。', 429: '查詢太頻繁了，等一分鐘再試。' }[res.status];
+        throw new Error(why || `讀取失敗 (錯誤碼 ${res.status})，晚點再試一次。`);
+      }
+      const data = await res.json();
+      SC.data = data;
+      SC.cache.set(uid, { data, until: Date.now() + Math.max(30, data.ttl || 60) * 1000 });
+    } catch (e) {
+      SC.data = null;
+      scMsg(e && e.message && !/fetch/i.test(e.message) ? e.message : '連不上資料來源，請檢查網路後再試一次。', true);
+    } finally { SC.busy = false; }
+    if (SC.data) renderShow();
+  }
+  function scMsg(t, bad) { const m = $('scMsg'); m.hidden = !t; m.textContent = t || ''; m.classList.toggle('bad', !!bad); }
+
+  function renderShow() {
+    const d = SC.data;
+    if (!d) { $('scPlayer').innerHTML = ''; $('scAvatars').innerHTML = ''; $('scCard').innerHTML = ''; $('scDetail').hidden = true; return; }
+    const p = d.playerInfo || {};
+    $('scPlayer').innerHTML = `<b>${esc(p.nickname || '旅行者')}</b>
+      <span>冒險等級 ${p.level || '-'}</span><span>世界等級 ${p.worldLevel != null ? p.worldLevel : '-'}</span>
+      ${p.signature ? `<span class="sig">${esc(p.signature)}</span>` : ''}
+      <a href="https://enka.network/u/${SC.uid}/" target="_blank" rel="noopener">在 Enka 開啟 ↗</a>`;
+    const list = d.avatarInfoList || [];
+    if (!list.length) {
+      scMsg('這個帳號的角色展示沒有公開角色詳情。遊戲裡打開「角色展示」並開啟「顯示角色詳情」，大約幾分鐘後再查一次。', true);
+      $('scAvatars').innerHTML = ''; $('scCard').innerHTML = ''; $('scDetail').hidden = true; return;
+    }
+    scMsg('');
+    SC.sel = Math.min(SC.sel, list.length - 1);
+    $('scAvatars').innerHTML = list.map((av, i) => {
+      const c = charInfo(av), lv = av.propMap && av.propMap['4001'] ? av.propMap['4001'].val : '';
+      return `<button type="button" role="tab" class="sc-av q${c.q}" data-i="${i}" aria-selected="${i === SC.sel}" title="${esc(c.n)}">
+        <img src="${UI('UI_AvatarIcon_' + iconOf(c, av))}" alt="${esc(c.n)}" loading="lazy" onerror="this.style.visibility='hidden'"><span class="lv">${lv}</span></button>`;
+    }).join('');
+    renderCard();
+  }
+
+  function relicsOf(av) {
+    return (av.equipList || []).filter(e => e.reliquary).map(e => {
+      const f = e.flat || {}, slot = SLOT[f.equipType] || ['聖遺物', 9];
+      return { e, f, slot: slot[0], order: slot[1], parsed: f.rankLevel === 5 ? E.parseRelic(e.reliquary.appendPropIdList, e.reliquary.level) : { ok: false } };
+    }).sort((a, b) => a.order - b.order);
+  }
+
+  function renderCard() {
+    const av = (SC.data.avatarInfoList || [])[SC.sel];
+    if (!av) return;
+    const c = charInfo(av), pal = EL[c.e] || EL.None, fp = av.fightPropMap || {};
+    const lv = av.propMap && av.propMap['4001'] ? av.propMap['4001'].val : '-';
+    const cons = (av.talentIdList || []).length;
+    const extra = av.proudSkillExtraLevelMap || {};
+    const talents = c.s.map((sid, k) => ({ icon: c.k[k], lv: ((av.skillLevelMap || {})[sid] || 1) + (extra[c.p[k]] || 0), up: !!extra[c.p[k]] }));
+    const cos = av.costumeId && c.c[av.costumeId];
+    const art = cos ? UI('UI_Costume_' + cos) : UI('UI_Gacha_AvatarImg_' + c.i);
+
+    const w = (av.equipList || []).find(e => e.weapon);
+    let weaponHtml = '';
+    if (w) {
+      const f = w.flat || {}, st = f.weaponStats || [];
+      const ref = w.weapon.affixMap ? Object.values(w.weapon.affixMap)[0] + 1 : 1;
+      const val = s => fmtProp(s.appendPropId, s.statValue != null ? s.statValue : s.propValue);
+      weaponHtml = `<div class="sc-weapon">
+        <img src="${UI(f.icon || '')}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+        <div><div class="wn">${esc(loc(f.nameTextMapHash) || loc(f.nameTextHashMap) || '武器')}</div>
+          <div class="wst">${st.map(s => `<span title="${esc(propName(s.appendPropId))}">${esc(s.appendPropId === 'FIGHT_PROP_BASE_ATTACK' ? '攻擊' : propName(s.appendPropId))} ${val(s)}</span>`).join('')}</div>
+          <div class="wst"><span class="r">R${ref}</span><span>Lv. ${w.weapon.level || '-'}/90</span><span class="stars">${'★'.repeat(f.rankLevel || 0)}</span></div></div>
+      </div>`;
+    }
+
+    const num = k => +(fp[k] || 0);
+    const pct = k => (num(k) * 100).toFixed(1) + '%';
+    const int = k => Math.round(num(k)).toLocaleString('en-US');
+    const rows = [
+      ['生命值上限', int(2000), `${int(1)} <em>+${Math.round(num(2000) - num(1)).toLocaleString('en-US')}</em>`],
+      ['攻擊力', int(2001), `${int(4)} <em>+${Math.round(num(2001) - num(4)).toLocaleString('en-US')}</em>`],
+      ['防禦力', int(2002), `${int(7)} <em>+${Math.round(num(2002) - num(7)).toLocaleString('en-US')}</em>`],
+      ['元素精通', int(28)], ['暴擊率', pct(20)], ['暴擊傷害', pct(22)], ['元素充能效率', pct(23)],
+    ];
+    if (num(26) > 0) rows.push(['治療加成', pct(26)]);
+    // 元素傷害加成：角色本身的元素，加上其他比它高的
+    const own = EL_PROP[c.e];
+    const dmg = Object.keys(EL_KEY).map(Number).filter(k => num(k) > 0 && (k === own || num(k) > num(own || 0)));
+    dmg.sort((a, b) => (b === own) - (a === own) || num(b) - num(a)).forEach(k => rows.push([loc(`FIGHT_PROP_${EL_KEY[k]}_ADD_HURT`) || '傷害加成', pct(k)]));
+
+    const relics = relicsOf(av);
+    const sets = {};
+    relics.forEach(r => { const n = loc(r.f.setNameTextMapHash) || loc(r.f.setNameTextHashMap); if (n) sets[n] = (sets[n] || 0) + 1; });
+    const setHtml = Object.entries(sets).filter(([, n]) => n >= 2).map(([n, k]) => `<div class="sc-set"><span>${esc(n)}</span><b>${k}</b></div>`).join('') || '<div class="sc-set muted"><span>沒有套裝效果</span></div>';
+
+    $('scCard').innerHTML = `<div class="sc-card" style="--el1:${pal[0]};--el2:${pal[1]};--el3:${pal[2]}">
+      <div class="sc-art">
+        <img class="splash" src="${art}" alt="" onerror="this.style.display='none'">
+        <div class="sc-name"><b>${esc(c.n)}</b><span>${esc((SC.data.playerInfo || {}).nickname || '')}</span></div>
+        <div class="sc-lv">Lv. ${lv} / ${lv > 90 ? 100 : 90}<span class="cons" title="命之座">命座 ${cons}</span></div>
+        <div class="sc-talents">${talents.map(t => `<div class="tl${t.up ? ' up' : ''}"><img src="${UI(t.icon)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'"><span>${t.lv}</span></div>`).join('')}</div>
+        <div class="sc-uid">UID ${SC.uid}</div>
+      </div>
+      <div class="sc-mid">
+        ${weaponHtml}
+        <div class="sc-stats">${rows.map(r => `<div class="st"><span>${r[0]}</span><b>${r[1]}</b>${r[2] ? `<small>${r[2]}</small>` : ''}</div>`).join('')}</div>
+        ${setHtml}
+      </div>
+      <div class="sc-relics">${relics.map((r, i) => relicHtml(r, i)).join('') || '<p class="muted">沒有裝備聖遺物</p>'}</div>
+    </div>`;
+    renderDetail(relics);
+  }
+
+  function relicHtml(r, i) {
+    const f = r.f, m = f.reliquaryMainstat || {};
+    const mv = m.statValue != null ? m.statValue : m.propValue;
+    const subs = r.parsed.ok ? r.parsed.subs.map(s => ({ name: SHORT_SUB[s.stat], full: byId[s.stat].name, val: E.fmtValue(s.stat, s.total), dots: [s.initTier].concat(s.rolls), init: true }))
+      : (f.reliquarySubstats || []).map(s => ({ name: propName(s.appendPropId), val: fmtProp(s.appendPropId, s.statValue != null ? s.statValue : s.propValue), dots: [] }));
+    return `<button type="button" class="sc-relic${SC.relic === i ? ' on' : ''}" data-r="${i}" aria-pressed="${SC.relic === i}" title="${r.slot}：點一下看詞條明細">
+      <div class="rl-main">
+        <img src="${UI(f.icon || '')}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+        <span class="mn" title="${esc(propName(m.mainPropId || ''))}">${esc(SHORT_MAIN[m.mainPropId] || propName(m.mainPropId || ''))}</span>
+        <b>${mv != null ? fmtProp(m.mainPropId || '', mv) : ''}</b>
+        <span class="rl-foot"><span class="stars">${'★'.repeat(f.rankLevel || 0)}</span><span class="plus">+${Math.max(0, (r.e.reliquary.level || 1) - 1)}</span></span>
+      </div>
+      <div class="rl-subs">${subs.map(s => `<div class="rs"><span class="nm" title="${esc(s.full || s.name)}">${esc(s.name)}</span><b>+${esc(s.val)}</b>
+        <span class="dots">${s.dots.map((t, k) => `<i class="t${t}${k === 0 ? ' first' : ''}"></i>`).join('')}</span></div>`).join('')}</div>
+    </button>`;
+  }
+
+  // 點聖遺物：下方顯示每個詞條的初始數值與每次升級跳的數值，可以帶入計算
+  function renderDetail(relics) {
+    const box = $('scDetail'), r = relics[SC.relic];
+    if (!r) { box.hidden = true; return; }
+    box.hidden = false;
+    const c = charInfo(SC.data.avatarInfoList[SC.sel]), p = r.parsed;
+    const title = `<h2>${esc(c.n)}・${r.slot}的詞條明細</h2>`;
+    if (!p.ok) { box.innerHTML = title + '<p class="hint">只有五星聖遺物可以拆出初始數值和每次升級跳的數值。</p>'; return; }
+    const pctRank = ['七', '八', '九', '十'];
+    const can = p.subs.length === 4 && p.level >= 20;
+    box.innerHTML = `${title}
+      <p class="hint">初始 ${p.init} 詞條，+${p.level}${p.init === 3 && p.subs.length === 4 ? `，+4 新增「${byId[p.subs[3].stat].name}」` : ''}。圓點是每一次 (第一個是初始)，顏色越深檔位越高。</p>
+      <div class="tbl-wrap"><table class="gtable sc-tbl">
+        <tr><th style="text-align:left">詞條</th><th>初始</th><th>升級跳</th><th>次數</th><th>目前</th></tr>
+        ${p.subs.map((s, k) => {
+          const t = byId[s.stat].tiers;
+          const added = p.init === 3 && k === 3;
+          return `<tr><td class="name">${byId[s.stat].name}${added ? ' <span class="tag">+4 出現</span>' : ''}</td>
+            <td class="num">${E.fmtValue(s.stat, t[s.initTier])} <small>第${pctRank[s.initTier]}檔</small></td>
+            <td class="num">${s.rolls.length ? s.rolls.map(x => '+' + E.fmtValue(s.stat, t[x])).join('、') : '<span class="muted">沒有跳</span>'}</td>
+            <td class="num">${s.rolls.length}</td>
+            <td class="num"><b>${E.fmtValue(s.stat, s.total)}</b></td></tr>`;
+        }).join('')}
+      </table></div>
+      <div class="btns"><button type="button" class="gbtn" id="scApply"${can ? '' : ' disabled'}><span class="ic">⇩</span>帶入重塑計算</button>
+      <span class="hint" style="align-self:center">${can ? '會換成這四個詞條和初始詞條數，初始那一檔也一起填好，選定詞條和目標保留原本的設定。' : '要升到 +20 才能重塑。'}</span></div>`;
+    if (can) $('scApply').onclick = () => applyRelic(p, `${c.n}・${r.slot}`);
+  }
+
+  function applyRelic(p, label) {
+    const old = S.rows;
+    S.init = p.init;
+    S.rows = p.subs.map(s => {
+      const prev = old.find(r => r.stat === s.stat);
+      const r = prev ? Object.assign({}, prev) : row(s.stat, false);
+      r.init = s.initTier;
+      return r;
+    });
+    // 選定詞條超過兩個時只留前兩個
+    let n = 0; S.rows.forEach(r => { if (r.lock && ++n > 2) r.lock = false; });
+    refresh(true);
+    showTab('calc');
+    const msg = $('applyMsg');
+    msg.textContent = `已帶入 ${label}`; msg.hidden = false;
+    clearTimeout(applyRelic.t); applyRelic.t = setTimeout(() => { msg.hidden = true; }, 4000);
+    $('form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  $('uidGo').addEventListener('click', () => loadUid($('uidInput').value));
+  $('uidGo2').addEventListener('click', () => loadUid($('uidInput2').value));
+  ['uidInput', 'uidInput2'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); loadUid(e.target.value); } }));
+  $('scAvatars').addEventListener('click', e => {
+    const b = e.target.closest('.sc-av'); if (!b) return;
+    SC.sel = +b.dataset.i; SC.relic = -1;
+    document.querySelectorAll('.sc-av').forEach(x => x.setAttribute('aria-selected', x === b ? 'true' : 'false'));
+    renderCard();
+  });
+  $('scCard').addEventListener('click', e => {
+    const b = e.target.closest('.sc-relic'); if (!b) return;
+    const i = +b.dataset.r;
+    SC.relic = SC.relic === i ? -1 : i;
+    renderCard();
+    if (SC.relic >= 0) $('scDetail').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+
+  try { const u = localStorage.getItem(UIDKEY); if (u) setUid(u); } catch (e) {}
+  const hm = location.hash.match(/^#uid-(\d{9,10})$/);
+  if (hm) loadUid(hm[1]);
+  else if (location.hash === '#showcase') showTab('show');
+  else if (location.hash === '#rules') showTab('rules');
 })();
 </script>

@@ -86,5 +86,29 @@ eq('成功率 50%，八成要幾顆', E.trialsFor(0.5, 0.8), 3);
 eq('成功率 80%，八成要幾顆', E.trialsFor(0.8, 0.8), 1);
 eq('成功率 10%，八成要幾顆', E.trialsFor(0.1, 0.8), 16);
 
+// 11. Enka 副詞條 ID 解碼：五星 40 個 ID 都要跟官方 affixes.json 一致 (詞條、檔位、數值)
+{
+  const D = require('./enka-data.js');
+  const PROP = { hp: 2, hpp: 3, atk: 5, atkp: 6, def: 8, defp: 9, cr: 20, cd: 22, er: 23, em: 28 };
+  let bad = 0;
+  for (const [id, [prop, pos, val]] of Object.entries(D.affix5)) {
+    const s = E.decodeAffix(id);
+    const want = s && Math.round(val * (E.byId[s.stat].pct ? 10000 : 100));
+    if (!s || PROP[s.stat] !== prop || s.tier !== pos - 1 || E.byId[s.stat].tiers[pos - 1] !== want) { bad++; console.log('  不一致', id, prop, pos, val); }
+  }
+  eq('Enka 五星副詞條 ID 解碼 (不一致的數量)', bad, 0);
+  // 使用者實際的魈 (UID 900211203)：死之羽 (EQUIP_NECKLACE) 初始 3 詞條，攻擊力% 是 +4 新增的
+  const plume = E.parseRelic([501224, 501202, 501234, 501061, 501222, 501202, 501203, 501221], 21);
+  eq('死之羽 初始詞條數', plume.init, 3);
+  eq('死之羽 詞條順序', plume.subs.map(x => x.stat).join(','), 'cd,cr,er,atkp');
+  eq('死之羽 暴擊傷害顯示值', E.fmtValue('cd', plume.subs[0].total), '19.4%');
+  eq('死之羽 暴擊傷害升級跳次數', plume.subs[0].rolls.length, 2);
+  const sands = E.parseRelic([501231, 501204, 501222, 501023, 501223, 501224, 501224, 501222, 501231], 21);
+  eq('時之沙 初始詞條數', sands.init, 4);
+  eq('時之沙 暴擊傷害 35.0%', E.fmtValue('cd', sands.subs[2].total), '35.0%');
+  eq('時之沙 暴擊傷害升級跳 4 次', sands.subs[2].rolls.length, 4);
+  eq('時之沙 生命值 269', E.fmtValue('hp', sands.subs[3].total), '269');
+}
+
 console.log(fail ? `\n${fail} 項失敗` : '\n全部通過');
 process.exit(fail ? 1 : 0);

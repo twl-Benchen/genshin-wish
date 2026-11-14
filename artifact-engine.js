@@ -12,7 +12,7 @@
   // tiers：第七到第十檔的精確值 (乘 100 的整數)
   const STATS = [
     { id: 'hp',   name: '生命值',       pct: false, tiers: [20913, 23900, 26888, 29875] },
-    { id: 'atk',  name: '攻擊力',       pct: false, tiers: [1362, 1555, 1751, 1945] },
+    { id: 'atk',  name: '攻擊力',       pct: false, tiers: [1362, 1556, 1751, 1945] },
     { id: 'def',  name: '防禦力',       pct: false, tiers: [1620, 1852, 2083, 2315] },
     { id: 'hpp',  name: '生命值%',      pct: true,  tiers: [408, 466, 525, 583] },
     { id: 'atkp', name: '攻擊力%',      pct: true,  tiers: [408, 466, 525, 583] },
@@ -130,7 +130,36 @@
     return Math.ceil(Math.log(1 - prob) / Math.log(1 - p) - 1e-9);
   }
 
-  const api = { STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor };
+  /* Enka.Network 的副詞條紀錄 (reliquary.appendPropIdList) 解碼
+   * 每個 ID 是一次詞條 (初始那幾次和之後每次升級跳各一個)，照發生順序排列。
+   * 五星 ID 格式是 501PPT：PP 是哪個詞條，T 是第幾檔 (1..4 = 第七到第十檔)，跟官方 affixes.json 核對過
+   * level：reliquary.level (1..21，+20 是 21)
+   * 回傳 { ok, init (初始詞條數), level (+0..+20), subs: [{ stat, initTier, rolls: [檔位...], total }] }，
+   * subs 照第一次出現的順序 (初始 3 詞條時第 4 個就是 +4 新增的那個)。不是五星或看不懂的 ID 回傳 ok: false */
+  const AFFIX_CODE = { '02': 'hp', '03': 'hpp', '05': 'atk', '06': 'atkp', '08': 'def', '09': 'defp', '20': 'cr', '22': 'cd', '23': 'er', '24': 'em' };
+  function decodeAffix(raw) {
+    const id = String(raw), stat = AFFIX_CODE[id.slice(3, 5)], tier = +id.slice(5) - 1;
+    return id.length === 6 && id.startsWith('501') && stat && tier >= 0 && tier <= 3 ? { stat, tier } : null;
+  }
+  function parseRelic(ids, level) {
+    const plus = Math.max(0, (level || 1) - 1);
+    const subs = [];
+    for (const raw of ids || []) {
+      const a = decodeAffix(raw);
+      if (!a) return { ok: false };
+      const { stat, tier } = a;
+      let s = subs.find(x => x.stat === stat);
+      if (!s) { s = { stat, initTier: tier, rolls: [], total: 0 }; subs.push(s); }
+      else s.rolls.push(tier);
+      s.total += byId[stat].tiers[tier];
+    }
+    const init = (ids || []).length - Math.floor(plus / 4);
+    if (subs.length < 3 || subs.length > 4 || init < 3 || init > 4) return { ok: false };
+    // 初始 3 詞條時，+4 新增的詞條本身算初始那 1 次，不是升級跳
+    return { ok: true, init, level: plus, subs };
+  }
+
+  const api = { STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.ArtifactEngine = api;
 })(typeof window !== 'undefined' ? window : this);

@@ -253,7 +253,7 @@
 
 | 詞條 | 第七檔 | 第八檔 | 第九檔 | 第十檔 |
 |---|---|---|---|---|
-| 攻擊力 | 13.62 | 15.55 | 17.51 | 19.45 |
+| 攻擊力 | 13.62 | 15.56 | 17.51 | 19.45 |
 | 生命值 | 209.13 | 239 | 268.88 | 298.75 |
 | 防禦力 | 16.2 | 18.52 | 20.83 | 23.15 |
 | 元素精通 | 16.32 | 18.65 | 20.98 | 23.31 |
@@ -263,7 +263,7 @@
 | 暴擊率 | 2.72 | 3.11 | 3.50 | 3.89 |
 | 暴擊傷害 | 5.44 | 6.22 | 6.99 | 7.77 |
 
-  使用者的「顯示值」表有兩格跟精確值對不上：防禦力最大值寫 140 (23.15 × 6 = 138.9，應顯示 139)，暴擊傷害最大值寫 45.60% (應為 46.6%，使用者也確認是 46.6%)。攻擊力第八檔 15.55 不是 19.45 × 0.8 = 15.56，照使用者的表，顯示成整數時沒有差別。
+  使用者的「顯示值」表有兩格跟精確值對不上：防禦力最大值寫 140 (23.15 × 6 = 138.9，應顯示 139)，暴擊傷害最大值寫 45.60% (應為 46.6%，使用者也確認是 46.6%)。攻擊力第八檔使用者的表寫 15.55，2026-11-14 用 Enka 官方 affixes.json (ID 501052 = 15.56) 核對後改成 15.56，顯示成整數時沒有差別。
 - 精確機率：遞迴列舉所有升級路徑 (最多 4^5 = 1024 條)，每條路徑乘上「這組次數下每個詞條到目標的機率」(`exact()` 的 `weight`)。不同詞條的數值在次數確定後互相獨立，所以可以直接相乘。數值分布用 `valueDist()` 逐次捲積後換成顯示值，有快取。
 - 設定存在 localStorage `artcalc-v3` (v1 是舊版的次數範圍格式，v2 是「至少跳幾次」的格式，都不再讀取)。
 
@@ -292,6 +292,20 @@
 - 開發環境的網路政策目前擋住 act-webstatic.hoyoverse.com 與 HoYoWiki API，要下載圖片需要先在環境設定允許這兩個主機，或由使用者提供圖片。
 - 圖片版權屬於 HoYoverse，非商業粉絲工具常見做法是註明來源。
 
+## 角色展示 (artifact.html 第三個分頁)
+
+2026-11-14 加入。設定欄最上面有 UID 欄位 (右邊放大鏡)，分頁列多一個「角色展示」藥丸按鈕，兩個都會進到角色展示分頁。網址 `artifact.html#showcase` 直接開這頁，`artifact.html#uid-900211203` 會直接查這個 UID，可以分享。最後查的 UID 存在 localStorage `artcalc-uid`。
+
+資料來源：Enka.Network 的 `https://enka.network/api/uid/{UID}/` (遊戲內「角色展示」，玩家要開「顯示角色詳情」)。Enka 沒有開 CORS (瀏覽器直接呼叫會 Failed to fetch)，所以經過自己的 Cloudflare Worker `https://enka-proxy.twl-benchen.workers.dev/uid/{UID}`，原始碼備份在 `worker/enka-proxy.js` (只允許 twl-benchen.github.io、只轉發 /uid/數字、帶自訂 User-Agent)。Cloudflare 的 Cache API 在 workers.dev 網址上不生效，所以 Worker 不快取，改在網頁裡依回應的 `ttl` 記住查過的 UID。Enka 的規則：不要列舉 UID、要帶 User-Agent、有動態限流 (429)。錯誤碼 400 格式錯、404 找不到玩家、424 維護或改版、429 限流。
+
+畫面：仿 Enka 的三欄角色卡 (立繪與天賦、武器與屬性、五個聖遺物)，底色跟著元素，手機時變成單欄。點聖遺物會在下方顯示詞條明細 (每個詞條初始那一檔、每次升級跳的數值、次數、目前數值)，+20 的五星聖遺物可以按「帶入重塑計算」：換成這四個詞條 (照出現順序，初始 3 詞條時第 4 個是 +4 新增的)、初始詞條數，並把每個詞條的「初始那一檔」填好；同一個詞條原本的選定、目標設定保留。
+
+副詞條解碼 (`E.parseRelic` / `E.decodeAffix`)：`reliquary.appendPropIdList` 每個 ID 是一次詞條 (初始幾次和之後每次升級跳各一個)，照發生順序。五星 ID 格式 `501PPT`，PP：02 生命、03 生命%、05 攻擊、06 攻擊%、08 防禦、09 防禦%、20 暴擊率、22 暴擊傷害、23 充能、24 精通；T：1..4 是第七到第十檔。初始詞條數 = ID 數量 − floor((level − 1) / 4)。`test-artifact.js` 會把 40 個五星 ID 跟官方 affixes.json (存在 enka-data.js 的 affix5) 逐一核對。
+
+`enka-data.js`：`scripts/build_enka_data.py` 從 `git clone https://github.com/EnkaNetwork/API-docs` 的 `store/gi` 產生，內容是角色 (繁中名、元素、星級、圖示名、技能順序與圖示、命座加天賦用的 ProudMap、造型)、繁中名稱表 (武器、套裝、屬性名) 與五星副詞條 ID 表，約 38 KB，build.py 內嵌進 artifact.html。圖片網址：頭像 `UI_AvatarIcon_{名}`、立繪 `UI_Gacha_AvatarImg_{名}` (有造型時 `UI_Costume_{造型}`)、武器與聖遺物用回應裡 `flat.icon`，都在 `https://enka.network/ui/{名}.png`。開發環境連不到 Enka 和它的圖片，畫面是用假資料和假圖測的，真實立繪的裁切位置要在網站上確認。
+
+部位對照 (Enka 的 equipType)：EQUIP_BRACER 生之花、EQUIP_NECKLACE 死之羽、EQUIP_SHOES 時之沙、EQUIP_RING 空之杯、EQUIP_DRESS 理之冠。
+
 ## 資料來源
 
 - [gino8246/Gacha_Simulator](https://github.com/gino8246/Gacha_Simulator)
@@ -313,3 +327,4 @@
 - 聖遺物重塑保底機制 (隨機到最後才補保底)、3 詞條強化 4 次與 4 詞條強化 5 次：[Icy Veins Dust of Enlightenment Guide](https://www.icy-veins.com/genshin-impact/artifact-rerolling)、[GameWith Dust Of Enlightenment Guide](https://gamewith.net/genshin-impact/article/show/57477)
 - [17173：啟聖之塵強化機率模擬](https://news.17173.com/content/07012025/142101415.shtml)、[BWIKI：啟聖之塵](https://wiki.biligame.com/ys/%E5%90%AF%E5%9C%A3%E4%B9%8B%E5%B0%98)：重塑、高階重塑 (每 6 點進度，至少 3 次)、諭告重塑 (每 2 次高階重塑後，至少 4 次)
 - 使用者提供的副詞條四檔精確值與顯示值表、遊戲截圖 (升級跳次數的黃色圓圈、選定詞條的金色圓圈十字星)
+- 角色展示資料與副詞條 ID：[Enka.Network API docs](https://github.com/EnkaNetwork/API-docs) (`docs/gi/api.md`、`store/gi/affixes.json`)

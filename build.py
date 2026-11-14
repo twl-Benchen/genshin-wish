@@ -1,6 +1,6 @@
 # 產生 GitHub Pages 用的單檔網頁
 # - index.html：page.html + engine.js (期望抽數計算)
-# - artifact.html：artifact-page.html + artifact-engine.js (聖遺物重塑計算)，共用樣式從 page.html 的 SHARED 區塊帶入
+# - artifact.html：artifact-page.html + artifact-engine.js + enka-data.js (聖遺物重塑計算與角色展示)，共用樣式從 page.html 的 SHARED 區塊帶入
 # page.html 同時是 Claude Artifact 的原始檔，所以本身不含 <!doctype>/<head>/<body>，由這裡補上
 from pathlib import Path
 
@@ -46,8 +46,8 @@ shared = page[a + len("/*SHARED-START*/"):b].strip()
 
 # 聖遺物重塑計算
 art = read("artifact-page.html")
-assert "/*ENGINE*/" in art and "/*SHARED*/" in art, "artifact-page.html 缺少佔位符"
-art = art.replace("/*SHARED*/", shared).replace("/*ENGINE*/", read("artifact-engine.js"))
+assert all(k in art for k in ("/*ENGINE*/", "/*SHARED*/", "/*ENKA-DATA*/")), "artifact-page.html 缺少佔位符"
+art = art.replace("/*SHARED*/", shared).replace("/*ENGINE*/", read("artifact-engine.js")).replace("/*ENKA-DATA*/", read("enka-data.js"))
 (here / "artifact.html").write_text(wrap(art), encoding="utf-8")
 
 print("built index.html, artifact.html")

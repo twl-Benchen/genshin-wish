@@ -5,11 +5,12 @@
 ## 工作流程
 
 - 只改 `engine.js`、`page.html` (抽卡) 與 `artifact-engine.js`、`artifact-page.html` (聖遺物)，`index.html` 和 `artifact.html` 是建置產物，不要手改。
+- `enka-data.js` 由 `scripts/build_enka_data.py` 從 Enka 官方 API-docs 產生，不要手改；遊戲改版有新角色時重新產生。
 - 改完執行 `python3 build.py` 重新產生兩個頁面。兩頁共用的樣式 (主題色、外框、左上角切換鈕) 寫在 `page.html` 的 `/*SHARED-START*/` 到 `/*SHARED-END*/` 之間，聖遺物頁透過 `/*SHARED*/` 帶入。
 - 動到聖遺物計算時執行 `node test-artifact.js`，驗證案例全部要通過。
 - 動到抽卡計算邏輯時執行 `node test.js`，精確值和蒙地卡羅結果要對得上 (平均差距約 0.2 抽以內)，`HANDOFF.md` 裡的驗證數值也要一起更新。
 - `engine.js` 與 `artifact-engine.js` 要同時能在瀏覽器 (`window.GachaEngine`、`window.ArtifactEngine`) 和 Node (`module.exports`) 使用。
-- 網頁是純前端單檔，不加建置工具、不加後端，外部資源只用 Google Fonts。
+- 網頁是純前端單檔，不加建置工具、不加後端，外部資源只用 Google Fonts。例外只有聖遺物頁的「角色展示」：資料經過自己的 Cloudflare Worker (`worker/enka-proxy.js`，網址 https://enka-proxy.twl-benchen.workers.dev) 向 Enka.Network 查詢，圖片直接用 `https://enka.network/ui/`。不要再加其他後端或外部來源。
 
 ## 規則與資料
 
