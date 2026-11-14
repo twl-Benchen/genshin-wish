@@ -1,4 +1,4 @@
-<title>原神聖遺物定軌計算</title>
+<title>原神聖遺物重塑計算</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -9,7 +9,7 @@
 /* 以下是聖遺物頁自己的樣式，主題色與外框沿用抽卡頁 (build.py 從 page.html 帶入) */
 .panel { padding: 22px; display: grid; gap: 20px; }
 fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 10px; min-width: 0; }
-legend { font-family: var(--f-display); font-weight: 600; font-size: 1.05rem; padding: 0; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+legend { width: 100%; box-sizing: border-box; font-family: var(--f-display); font-weight: 600; font-size: 1.05rem; padding: 0; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
 legend .dot { width: 10px; height: 10px; transform: rotate(45deg); display: inline-block; background: var(--gold); }
 .hint { font-size: .78rem; color: var(--muted); margin: 0; }
 hr { border: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--frame), transparent); margin: 0; }
@@ -26,16 +26,37 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 .subrows { display: grid; gap: 8px; }
 .subrow { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
 .subrow.locked { border-color: var(--gold); background: var(--gold-soft); }
+.subrow { -webkit-touch-callout: none; transition: box-shadow .15s; }
+.subrow.dragging { position: relative; z-index: 5; box-shadow: 0 10px 26px rgba(30, 40, 70, .28); cursor: grabbing; user-select: none; -webkit-user-select: none; }
+.subrows.sorting .subrow:not(.dragging) { transition: transform .15s; }
 .subrow .top { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
 .subrow .idx { font-family: var(--f-num); color: var(--muted); font-size: .85rem; }
-.lockbtn { font: inherit; font-size: .8rem; height: 38px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--frame); background: transparent; color: var(--muted); cursor: pointer; white-space: nowrap; }
-.lockbtn[aria-pressed="true"] { background: var(--gold); border-color: var(--gold); color: #fff; font-weight: 700; }
-.lockbtn:disabled { opacity: .35; cursor: not-allowed; }
-.range { display: grid; grid-template-columns: auto 72px auto 72px auto; gap: 6px; align-items: center; font-size: .85rem; color: var(--muted); padding-left: 26px; }
-.range select { height: 32px; font-family: var(--f-num); }
+/* 選定詞條：仿遊戲裡副詞條右邊的金色圓圈十字星 */
+.lockbtn { width: 38px; height: 38px; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; display: grid; place-items: center; }
+.lockbtn svg { width: 28px; height: 28px; display: block; }
+.lockbtn .c { fill: transparent; stroke: var(--frame); stroke-width: 1.5; }
+.lockbtn .s { fill: var(--frame); }
+.lockbtn[aria-pressed="true"] .c { fill: #eecc7b; stroke: none; }
+.lockbtn[aria-pressed="true"] .s { fill: #cc842c; }
+.lockbtn:hover:not(:disabled) .c { stroke: var(--gold); }
+.lockbtn:disabled { opacity: .3; cursor: not-allowed; }
+.cond { display: grid; gap: 8px; padding-left: 26px; font-size: .85rem; color: var(--muted); }
+.cond-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.mini-segs { display: inline-flex; border: 1px solid var(--frame-soft); border-radius: 999px; overflow: hidden; background: var(--sunken); }
+.mini-segs button { font: inherit; font-size: .78rem; height: 26px; padding: 0 10px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+.mini-segs button.on { background: var(--btn); color: var(--btn-ink); font-weight: 700; }
+/* 升級跳次數：仿抽卡頁明光計數的分段按鈕 */
+.num-seg { display: flex; height: 34px; border: 1px solid var(--frame-soft); border-radius: 6px; overflow: hidden; background: var(--sunken); }
+.num-seg button { flex: 1; font: 600 .92rem var(--f-num); border: 0; background: transparent; color: var(--ink); cursor: pointer; padding: 0 4px; }
+.num-seg button + button { border-left: 1px solid var(--frame-soft); }
+.num-seg button.on { background: var(--btn); color: var(--btn-ink); }
+.valrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.valrow label { display: grid; gap: 3px; font-size: .78rem; }
+.vwarn { grid-column: 1 / -1; margin: 0; font-size: .78rem; color: var(--bad); }
+.valrow select, .valrow input { height: 34px; font-family: var(--f-num); }
+.valrow input { width: 100%; font: inherit; font-family: var(--f-num); font-size: .92rem; color: var(--ink); background: var(--sunken); border: 1px solid var(--frame-soft); border-radius: 6px; padding: 0 8px; min-width: 0; box-sizing: border-box; }
 .tag { font-size: .7rem; padding: 0 7px; border-radius: 999px; background: var(--violet-soft); color: var(--violet); white-space: nowrap; }
-.combo { display: grid; grid-template-columns: auto 72px auto 72px auto; gap: 6px; align-items: center; font-size: .85rem; color: var(--muted); }
-.combo select { height: 32px; font-family: var(--f-num); }
+.combo { display: grid; gap: 6px; font-size: .85rem; color: var(--muted); }
 
 .results { display: grid; gap: 20px; min-width: 0; }
 .card { padding: 22px; display: grid; gap: 12px; min-width: 0; }
@@ -57,29 +78,35 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; min-width: 460px; }
 .gtable { border: 1px solid var(--frame-soft); font-size: .85rem; }
 .gtable th, .gtable td { border: 1px solid var(--line); padding: 6px 6px; text-align: center; }
-.gtable th { background: var(--head); font-weight: 500; }
+.gtable th { background: var(--head); font-weight: 500; white-space: nowrap; }
 .gtable td.name { text-align: left; white-space: nowrap; }
 .gtable td.num { font-family: var(--f-num); }
 .gtable td.in { background: var(--gold-soft); color: var(--gold); font-weight: 600; }
+.gtable td.part { background: repeating-linear-gradient(135deg, var(--gold-soft) 0 4px, transparent 4px 8px); color: var(--gold); }
 .gtable td.zero { color: var(--muted); opacity: .5; }
 
-/* 強化模擬：仿遊戲裡的五星聖遺物卡 */
-.sim { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 16px; align-items: start; }
+/* 強化模擬：仿遊戲裡的五星聖遺物卡 (副詞條是深色底、金色細框) */
+.sim { display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); gap: 16px; align-items: start; }
 @media (max-width: 700px) { .sim { grid-template-columns: minmax(0, 1fr); } }
 .art { border-radius: 6px; overflow: hidden; box-shadow: 0 4px 14px rgba(30, 40, 70, .18); }
 .art-top { background: linear-gradient(150deg, #8a4b20, #c27a35); color: #fff6e6; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
 .art-top .stars { color: #ffd86b; letter-spacing: 2px; font-size: .9rem; }
 .art-top .lv { font-family: var(--f-num); font-weight: 600; background: rgba(0, 0, 0, .3); border-radius: 4px; padding: 1px 9px; }
-.art-body { background: #ece5d8; color: #495366; padding: 8px 14px 10px; }
-.asub { display: grid; grid-template-columns: 6px minmax(0, 1fr) auto 52px; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px dashed #cfc6b4; font-size: .95rem; }
+.art-body { background: #ece5d8; color: #495366; padding: 6px 14px 8px; }
+.asub { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto 24px; gap: 8px; align-items: center; min-height: 40px; border-bottom: 1px dashed #cfc6b4; font-size: .98rem; }
 .asub:last-child { border-bottom: 0; }
-.asub .dot { width: 6px; height: 6px; border-radius: 50%; background: #495366; }
-.asub .val { font-family: var(--f-num); font-weight: 600; }
-.asub .cnt { font-size: .75rem; color: #8a7a5c; text-align: right; }
-.asub .lk { font-size: .66rem; margin-left: 6px; padding: 0 5px; border-radius: 4px; background: #c9a764; color: #fff; vertical-align: 2px; }
+.asub .mk { display: grid; place-items: center; }
+/* 升級跳的次數：黃色圓圈 */
+.asub .mk b { width: 21px; height: 21px; border-radius: 50%; background: #e6cc8d; color: #83570a; font: 900 .86rem/21px 'Arial Black', 'Noto Sans TC', system-ui, sans-serif; -webkit-text-stroke: .4px #83570a; text-align: center; }
+.asub .val { font-family: var(--f-num); font-weight: 600; text-align: right; }
+.asub .lk svg { width: 22px; height: 22px; display: block; }
+.asub .lk .c { fill: #eecc7b; }
+.asub .lk .s { fill: #cc842c; }
 .asub.pending { opacity: .45; }
 .asub.flash { animation: fl .8s ease; }
 @keyframes fl { from { background: #ffe7a6; } to { background: transparent; } }
+.log .tally { color: var(--muted); }
+.log .bt b { color: var(--gold); }
 .verdict { font-size: .9rem; }
 .verdict .ok { color: var(--good); font-weight: 700; } .verdict .ng { color: var(--bad); font-weight: 700; }
 .btns { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -93,7 +120,37 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .log div:last-child { border-bottom: 0; }
 .log .f { color: var(--gold); font-weight: 600; }
 .log .lvl { font-family: var(--f-num); color: var(--muted); display: inline-block; width: 36px; }
-.batch { font-size: .88rem; background: var(--sunken); border-radius: 6px; padding: 8px 10px; }
+.tabbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.tabs button { font: inherit; font-size: .92rem; font-weight: 500; padding: 7px 18px; border-radius: 999px; border: 1px solid var(--frame); background: var(--surface); color: var(--ink); cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--btn); color: var(--btn-ink); border-color: var(--btn); font-weight: 700; }
+.rules-page { max-width: 980px; display: grid; gap: 20px; }
+.legend-note { margin-left: auto; font-family: var(--f-body); font-size: .74rem; font-weight: 400; color: var(--muted); }
+/* 分享結果視窗 (跟抽卡頁一樣) */
+.note { font-size: .8rem; color: var(--muted); margin: 0; }
+.seg { display: inline-flex; border: 1px solid var(--frame-soft); border-radius: 999px; overflow: hidden; background: var(--sunken); }
+.seg button { font: inherit; font-size: .82rem; padding: 5px 12px; background: transparent; color: var(--muted); border: 0; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--frame-soft); }
+.seg button[aria-pressed="true"] { background: var(--btn); color: var(--btn-ink); font-weight: 700; }
+dialog.hist { padding: 0; border: 0; background: transparent; color: var(--ink); width: min(980px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); }
+dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
+.hist-in { padding: 24px 24px 20px; display: grid; gap: 12px; max-height: calc(100dvh - 24px); overflow-y: auto; }
+.hist-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.hist-head h2 { font-family: var(--f-display); font-size: 1.3rem; margin: 0; display: flex; gap: 8px; align-items: center; }
+.hist-head h2 span { color: var(--star-on); }
+.hist-x { width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--btn); color: var(--btn-ink); font-size: 1rem; cursor: pointer; flex: none; }
+.hist-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.hist-actions .gbtn { min-width: 130px; }
+.result-img-btn { font-size: .92rem; padding: 7px 18px 7px 7px; box-shadow: 0 2px 10px rgba(30, 40, 70, .18); }
+.result-img-orient { display: flex; justify-content: center; }
+.result-img-prev { display: grid; place-items: center; min-height: 160px; background: var(--sunken); border-radius: 6px; padding: 10px; }
+.result-img-prev img { display: block; max-width: 100%; max-height: 58vh; width: auto; height: auto; border-radius: 4px; box-shadow: 0 4px 16px rgba(30, 40, 70, .2); }
+.site-link-box { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; }
+#qrSmall { width: 123px; height: 123px; border-radius: 6px; border: 1px solid var(--frame); background: #fffaf0; }
+.site-text { display: grid; gap: 6px; min-width: 0; }
+.site-text b { font-family: var(--f-display); font-size: 1.05rem; }
+.site-text .url { font-family: var(--f-num); font-size: .85rem; color: var(--gold); word-break: break-all; user-select: all; }
+.site-act { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .rules { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; font-size: .9rem; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
@@ -111,12 +168,20 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
       <span>抽卡</span>
     </a>
     <header>
-      <h1><span class="star">✦</span> 聖遺物定軌計算</h1>
-      <p class="lede">選好四個副詞條、初始詞條數和定軌保底，算出每個詞條跳到你要的次數的機率，也能實際模擬強化。</p>
+      <h1><span class="star">✦</span> 聖遺物重塑計算</h1>
+      <p class="lede">設定副詞條目標與重塑保底，算出成功機率，也能模擬重塑。</p>
     </header>
   </div>
 
-  <div class="layout">
+  <div class="tabbar">
+    <nav class="tabs" role="tablist" aria-label="頁面">
+      <button type="button" role="tab" id="tabBtnCalc" aria-controls="tabCalc" aria-selected="true">計算</button>
+      <button type="button" role="tab" id="tabBtnRules" aria-controls="tabRules" aria-selected="false">重塑規則</button>
+    </nav>
+    <button type="button" class="gbtn result-img-btn" id="resultImgBtn"><span class="ic"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><circle cx="12" cy="3.5" r="2" fill="currentColor"/><circle cx="4" cy="8" r="2" fill="currentColor"/><circle cx="12" cy="12.5" r="2" fill="currentColor"/><path d="M10.3 4.5 5.7 7M5.7 9l4.6 2.5" stroke="currentColor" stroke-width="1.4" fill="none"/></svg></span>分享結果</button>
+  </div>
+
+  <div class="layout" id="tabCalc" role="tabpanel" aria-labelledby="tabBtnCalc">
     <form class="panel frame" id="form" autocomplete="off" onsubmit="return false">
       <fieldset>
         <legend><span class="dot"></span>初始詞條數</legend>
@@ -124,25 +189,24 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
           <button type="button" data-v="3">初始 3 詞條</button>
           <button type="button" data-v="4">初始 4 詞條</button>
         </div>
-        <p class="hint" id="initHint"></p>
       </fieldset>
       <hr>
       <fieldset>
-        <legend><span class="dot"></span>副詞條與可接受次數</legend>
+        <legend><span class="dot"></span>副詞條與目標<span class="legend-note">長按可以拖動順序</span></legend>
         <div class="subrows" id="rows"></div>
-        <p class="hint">次數包含初始的 1 次，所以「1 到 2 次」代表升級中不跳也可以，最多跳 1 次。</p>
+        <p class="hint">金色圓圈是重塑的選定詞條，選兩個。次數只算升級跳，選最大代表不限制。</p>
       </fieldset>
       <hr>
       <fieldset>
-        <legend><span class="dot"></span>定軌保底</legend>
+        <legend><span class="dot"></span>重塑保底</legend>
         <div class="segs" id="gSeg">
-          <button type="button" data-v="0">不定軌</button>
-          <button type="button" data-v="2">2 次</button>
-          <button type="button" data-v="3">3 次</button>
-          <button type="button" data-v="4">4 次</button>
+          <button type="button" data-v="0">不重塑</button>
+          <button type="button" data-v="2">重塑</button>
+          <button type="button" data-v="3">高階重塑</button>
+          <button type="button" data-v="4">諭告重塑</button>
         </div>
         <p class="hint" id="gHint"></p>
-        <label class="check"><input type="checkbox" id="comboOn">另外限制兩個定軌詞條的合計次數</label>
+        <label class="check"><input type="checkbox" id="comboOn">另外要求兩個選定詞條合計至少升級跳幾次</label>
         <div class="combo" id="comboBox" hidden></div>
       </fieldset>
     </form>
@@ -150,19 +214,19 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
     <div class="results">
       <div class="summary">
         <div class="stat hero"><span class="k">全部條件同時符合</span><span class="v" id="pct">-</span><span class="s" id="pctDesc"></span></div>
-        <div class="stat"><span class="k">定軌詞條平均合計多跳</span><span class="v" id="avgHit">-</span><span class="s" id="avgHitDesc"></span></div>
-        <div class="stat"><span class="k">強化次數</span><span class="v" id="nUp">-</span><span class="s" id="nUpDesc"></span></div>
+        <div class="stat"><span class="k" id="need80K">八成機率成功，需要重塑</span><span class="v" id="need80">-</span><span class="s" id="need80Desc"></span></div>
+        <div class="stat"><span class="k">升級跳的次數</span><span class="v" id="nUp">-</span><span class="s" id="nUpDesc"></span></div>
       </div>
       <div id="warn"></div>
 
       <section class="card frame">
-        <h2>每個詞條最後跳幾次</h2>
+        <h2>每個詞條升級跳幾次</h2>
         <div class="tbl-wrap"><table class="gtable" id="tbl"></table></div>
-        <p class="hint">金色格子是你設定可接受的範圍。結果是把所有強化路徑逐一列舉的精確值，不是隨機模擬。</p>
+        <p class="hint">金色格子是符合目標的次數 (最多跳幾次以內)，設數值目標時，淡金色代表跳這麼多次「有機會」到目標，最後一欄已經把數值的機率算進去。結果是把所有強化路徑和數值檔位逐一列舉的精確值，不是隨機模擬。</p>
       </section>
 
       <section class="card frame">
-        <h2>強化模擬</h2>
+        <h2>重塑模擬</h2>
         <div class="sim">
           <div class="art">
             <div class="art-top"><span>聖遺物 <span class="stars">★★★★★</span></span><span class="lv" id="lv">+0</span></div>
@@ -171,29 +235,64 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
           <div style="display:grid;gap:10px;min-width:0">
             <div class="verdict" id="verdict"></div>
             <div class="btns">
-              <button type="button" class="gbtn" id="bUp"><span class="ic">+4</span>強化</button>
-              <button type="button" class="gbtn" id="bMax"><span class="ic">▲</span>強化到 +20</button>
-              <button type="button" class="gbtn light" id="bReset"><span class="ic">↻</span>重新一顆</button>
+              <button type="button" class="gbtn" id="bMain"></button>
+              <button type="button" class="gbtn light" id="bBatch"><span class="ic">∑</span>批量模擬十萬顆</button>
             </div>
             <div class="log" id="log"></div>
-            <div class="btns"><button type="button" class="gbtn light" id="bBatch"><span class="ic">∑</span>批量模擬 100,000 顆</button></div>
-            <div class="batch" id="batch" hidden></div>
           </div>
         </div>
       </section>
 
-      <section class="card frame">
-        <h2>規則說明</h2>
-        <ul class="rules">
-          <li>初始 4 詞條在 +4、+8、+12、+16、+20 共跳 5 次。初始 3 詞條在 +4 新增第 4 個詞條，之後 +8 到 +20 共跳 4 次。</li>
-          <li>一般強化時，每次四個詞條的機率相等，各 1/4。</li>
-          <li>定軌保底是「兩個定軌詞條合計至少跳 N 次」。前面的強化完全隨機，只有剩下的強化次數剛好等於還沒達成的保底次數時，才會強制跳到兩個定軌詞條之一 (各 1/2)。所以保底只會把很差的結果拉上來，不會提高跳很多次的機率。</li>
-          <li>每次強化的數值是五星最大值的 70%、80%、90%、100% 其中之一。</li>
-        </ul>
-      </section>
     </div>
   </div>
+
+  <div class="rules-page" id="tabRules" role="tabpanel" aria-labelledby="tabBtnRules" hidden>
+      <section class="card frame">
+        <h2>重塑規則</h2>
+        <ul class="rules">
+          <li>重塑用「啟聖之塵」把已經 +20 的五星聖遺物重新分配升級跳的部分，要先選兩個副詞條當作選定詞條。</li>
+          <li>初始 4 詞條在 +4、+8、+12、+16、+20 共升級跳 5 次。初始 3 詞條在 +4 新增第 4 個詞條，之後 +8 到 +20 共升級跳 4 次。</li>
+          <li>一般情況下每次四個詞條的機率相等，各 1/4。</li>
+          <li>重塑保底是「兩個選定詞條合計至少升級跳 N 次」：一般重塑 2 次。每用 1 個啟聖之塵累積 1 點進度，到 6 點時觸發高階重塑 (3 次)，觸發 2 次高階重塑後下一次改成諭告重塑 (4 次)。</li>
+          <li>保底是最後才補：前面完全隨機，只有剩下的次數剛好等於還沒達成的保底次數時，才會強制跳到兩個選定詞條之一 (各 1/2)。所以保底只會把很差的結果拉上來，不會提高跳很多次的機率。</li>
+          <li>每次 (含初始) 的數值是四個檔位之一，機率相等。遊戲內部取到小數點後兩位，畫面上百分比四捨五入到小數點後一位，固定值四捨五入到整數。例如暴擊傷害最高檔顯示 7.8%，實際是 7.77%，6 次都最高檔是 46.62%，顯示 46.6%。</li>
+        </ul>
+      </section>
+  </div>
 </div>
+
+<dialog class="hist" id="resultImgDlg" aria-labelledby="resultImgTitle">
+  <div class="hist-in frame">
+    <div class="hist-head">
+      <h2 id="resultImgTitle"><span>✦</span>分享結果</h2>
+      <button type="button" class="hist-x" id="resultImgClose" aria-label="關閉">✕</button>
+    </div>
+    <div class="result-img-orient">
+      <div class="seg" id="resultImgOrient" role="group" aria-label="圖片方向">
+        <button type="button" data-v="landscape">橫式</button>
+        <button type="button" data-v="portrait">直式</button>
+      </div>
+    </div>
+    <div class="result-img-prev">
+      <p class="note" id="resultImgWait">圖片產生中…</p>
+      <img id="resultImgPic" alt="這次計算結果的分享圖" hidden>
+    </div>
+    <div class="hist-actions">
+      <button type="button" class="gbtn" id="resultImgSave" disabled><span class="ic">↓</span>下載圖片</button>
+      <button type="button" class="gbtn light" id="resultImgSend" hidden><span class="ic">↗</span>分享圖片</button>
+    </div>
+    <p class="note" style="text-align: center">手機也可以長按上面的圖片儲存。有按過重塑模擬的話，圖上會附最後一顆的結果。</p>
+    <hr>
+    <div class="site-link-box">
+      <canvas id="qrSmall" role="img" aria-label="網站的 QR code"></canvas>
+      <div class="site-text">
+        <b>把這個網站分享給朋友</b>
+        <span class="url" id="siteUrl">twl-benchen.github.io/genshin-wish/artifact.html</span>
+        <span class="site-act"><button type="button" class="gbtn light" id="copyUrl"><span class="ic">⧉</span>複製網址</button><span class="note" id="copyMsg" role="status"></span></span>
+      </div>
+    </div>
+  </div>
+</dialog>
 
 <script>
 /*ENGINE*/
@@ -201,20 +300,17 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 <script>
 (() => {
   const E = window.ArtifactEngine;
-  const byId = Object.fromEntries(E.STATS.map(s => [s.id, s]));
-  const KEY = 'artcalc-v1';
+  const byId = E.byId;
+  const KEY = 'artcalc-v3';
+  // 副詞條選單的順序
+  const ORDER = ['cr', 'cd', 'em', 'er', 'atkp', 'hpp', 'defp', 'atk', 'hp', 'def'];
   const $ = id => document.getElementById(id);
+  const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle class="c" cx="12" cy="12" r="10.25"/><path class="s" d="M12 3.6Q13.2 10.8 20.4 12Q13.2 13.2 12 20.4Q10.8 13.2 3.6 12Q10.8 10.8 12 3.6Z"/></svg>';
 
-  let S = {
-    init: 4, g: 2,
-    rows: [
-      { stat: 'cr',   lock: true,  min: 1, max: 6 },
-      { stat: 'cd',   lock: true,  min: 1, max: 6 },
-      { stat: 'atkp', lock: false, min: 1, max: 6 },
-      { stat: 'er',   lock: false, min: 1, max: 6 },
-    ],
-    comboOn: false, cMin: 2, cMax: 7,
-  };
+  // 每列：stat 副詞條、lock 是否選定、mode 目標種類 (cnt 升級跳次數 / val 數值)、
+  // max 最多升級跳幾次 (大於等於 N 代表沒有限制)、init 初始那一檔 (-1 隨機，0..3 第七到第十檔)、target 數值目標 (畫面單位，見 E.toDisp)
+  const row = (stat, lock) => ({ stat, lock, mode: 'cnt', max: 5, init: -1, target: null });
+  let S = { init: 4, g: 2, rows: [row('cr', true), row('cd', true), row('atkp', false), row('er', false)], comboOn: false, cJumps: 3 };
   try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.rows && s.rows.length === 4) S = Object.assign(S, s); } catch (e) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 
@@ -222,21 +318,39 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
   const locked = () => S.rows.map((r, i) => (r.lock ? i : -1)).filter(i => i >= 0);
   const effG = () => (locked().length === 2 ? Math.min(S.g, N()) : 0);
   const name = i => byId[S.rows[i].stat].name;
+  const isPct = i => byId[S.rows[i].stat].pct;
+  // 預設數值目標：平均每檔 × 3 次 (初始 + 升級跳 2 次)
+  // 數值目標的最大值：初始那一檔 (隨機時用最高檔) + 升級跳全部最高檔
+  const maxDisp = r => { const t = byId[r.stat].tiers; return E.toDisp(r.stat, (r.init >= 0 ? t[r.init] : t[3]) + N() * t[3]); };
+  const toUnit = (i, d) => (isPct(i) ? (d / 10).toFixed(1) : String(d));
 
   function clamp() {
-    const top = 1 + N(), ctop = 2 + N();
-    S.rows.forEach(r => { r.min = Math.max(1, Math.min(r.min, top)); r.max = Math.max(1, Math.min(r.max, top)); if (r.min > r.max) r.max = r.min; });
-    S.cMin = Math.max(2, Math.min(S.cMin, ctop)); S.cMax = Math.max(2, Math.min(S.cMax, ctop)); if (S.cMin > S.cMax) S.cMax = S.cMin;
+    S.rows.forEach(r => {
+      r.max = Math.max(0, Math.min(r.max == null ? 5 : r.max | 0, 5));
+      if (r.mode !== 'val') r.mode = 'cnt';
+      if (!(r.init >= -1 && r.init <= 3)) r.init = -1;
+      if (r.target != null && !isFinite(r.target)) r.target = null;
+    });
+    S.cJumps = Math.max(0, Math.min(S.cJumps | 0, N()));
+    if (locked().length > 2) S.rows.forEach((r, i) => { if (i > 1) r.lock = false; });
   }
-  const opts = (from, to, sel) => { let h = ''; for (let i = from; i <= to; i++) h += `<option value="${i}"${i === sel ? ' selected' : ''}>${i}</option>`; return h; };
 
-  function accept(c) {
-    for (let i = 0; i < 4; i++) if (c[i] < S.rows[i].min || c[i] > S.rows[i].max) return false;
-    const lk = locked();
-    if (S.comboOn && lk.length === 2) { const s = c[lk[0]] + c[lk[1]]; if (s < S.cMin || s > S.cMax) return false; }
-    return true;
+  const cap = r => Math.min(r.max, N());
+  // 第 i 列在總次數 c (含初始) 下符合目標的機率
+  function rowProb(i, c) {
+    const r = S.rows[i];
+    if (r.mode === 'cnt') return c - 1 <= cap(r) ? 1 : 0;
+    if (r.target == null) return 1; // 沒填代表沒有要求
+    return E.probAtLeast(r.stat, c - 1, r.init < 0 ? null : r.init, r.target);
   }
-  const calcOpts = () => ({ init: S.init, guarantee: effG(), locked: locked(), accept });
+  function weight(c) {
+    const lk = locked();
+    if (S.comboOn && lk.length === 2 && c[lk[0]] + c[lk[1]] - 2 < S.cJumps) return 0;
+    let w = 1;
+    for (let i = 0; i < 4 && w > 0; i++) w *= rowProb(i, c[i]);
+    return w;
+  }
+  const calcOpts = () => ({ init: S.init, guarantee: effG(), locked: locked(), weight });
 
   function fmtP(p) {
     if (p >= 0.99995) return '100%';
@@ -244,26 +358,40 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
     if (p < 0.0001) return '<0.01%';
     return (p * 100).toFixed(p < 0.1 ? 2 : 1) + '%';
   }
+  const numSeg = (k, i, sel) => { let h = ''; for (let v = 0; v <= N(); v++) h += `<button type="button" data-k="${k}" data-i="${i}" data-v="${v}" class="${v === sel ? 'on' : ''}" aria-pressed="${v === sel}">${v}</button>`; return h; };
 
   /* ---------- 設定 ---------- */
   function renderSetup() {
     clamp();
     document.querySelectorAll('#initSeg button').forEach(b => b.classList.toggle('on', +b.dataset.v === S.init));
-    $('initHint').textContent = S.init === 4
-      ? '強化到 +20 共跳 5 次 (+4、+8、+12、+16、+20)。'
-      : '+4 新增第 4 個詞條 (下面第 4 列)，之後 +8 到 +20 共跳 4 次。';
 
-    const used = S.rows.map(r => r.stat), lk = locked(), top = 1 + N();
+    const used = S.rows.map(r => r.stat), lk = locked();
     $('rows').innerHTML = S.rows.map((r, i) => {
-      const so = E.STATS.map(s => `<option value="${s.id}"${s.id === r.stat ? ' selected' : ''}${used.includes(s.id) && s.id !== r.stat ? ' disabled' : ''}>${s.name}</option>`).join('');
+      const so = ORDER.map(id => byId[id]).map(s => `<option value="${s.id}"${s.id === r.stat ? ' selected' : ''}${used.includes(s.id) && s.id !== r.stat ? ' disabled' : ''}>${s.name}</option>`).join('');
       const dis = !r.lock && lk.length >= 2;
-      const tag = S.init === 3 && i === 3 ? '<span class="tag">+4 出現</span>' : '<span></span>';
+      const tag = S.init === 3 && i === 3 ? ' <span class="tag">+4 出現</span>' : '';
+      const t = byId[r.stat].tiers;
+      const body = r.mode === 'cnt'
+        ? `<div class="num-seg" role="group" aria-label="${name(i)}最多跳幾次">${numSeg('max', i, cap(r))}</div>`
+        : `<div class="valrow">
+            <label>初始那一檔<select data-i="${i}" data-k="init" aria-label="${name(i)}初始數值">
+              <option value="-1"${r.init < 0 ? ' selected' : ''}>隨機</option>
+              ${t.map((v, k) => `<option value="${k}"${r.init === k ? ' selected' : ''}>${E.fmtValue(r.stat, v)}</option>`).join('')}
+            </select></label>
+            <label>最後至少${isPct(i) ? ' (%)' : ''}<input type="number" inputmode="decimal" data-i="${i}" data-k="target" min="0" step="${isPct(i) ? '0.1' : '1'}" value="${r.target == null ? '' : toUnit(i, r.target)}" placeholder="最大值 ${toUnit(i, maxDisp(r))}" aria-label="${name(i)}數值目標"></label>
+            <p class="vwarn" data-w="${i}"${r.target != null && r.target > maxDisp(r) ? '' : ' hidden'}>超過最大值，最大值是 ${E.dispText(r.stat, maxDisp(r))}</p>
+          </div>`;
       return `<div class="subrow${r.lock ? ' locked' : ''}">
         <div class="top"><span class="idx">${i + 1}</span>
           <select data-i="${i}" data-k="stat" aria-label="第 ${i + 1} 個副詞條">${so}</select>
-          <button type="button" class="lockbtn" data-i="${i}" aria-pressed="${r.lock}"${dis ? ' disabled' : ''}>定軌</button>
+          <button type="button" class="lockbtn" data-i="${i}" aria-pressed="${r.lock}" aria-label="選定詞條" title="${r.lock ? '取消選定' : '設為重塑的選定詞條'}"${dis ? ' disabled' : ''}>${STAR}</button>
         </div>
-        <div class="range">可接受<select data-i="${i}" data-k="min" aria-label="最少次數">${opts(1, top, r.min)}</select>到<select data-i="${i}" data-k="max" aria-label="最多次數">${opts(1, top, r.max)}</select>${tag}</div>
+        <div class="cond">
+          <div class="cond-head"><span>${r.mode === 'cnt' ? '最多跳幾次' : '最後的數值'}${tag}</span>
+            <span class="mini-segs" role="group" aria-label="目標種類"><button type="button" data-i="${i}" data-k="mode" data-v="cnt" class="${r.mode === 'cnt' ? 'on' : ''}">次數</button><button type="button" data-i="${i}" data-k="mode" data-v="val" class="${r.mode === 'val' ? 'on' : ''}">數值</button></span>
+          </div>
+          ${body}
+        </div>
       </div>`;
     }).join('');
 
@@ -273,80 +401,146 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
       b.disabled = v > 0 && !two;
       b.classList.toggle('on', two ? v === S.g : v === 0);
     });
-    $('gHint').textContent = !two ? '先把兩個副詞條設為「定軌」，才能選保底。'
-      : S.g === 0 ? '一般強化，每次四個詞條機率相等。'
-      : `強化過程中，${name(lk[0])} 與 ${name(lk[1])} 合計至少跳 ${effG()} 次。`;
+    const kind = { 2: '一般重塑', 3: '高階重塑', 4: '諭告重塑' }[S.g];
+    $('gHint').textContent = !two ? '先點右邊的金色圓圈選兩個副詞條，才能重塑。'
+      : S.g === 0 ? '一般強化 (不重塑)，每次四個詞條機率相等。'
+      : `${kind}：${name(lk[0])} 與 ${name(lk[1])} 合計至少升級跳 ${effG()} 次。`;
 
     $('comboOn').checked = S.comboOn;
     $('comboOn').disabled = !two;
-    const cb = $('comboBox'), ctop = 2 + N();
+    const cb = $('comboBox');
     cb.hidden = !(S.comboOn && two);
-    if (!cb.hidden) cb.innerHTML = `合計<select id="cMin" aria-label="合計最少">${opts(2, ctop, S.cMin)}</select>到<select id="cMax" aria-label="合計最多">${opts(2, ctop, S.cMax)}</select>次`;
+    if (!cb.hidden) cb.innerHTML = `<div class="num-seg" role="group" aria-label="兩個選定詞條合計至少升級跳幾次">${numSeg('combo', -1, S.cJumps)}</div>`;
     save();
   }
 
   $('initSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { S.init = +b.dataset.v; refresh(true); } });
   $('gSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b && !b.disabled) { S.g = +b.dataset.v; refresh(true); } });
   $('rows').addEventListener('click', e => {
-    const b = e.target.closest('.lockbtn'); if (!b || b.disabled) return;
-    const r = S.rows[+b.dataset.i]; r.lock = !r.lock; refresh(true);
+    const lb = e.target.closest('.lockbtn');
+    if (lb) { if (!lb.disabled) { const r = S.rows[+lb.dataset.i]; r.lock = !r.lock; refresh(true); } return; }
+    const b = e.target.closest('button[data-k]'); if (!b) return;
+    const r = S.rows[+b.dataset.i];
+    if (b.dataset.k === 'max') { r.max = +b.dataset.v; refresh(false); }
+    if (b.dataset.k === 'mode' && r.mode !== b.dataset.v) { r.mode = b.dataset.v; refresh(false); }
   });
   $('rows').addEventListener('change', e => {
-    const t = e.target, r = S.rows[+t.dataset.i], k = t.dataset.k;
-    if (k === 'stat') r.stat = t.value;
-    if (k === 'min') { r.min = +t.value; if (r.max < r.min) r.max = r.min; }
-    if (k === 'max') { r.max = +t.value; if (r.min > r.max) r.min = r.max; }
-    refresh(k === 'stat');
+    const t = e.target, i = +t.dataset.i, r = S.rows[i], k = t.dataset.k;
+    if (k === 'stat') { r.stat = t.value; r.init = -1; r.target = null; }
+    if (k === 'init') r.init = +t.value;
+    if (k === 'target') r.target = parseTarget(i, t.value);
+    refresh(k === 'stat' || k === 'init');
+  });
+  /* 長按卡片 (0.25 秒，手指不動) 進入拖動，經過上下卡片的一半就互換，放開後重新計算 */
+  (() => {
+    const box = $('rows');
+    let timer = 0, start = null, drag = null;
+    const cancel = () => { clearTimeout(timer); timer = 0; start = null; };
+    box.addEventListener('pointerdown', e => {
+      const card = e.target.closest('.subrow');
+      if (!card || e.button > 0 || e.target.closest('select, input, button')) return;
+      start = { x: e.clientX, y: e.clientY, card, id: e.pointerId };
+      timer = setTimeout(() => {
+        const cards = [...box.children];
+        drag = { card, idx: cards.indexOf(card), y0: start.y, id: start.id };
+        card.classList.add('dragging'); box.classList.add('sorting');
+        try { card.setPointerCapture(drag.id); } catch (err) {}
+        if (navigator.vibrate) navigator.vibrate(15);
+      }, 250);
+    });
+    box.addEventListener('pointermove', e => {
+      if (start && !drag && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 8) cancel();
+      if (!drag || e.pointerId !== drag.id) return;
+      const cards = [...box.children];
+      let dy = e.clientY - drag.y0;
+      const nb = dy < 0 ? cards[drag.idx - 1] : cards[drag.idx + 1];
+      if (nb && Math.abs(dy) > nb.offsetHeight / 2 + 4) {
+        const j = drag.idx + (dy < 0 ? -1 : 1);
+        [S.rows[drag.idx], S.rows[j]] = [S.rows[j], S.rows[drag.idx]];
+        const top = drag.card.getBoundingClientRect().top;
+        if (dy < 0) box.insertBefore(drag.card, nb); else box.insertBefore(nb, drag.card);
+        drag.y0 += drag.card.getBoundingClientRect().top - top; // 卡片換位後重新以新位置為基準
+        drag.idx = j;
+        dy = e.clientY - drag.y0;
+      }
+      drag.card.style.transform = `translateY(${dy}px)`;
+    });
+    const end = () => {
+      cancel();
+      if (!drag) return;
+      drag.card.style.transform = ''; drag.card.classList.remove('dragging'); box.classList.remove('sorting');
+      drag = null;
+      refresh(true);
+    };
+    box.addEventListener('pointerup', end);
+    box.addEventListener('pointercancel', end);
+    // 拖動時不要捲動頁面 (手機)
+    box.addEventListener('touchmove', e => { if (drag) e.preventDefault(); }, { passive: false });
+    box.addEventListener('contextmenu', e => { if (drag || timer) e.preventDefault(); });
+  })();
+
+  const parseTarget = (i, v) => { const x = parseFloat(v); return isFinite(x) ? Math.max(0, Math.round(isPct(i) ? x * 10 : x)) : null; };
+  // 一邊輸入一邊檢查有沒有超過最大值 (還沒離開輸入框，不重算)
+  $('rows').addEventListener('input', e => {
+    const t = e.target; if (t.dataset.k !== 'target') return;
+    const i = +t.dataset.i, v = parseTarget(i, t.value), w = $('rows').querySelector(`.vwarn[data-w="${i}"]`);
+    if (w) w.hidden = !(v != null && v > maxDisp(S.rows[i]));
   });
   $('comboOn').addEventListener('change', e => { S.comboOn = e.target.checked; refresh(false); });
-  $('comboBox').addEventListener('change', e => {
-    if (e.target.id === 'cMin') { S.cMin = +e.target.value; if (S.cMax < S.cMin) S.cMax = S.cMin; }
-    if (e.target.id === 'cMax') { S.cMax = +e.target.value; if (S.cMin > S.cMax) S.cMin = S.cMax; }
-    refresh(false);
-  });
+  $('comboBox').addEventListener('click', e => { const b = e.target.closest('button[data-k="combo"]'); if (b) { S.cJumps = +b.dataset.v; refresh(false); } });
 
   /* ---------- 計算結果 ---------- */
+  let lastP = 0, lastCalc = null;
   function renderCalc() {
-    const { success, marginal, comboDist } = E.exact(calcOpts()), n = N(), lk = locked();
+    const { success, marginal } = E.exact(calcOpts()), n = N();
+    lastP = success;
+    const k80_ = E.trialsFor(success, 0.8);
+    lastCalc = { success, marginal, n, k80: k80_, act: S.g > 0 && locked().length === 2 ? '重塑' : '強化' };
+    const act = S.g > 0 && locked().length === 2 ? '重塑' : '強化';
     $('pct').textContent = fmtP(success);
-    $('pctDesc').textContent = success > 0 && success < 1 ? `大約每 ${(1 / success).toFixed(1)} 顆成功 1 顆` : (success >= 1 ? '一定成功' : '不可能達成');
-    if (lk.length === 2) {
-      const avg = comboDist.reduce((a, p, k) => a + p * (k - 2), 0);
-      $('avgHit').textContent = avg.toFixed(2) + ' 次';
-      $('avgHitDesc').textContent = `${name(lk[0])} + ${name(lk[1])}`;
-    } else { $('avgHit').textContent = '-'; $('avgHitDesc').textContent = '要先選兩個定軌詞條'; }
+    $('pctDesc').textContent = success > 0 && success < 1 ? `大約每${act} ${(1 / success).toFixed(1)} 顆成功 1 顆` : (success >= 1 ? '一定成功' : '不可能達成');
+    const k80 = E.trialsFor(success, 0.8);
+    $('need80K').textContent = `八成機率成功，需要${act}`;
+    $('need80').textContent = isFinite(k80) ? `${k80.toLocaleString()} 顆` : '-';
+    $('need80Desc').textContent = !isFinite(k80) ? '不可能達成'
+      : k80 === 1 ? `${act} 1 顆就有 ${fmtP(success)} 機率成功`
+      : `${act} ${k80.toLocaleString()} 顆後至少成功 1 顆的機率 ${fmtP(1 - Math.pow(1 - success, k80))}`;
     $('nUp').textContent = n + ' 次';
     $('nUpDesc').textContent = S.init === 4 ? '初始 4 詞條' : '初始 3 詞條，+4 先新增詞條';
 
     let h = '<tr><th style="text-align:left">詞條</th>';
-    for (let k = 1; k <= n + 1; k++) h += `<th>${k} 次</th>`;
-    h += '<th>在範圍內</th></tr>';
+    for (let k = 0; k <= n; k++) h += `<th>跳 ${k} 次</th>`;
+    h += '<th>符合目標</th></tr>';
     S.rows.forEach((r, i) => {
       let inP = 0;
-      h += `<tr><td class="name">${name(i)}${r.lock ? ' <span class="tag" style="background:var(--gold-soft);color:var(--gold)">定軌</span>' : ''}</td>`;
-      for (let k = 1; k <= n + 1; k++) {
-        const p = marginal[i][k], isIn = k >= r.min && k <= r.max;
-        if (isIn) inP += p;
-        h += `<td class="num${isIn ? ' in' : ''}${p === 0 ? ' zero' : ''}">${p === 0 ? '0' : fmtP(p)}</td>`;
+      const goal = r.mode === 'cnt' ? (cap(r) < n ? `最多跳 ${cap(r)} 次` : '沒有限制') : (r.target == null ? '沒有要求' : `至少 ${E.dispText(r.stat, r.target)}`);
+      h += `<tr><td class="name">${name(i)}${r.lock ? ' <span class="tag" style="background:var(--gold-soft);color:var(--gold)">選定</span>' : ''}<br><span style="font-size:.74rem;color:var(--muted)">${goal}</span></td>`;
+      for (let k = 0; k <= n; k++) {
+        const p = marginal[i][k + 1], w = rowProb(i, k + 1);
+        inP += p * w;
+        const cls = w >= 1 ? ' in' : w > 0 ? ' part' : '';
+        h += `<td class="num${cls}${p === 0 ? ' zero' : ''}"${w > 0 && w < 1 ? ` title="跳 ${k} 次時有 ${fmtP(w)} 機率到目標"` : ''}>${p === 0 ? '0' : fmtP(p)}</td>`;
       }
       h += `<td class="num">${fmtP(inP)}</td></tr>`;
     });
     $('tbl').innerHTML = h;
 
     const w = [];
-    const minSum = S.rows.reduce((a, r) => a + r.min - 1, 0), maxSum = S.rows.reduce((a, r) => a + r.max - 1, 0);
-    if (minSum > n) w.push(`四個詞條的最低要求加起來要跳 ${minSum} 次，但總共只會跳 ${n} 次，不可能達成。`);
-    if (maxSum < n) w.push(`四個詞條的上限加起來只容許跳 ${maxSum} 次，但一定會跳滿 ${n} 次，不可能達成。`);
+    const maxSum = S.rows.reduce((a, r) => a + (r.mode === 'cnt' ? cap(r) : n), 0);
+    if (maxSum < n) w.push(`四個詞條最多跳的次數加起來只有 ${maxSum} 次，但一定會跳滿 ${n} 次，不可能達成。`);
+    const lk2 = locked();
+    if (S.comboOn && lk2.length === 2 && lk2.reduce((a, i) => a + (S.rows[i].mode === 'cnt' ? cap(S.rows[i]) : n), 0) < S.cJumps) w.push(`兩個選定詞條最多跳的次數加起來不到合計要求的 ${S.cJumps} 次，不可能達成。`);
     $('warn').innerHTML = w.map(x => `<div class="warn">${x}</div>`).join('');
   }
 
-  /* ---------- 強化模擬 ---------- */
-  let sim;
-  const fmtV = (s, v) => (byId[s].pct ? v.toFixed(1) + '%' : Math.round(v).toString());
+  /* ---------- 重塑模擬 ---------- */
+  let sim, tally = { n: 0, ok: 0 }, batchHtml = '';
   function newSim() {
-    sim = { level: 0, counts: [1, 1, 1, 1], vals: S.rows.map(r => E.rollValue(r.stat)), shown: S.init === 4 ? 4 : 3, rolls: 0, hits: 0, log: [], flash: -1 };
-    $('batch').hidden = true;
-    renderSim();
+    sim = {
+      level: 0, counts: [1, 1, 1, 1],
+      vals: S.rows.map(r => (r.mode === 'val' && r.init >= 0 ? byId[r.stat].tiers[r.init] : E.rollValue(r.stat))),
+      shown: S.init === 4 ? 4 : 3, rolls: 0, hits: 0, log: [], flash: -1,
+    };
   }
   function upgrade() {
     if (sim.level >= 20) return;
@@ -354,7 +548,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
     const n = N(), X = effG(), lk = locked();
     if (sim.shown === 3) {
       sim.shown = 4; sim.flash = 3;
-      sim.log.push(`<span class="lvl">+${sim.level}</span>新增詞條「${name(3)}」 ${fmtV(S.rows[3].stat, sim.vals[3])}`);
+      sim.log.push(`<span class="lvl">+${sim.level}</span>新增詞條「${name(3)}」 ${E.fmtValue(S.rows[3].stat, sim.vals[3])}`);
       return;
     }
     const { j, forced } = E.pickRoll(X, sim.hits, n - sim.rolls, lk, Math.random);
@@ -362,41 +556,429 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
     sim.vals[j] += add; sim.counts[j]++; sim.rolls++;
     if (X > 0 && lk.includes(j)) sim.hits++;
     sim.flash = j;
-    sim.log.push(`<span class="${forced ? 'f' : ''}"><span class="lvl">+${sim.level}</span>${name(j)} +${fmtV(S.rows[j].stat, add)}${forced ? ' (保底觸發)' : ''}</span>`);
+    sim.log.push(`<span class="${forced ? 'f' : ''}"><span class="lvl">+${sim.level}</span>${name(j)} +${E.fmtValue(S.rows[j].stat, add)}${forced ? ' (保底觸發)' : ''}</span>`);
+  }
+  // 模擬結果是否符合目標 (用實際骰出來的數值判斷)
+  function simOk() {
+    const lk = locked();
+    if (S.comboOn && lk.length === 2 && sim.counts[lk[0]] + sim.counts[lk[1]] - 2 < S.cJumps) return false;
+    return S.rows.every((r, i) => (r.mode === 'cnt' ? sim.counts[i] - 1 <= cap(r) : r.target == null || E.toDisp(r.stat, sim.vals[i]) >= r.target));
+  }
+  function finish() {
+    while (sim.level < 20) upgrade();
+    tally.n++; if (simOk()) tally.ok++;
   }
   function renderSim() {
+    const reshape = S.g > 0 && locked().length === 2;
     $('lv').textContent = '+' + sim.level;
     $('artBody').innerHTML = S.rows.map((r, i) => {
-      const pending = i >= sim.shown;
+      const pending = i >= sim.shown, j = sim.counts[i] - 1;
       return `<div class="asub${pending ? ' pending' : ''}${sim.flash === i ? ' flash' : ''}">
-        <span class="dot"></span><span>${name(i)}${r.lock ? '<span class="lk">定軌</span>' : ''}</span>
-        <span class="val">${pending ? '?' : '+' + fmtV(r.stat, sim.vals[i])}</span>
-        <span class="cnt">${pending ? '+4 出現' : sim.counts[i] + ' 次'}</span></div>`;
+        <span class="mk">${j > 0 && !pending ? `<b aria-label="升級跳 ${j} 次">${j}</b>` : ''}</span>
+        <span>${name(i)}</span>
+        <span class="val">${pending ? '+4 出現' : E.fmtValue(r.stat, sim.vals[i])}</span>
+        <span class="lk">${r.lock ? STAR : ''}</span></div>`;
     }).join('');
     sim.flash = -1;
     const X = effG();
-    let v = `已跳 ${sim.rolls} / ${N()} 次`;
-    if (X > 0) v += `，定軌詞條已中 ${sim.hits} 次 (保底 ${X} 次)`;
-    if (sim.level >= 20) v += `<br>結果：${accept(sim.counts) ? '<span class="ok">符合你的條件 ✓</span>' : '<span class="ng">不符合條件 ✗</span>'}`;
+    let v = `已升級跳 ${sim.rolls} / ${N()} 次`;
+    if (X > 0) v += `，選定詞條已中 ${sim.hits} 次 (保底 ${X} 次)`;
+    if (sim.level >= 20) v += `<br>結果：${simOk() ? '<span class="ok">符合你的目標 ✓</span>' : '<span class="ng">不符合目標 ✗</span>'}`;
     $('verdict').innerHTML = v;
-    $('bUp').disabled = $('bMax').disabled = sim.level >= 20;
+    const done = sim.level >= 20;
+    $('bMain').innerHTML = done ? `<span class="ic">↻</span>${reshape ? '重塑' : '換一顆再強化'}` : '<span class="ic">▲</span>強化到 +20';
+    // 重塑紀錄和批量模擬結果共用同一個區塊，按批量模擬時蓋掉紀錄，再按重塑就換回紀錄
     const lg = $('log');
-    lg.innerHTML = sim.log.length ? sim.log.map(x => `<div>${x}</div>`).join('') : '<div style="color:var(--muted)">按「強化」開始，每次 +4。</div>';
+    if (batchHtml) lg.innerHTML = batchHtml;
+    else {
+      const head = tally.n ? `<div class="tally">已${reshape ? '重塑' : '強化'} ${tally.n} 顆，成功 ${tally.ok} 顆 (${(tally.ok / tally.n * 100).toFixed(1)}%，精確值 ${fmtP(lastP)})</div>` : '';
+      lg.innerHTML = head + (sim.log.length ? sim.log.map(x => `<div>${x}</div>`).join('') : '<div style="color:var(--muted)">按「強化到 +20」看一次結果，之後同一個按鈕會變成「重塑」，每按一次就重塑一顆。</div>');
+    }
     lg.scrollTop = lg.scrollHeight;
   }
-  $('bUp').onclick = () => { upgrade(); renderSim(); };
-  $('bMax').onclick = () => { while (sim.level < 20) upgrade(); renderSim(); };
-  $('bReset').onclick = newSim;
+  $('bMain').onclick = () => { batchHtml = ''; if (sim.level >= 20) newSim(); finish(); renderSim(); };
   $('bBatch').onclick = () => {
     const T = 100000, o = calcOpts();
     let ok = 0;
-    for (let t = 0; t < T; t++) if (accept(E.simulateCounts(o))) ok++;
-    const b = $('batch');
-    b.hidden = false;
-    b.innerHTML = `模擬 ${T.toLocaleString()} 顆，成功 ${ok.toLocaleString()} 顆，成功率 <b>${(ok / T * 100).toFixed(2)}%</b>。<br><span style="color:var(--muted)">精確值是 ${fmtP(E.exact(o).success)}，兩者應該很接近。</span>`;
+    for (let t = 0; t < T; t++) {
+      const c = E.simulateCounts(o);
+      const lk = o.locked;
+      if (S.comboOn && lk.length === 2 && c[lk[0]] + c[lk[1]] - 2 < S.cJumps) continue;
+      let good = true;
+      for (let i = 0; i < 4 && good; i++) {
+        const r = S.rows[i];
+        if (r.mode === 'cnt') { good = c[i] - 1 <= cap(r); continue; }
+        if (r.target == null) continue;
+        let hsum = r.init >= 0 ? byId[r.stat].tiers[r.init] : E.rollValue(r.stat);
+        for (let k = 1; k < c[i]; k++) hsum += E.rollValue(r.stat);
+        good = E.toDisp(r.stat, hsum) >= r.target;
+      }
+      if (good) ok++;
+    }
+    batchHtml = `<div class="bt">批量模擬十萬顆，成功 ${ok.toLocaleString()} 顆，成功率 <b>${(ok / T * 100).toFixed(2)}%</b>。</div><div style="color:var(--muted)">精確值是 ${fmtP(lastP)}，兩者應該很接近。按「${$('bMain').textContent.replace('↻', '').trim()}」回到重塑紀錄。</div>`;
+    renderSim();
   };
 
-  function refresh(resetSim) { renderSetup(); renderCalc(); if (resetSim || !sim) newSim(); else renderSim(); }
+  // ---- 分頁：計算 / 重塑規則 (跟抽卡頁一樣) ----
+  function showTab(name) {
+    const rules = name === 'rules';
+    $('tabCalc').hidden = rules;
+    $('tabRules').hidden = !rules;
+    $('tabBtnCalc').setAttribute('aria-selected', rules ? 'false' : 'true');
+    $('tabBtnRules').setAttribute('aria-selected', rules ? 'true' : 'false');
+    try { history.replaceState(null, '', rules ? '#rules' : location.pathname + location.search); } catch (e) {}
+  }
+  $('tabBtnCalc').addEventListener('click', () => showTab('calc'));
+  $('tabBtnRules').addEventListener('click', () => showTab('rules'));
+  document.querySelector('.tabs').addEventListener('keydown', e => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    const toRules = $('tabBtnCalc').getAttribute('aria-selected') === 'true';
+    showTab(toRules ? 'rules' : 'calc');
+    $(toRules ? 'tabBtnRules' : 'tabBtnCalc').focus();
+  });
+  if (location.hash === '#rules') showTab('rules');
+
+  function refresh(resetSim) {
+    renderSetup(); renderCalc();
+    if (resetSim || !sim) { tally = { n: 0, ok: 0 }; batchHtml = ''; newSim(); }
+    renderSim();
+  }
+
+  /* ---------- 分享結果：跟抽卡頁一樣，用 canvas 畫一張羊皮紙視窗的圖，可切換橫式/直式 ---------- */
+  const SITE = 'https://twl-benchen.github.io/genshin-wish/artifact.html';
+  // 聖遺物頁網址的 QR code (版本 4、容錯 M，用 segno 產生；網址改了要重新產生)
+  const SITE_QR = ['111111100010101111110011001111111','100000100111100101001011001000001','101110100000101101111010101011101','101110100101010000110011101011101','101110100001000011000011001011101','100000101001100000011110101000001','111111101010101010101010101111111','000000000111101001111101000000000','100101101010011110010101110100000','100110001110000011101100111100001','101111110001000010011010001110101','111110010000101100000100100011010','011011110010000101011101111101010','000110010111000111010010101011011','001110111101001001000101011110010','010001000011011101011100101010010','111100110001101001011111101010010','001011000110011011001001000101010','011010100010101010001010100000111','111011010010110001111101110100010','110011110111000110011100110000010','010001000100111110001100001101111','111000111110100100110100101010101','011101011111001010001110011011011','100111101010000111001101111110000','000000001100011010111111100011001','111111100011000011001100101011110','100000101010000001011100100010001','101110100000100000111110111111001','101110101100001100000001101010100','101110100010010010000011110011101','100000100101011111100111100000000','111111101100000010000100111011010'];
+  const K = {
+    sky1: '#8fb6dd', sky2: '#dbe7f2', surface: '#f4efe6', sunken: '#ebe3d4', head: '#e4d4b2', frame: '#d3bc8e', frameSoft: '#e3d4b4',
+    ink: '#4a5366', muted: '#847b6c', line: '#ddd0b8', gold: '#bd6932', goldSoft: '#f3e2cb', heroA: '#8a4b20', heroB: '#b77630', heroInk: '#fff6e6',
+    star: '#e0a93a', good: '#3f7f52', bad: '#b5483b', card: '#ece5d8', cardInk: '#495366',
+  };
+  const FD = '"Noto Serif TC", "Songti TC", "PMingLiU", serif';
+  const FB = '"Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif';
+  const FN = '"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace';
+  const SM = 36, SPD = 52;
+  let CX = 0, CW = 0;
+  const setCol = (x, w) => { CX = x; CW = w; };
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+  function text(ctx, s, x, y, font, color, align) {
+    ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align || 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText(s, x, y);
+    return ctx.measureText(s).width;
+  }
+  function fitFont(ctx, s, weight, size, family, maxW) {
+    let f = size;
+    do { ctx.font = `${weight} ${f}px ${family}`; if (ctx.measureText(s).width <= maxW) break; f -= 1; } while (f > 10);
+    return ctx.font;
+  }
+  function sectionTitle(ctx, s, y, right) {
+    text(ctx, '✦', CX, y, `600 26px ${FD}`, K.star);
+    text(ctx, s, CX + 34, y, `600 28px ${FD}`, K.ink);
+    if (right) text(ctx, right, CX + CW, y, `400 18px ${FB}`, K.muted, 'right');
+  }
+  function drawQR(ctx, x, y, module, dark, light) {
+    const n = SITE_QR.length, quiet = 4, size = (n + quiet * 2) * module;
+    ctx.fillStyle = light; ctx.fillRect(x, y, size, size);
+    ctx.fillStyle = dark;
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (SITE_QR[r][c] === '1') ctx.fillRect(x + (c + quiet) * module, y + (r + quiet) * module, module, module);
+    return size;
+  }
+  // 選定詞條的圓圈十字星 (跟網頁同色)
+  function drawStar(ctx, cx, cy, r) {
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fillStyle = '#eecc7b'; ctx.fill();
+    const k = r / 10.25, P = (x, y) => [cx + (x - 12) * k, cy + (y - 12) * k];
+    ctx.beginPath();
+    ctx.moveTo(...P(12, 3.6));
+    ctx.quadraticCurveTo(...P(13.2, 10.8), ...P(20.4, 12)); ctx.quadraticCurveTo(...P(13.2, 13.2), ...P(12, 20.4));
+    ctx.quadraticCurveTo(...P(10.8, 13.2), ...P(3.6, 12)); ctx.quadraticCurveTo(...P(10.8, 10.8), ...P(12, 3.6));
+    ctx.fillStyle = '#cc842c'; ctx.fill();
+  }
+  // 升級跳次數的圓圈
+  function drawJump(ctx, cx, cy, r, j) {
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fillStyle = '#e6cc8d'; ctx.fill();
+    text(ctx, String(j), cx, cy + r * 0.42, `900 ${Math.round(r * 1.25)}px ${FB}`, '#83570a', 'center');
+  }
+
+  const goalText = (r, n) => (r.mode === 'cnt' ? (cap(r) < n ? `最多跳 ${cap(r)} 次` : '沒有限制') : (r.target == null ? '沒有要求' : `至少 ${E.dispText(r.stat, r.target)}`));
+  function shareChips() {
+    const lk = locked(), two = lk.length === 2;
+    const kind = { 2: '重塑 (保底 2 次)', 3: '高階重塑 (保底 3 次)', 4: '諭告重塑 (保底 4 次)' }[effG()] || '不重塑';
+    const c = [['s', `初始 ${S.init} 詞條`], ['g', kind]];
+    if (two) c.push(['g', `選定 ${name(lk[0])} + ${name(lk[1])}`]);
+    if (S.comboOn && two) c.push(['g', `選定詞條合計至少跳 ${S.cJumps} 次`]);
+    return c;
+  }
+  function layoutChips(ctx, chips) {
+    ctx.font = `500 20px ${FB}`;
+    let x = 0, row = 0;
+    return {
+      items: chips.map(([k, s]) => {
+        const w = ctx.measureText(s).width + 26;
+        if (x > 0 && x + w > CW) { x = 0; row++; }
+        const it = { k, s, x, row, w }; x += w + 10; return it;
+      }),
+      rows: chips.length ? row + 1 : 0,
+    };
+  }
+
+  const SH = { stats: 140 + 16 + 120, tableHead: 48 + 54, row: 64, cardTitle: 48, cardTop: 62, cardRow: 56, foot: 30 + 214, gap: 34 };
+  const tableH = () => SH.tableHead + 4 * SH.row;
+  const cardH = () => SH.cardTitle + SH.cardTop + 4 * SH.cardRow + 22 + (tally.n ? 40 : 0);
+  const hasCard = () => sim && sim.level >= 20;
+
+  // 三個重點數字：成功機率 (大) + 八成機率 + 升級跳次數
+  function shareStats(ctx, y) {
+    const d = lastCalc;
+    const g = ctx.createLinearGradient(CX, y, CX + CW, y + 140);
+    g.addColorStop(0, K.heroA); g.addColorStop(1, K.heroB);
+    roundRect(ctx, CX, y, CW, 140, 6); ctx.fillStyle = g; ctx.fill();
+    text(ctx, '全部條件同時符合', CX + 24, y + 38, `500 21px ${FB}`, K.heroInk);
+    text(ctx, fmtP(d.success), CX + 24, y + 104, `600 62px ${FN}`, K.heroInk);
+    const desc = d.success > 0 && d.success < 1 ? `大約每${d.act} ${(1 / d.success).toFixed(1)} 顆成功 1 顆` : (d.success >= 1 ? '一定成功' : '不可能達成');
+    text(ctx, desc, CX + CW - 24, y + 104, `400 20px ${FB}`, K.heroInk, 'right');
+    y += 156;
+    const bw = (CW - 16) / 2;
+    const box = (x, k, v, s) => {
+      roundRect(ctx, x, y, bw, 120, 6); ctx.fillStyle = K.sunken; ctx.fill(); ctx.strokeStyle = K.frameSoft; ctx.lineWidth = 1; ctx.stroke();
+      text(ctx, k, x + 20, y + 34, `400 19px ${FB}`, K.muted);
+      text(ctx, v, x + 20, y + 80, `600 38px ${FN}`, K.ink);
+      ctx.font = fitFont(ctx, s, 400, 16, FB, bw - 40); ctx.fillStyle = K.muted; ctx.textAlign = 'left'; ctx.fillText(s, x + 20, y + 108);
+    };
+    box(CX, `八成機率成功，需要${d.act}`, isFinite(d.k80) ? `${d.k80.toLocaleString()} 顆` : '-',
+      !isFinite(d.k80) ? '不可能達成' : `${d.act} ${d.k80} 顆後至少成功 1 顆的機率 ${fmtP(1 - Math.pow(1 - d.success, d.k80))}`);
+    box(CX + bw + 16, '升級跳的次數', `${d.n} 次`, S.init === 4 ? '初始 4 詞條' : '初始 3 詞條，+4 先新增詞條');
+    return y + 120;
+  }
+
+  // 每個詞條升級跳幾次的機率表
+  function shareTable(ctx, y) {
+    const d = lastCalc, n = d.n;
+    sectionTitle(ctx, '每個詞條升級跳幾次', y + 26, '精確值');
+    y += 48;
+    const w0 = Math.round(CW * 0.27), w1 = Math.round(CW * 0.17), rest = CW - w0 - w1, cw = rest / (n + 2);
+    const xs = [0, w0, w0 + w1]; for (let k = 1; k <= n + 2; k++) xs.push(w0 + w1 + k * cw);
+    const top = y, hh = 54;
+    ctx.fillStyle = K.head; ctx.fillRect(CX, y, CW, hh);
+    const heads = ['詞條', '目標'].concat(Array.from({ length: n + 1 }, (_, k) => `跳 ${k} 次`), ['符合目標']);
+    heads.forEach((h, i) => { ctx.font = fitFont(ctx, h, 700, 18, FB, xs[i + 1] - xs[i] - 8); ctx.fillStyle = K.ink; ctx.textAlign = 'center'; ctx.fillText(h, CX + (xs[i] + xs[i + 1]) / 2, y + 34); });
+    y += hh;
+    S.rows.forEach((r, i) => {
+      const mid = y + SH.row / 2;
+      let inP = 0;
+      for (let k = 0; k <= n; k++) {
+        const p = d.marginal[i][k + 1], wgt = rowProb(i, k + 1);
+        inP += p * wgt;
+        const x = CX + xs[k + 2];
+        if (wgt >= 1) { ctx.fillStyle = K.goldSoft; ctx.fillRect(x, y, cw, SH.row); }
+        else if (wgt > 0) { ctx.fillStyle = 'rgba(243,226,203,.55)'; ctx.fillRect(x, y, cw, SH.row); }
+        ctx.font = fitFont(ctx, p === 0 ? '0' : fmtP(p), wgt > 0 ? 600 : 400, 18, FN, cw - 8);
+        ctx.fillStyle = p === 0 ? 'rgba(132,123,108,.5)' : wgt > 0 ? K.gold : K.ink; ctx.textAlign = 'center';
+        ctx.fillText(p === 0 ? '0' : fmtP(p), x + cw / 2, mid + 7);
+      }
+      let tx = CX + 14;
+      if (r.lock) { drawStar(ctx, tx + 12, mid, 12); tx += 32; }
+      ctx.font = fitFont(ctx, name(i), 500, 21, FB, w0 - (tx - CX) - 8); ctx.fillStyle = K.ink; ctx.textAlign = 'left'; ctx.fillText(name(i), tx, mid + 7);
+      const g = goalText(r, n);
+      ctx.font = fitFont(ctx, g, 400, 17, FB, w1 - 12); ctx.fillStyle = K.muted; ctx.textAlign = 'center'; ctx.fillText(g, CX + w0 + w1 / 2, mid + 6);
+      text(ctx, fmtP(inP), CX + xs[n + 3] + cw / 2, mid + 7, `600 19px ${FN}`, K.ink, 'center');
+      y += SH.row;
+    });
+    ctx.strokeStyle = K.line; ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) { const ly = top + hh + i * SH.row; ctx.beginPath(); ctx.moveTo(CX, ly); ctx.lineTo(CX + CW, ly); ctx.stroke(); }
+    xs.slice(1, -1).forEach(x => { ctx.beginPath(); ctx.moveTo(CX + x, top); ctx.lineTo(CX + x, y); ctx.stroke(); });
+    ctx.strokeStyle = K.frameSoft; ctx.strokeRect(CX, top, CW, y - top);
+    return y;
+  }
+
+  // 最後一顆重塑模擬的聖遺物卡
+  function shareCard(ctx, y) {
+    sectionTitle(ctx, '重塑模擬', y + 26, simOk() ? '符合目標 ✓' : '不符合目標 ✗');
+    y += 48;
+    const w = Math.min(CW, 620), x = CX, h = SH.cardTop + 4 * SH.cardRow + 22;
+    ctx.save(); ctx.shadowColor = 'rgba(30,40,70,.18)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 4;
+    roundRect(ctx, x, y, w, h, 8); ctx.fillStyle = K.card; ctx.fill(); ctx.restore();
+    ctx.save(); roundRect(ctx, x, y, w, h, 8); ctx.clip();
+    const g = ctx.createLinearGradient(x, y, x + w, y + SH.cardTop); g.addColorStop(0, '#8a4b20'); g.addColorStop(1, '#c27a35');
+    ctx.fillStyle = g; ctx.fillRect(x, y, w, SH.cardTop); ctx.restore();
+    const tw = text(ctx, '聖遺物', x + 20, y + 40, `500 22px ${FB}`, '#fff6e6');
+    text(ctx, '★★★★★', x + 30 + tw, y + 40, `400 20px ${FB}`, '#ffd86b');
+    roundRect(ctx, x + w - 86, y + 15, 66, 32, 4); ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fill();
+    text(ctx, '+20', x + w - 53, y + 39, `600 20px ${FN}`, '#fff6e6', 'center');
+    let ry = y + SH.cardTop + 11;
+    S.rows.forEach((r, i) => {
+      const mid = ry + SH.cardRow / 2, j = sim.counts[i] - 1;
+      if (j > 0) drawJump(ctx, x + 34, mid, 13, j);
+      text(ctx, name(i), x + 62, mid + 8, `400 22px ${FB}`, K.cardInk);
+      text(ctx, E.fmtValue(r.stat, sim.vals[i]), x + w - 64, mid + 8, `600 22px ${FN}`, K.cardInk, 'right');
+      if (r.lock) drawStar(ctx, x + w - 36, mid, 13);
+      if (i < 3) { ctx.strokeStyle = '#cfc6b4'; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(x + 20, ry + SH.cardRow); ctx.lineTo(x + w - 20, ry + SH.cardRow); ctx.stroke(); ctx.setLineDash([]); }
+      ry += SH.cardRow;
+    });
+    y += h;
+    if (tally.n) {
+      const s = `已${lastCalc.act} ${tally.n} 顆，成功 ${tally.ok} 顆 (${(tally.ok / tally.n * 100).toFixed(1)}%)，精確值 ${fmtP(lastP)}`;
+      ctx.font = fitFont(ctx, s, 400, 19, FB, CW); ctx.fillStyle = K.muted; ctx.textAlign = 'left'; ctx.fillText(s, CX, y + 32);
+      y += 40;
+    }
+    return y;
+  }
+
+  function shareFooter(ctx, y) {
+    const dg = ctx.createLinearGradient(CX, 0, CX + CW, 0);
+    dg.addColorStop(0, 'rgba(211,188,142,0)'); dg.addColorStop(0.5, K.frame); dg.addColorStop(1, 'rgba(211,188,142,0)');
+    ctx.fillStyle = dg; ctx.fillRect(CX, y, CW, 1.5);
+    y += 30;
+    roundRect(ctx, CX - 4, y - 4, 213, 213, 8); ctx.fillStyle = '#fffaf0'; ctx.fill(); ctx.strokeStyle = K.frame; ctx.lineWidth = 1.5; ctx.stroke();
+    drawQR(ctx, CX, y, 5, '#2f3441', '#fffaf0');
+    const fx = CX + 240, fw = CW - 240;
+    text(ctx, '一起來算算重塑機率', fx, y + 62, `600 34px ${FD}`, K.ink);
+    const url = SITE.replace('https://', '');
+    ctx.font = fitFont(ctx, url, 600, 22, FN, fw); ctx.fillStyle = K.gold; ctx.textAlign = 'left'; ctx.fillText(url, fx, y + 106);
+    const l1 = '掃描 QR code 或前往網址，設定你的副詞條和重塑保底';
+    const l2 = '機率依照社群整理的重塑規則精確計算，結果僅供參考，與米哈遊官方無關。';
+    ctx.font = fitFont(ctx, l1, 400, 18, FB, fw); ctx.fillStyle = K.muted; ctx.fillText(l1, fx, y + 144);
+    ctx.font = fitFont(ctx, l2, 400, 16, FB, fw); ctx.fillText(l2, fx, y + 176);
+    return y + 214;
+  }
+
+  // mode：'landscape' 橫式 (寬 1920，左欄重點數字與模擬卡，右欄機率表與 QR code) 或 'portrait' 直式 (寬 1080，由上而下)
+  async function renderShare(mode) {
+    const land = mode !== 'portrait';
+    let cv = document.createElement('canvas'), ctx = cv.getContext('2d');
+    const sample = '原神聖遺物重塑計算全部條件同時符合大約每顆成功一定不可能達成八成機率需要升級跳的次數初始詞條先新增每個幾目標精確值符合模擬已最多沒有限制要求至少選定合計保底高階諭告生命值攻擊力防禦力元素精通充能效率暴擊率傷害一起來算掃描或直接前往網址後點左上角依照社群整理規則結果僅供參考與米哈遊官方無關 0123456789,.%()+/★✦✓✗';
+    try {
+      await Promise.race([
+        Promise.all([`800 50px ${FD}`, `600 28px ${FD}`, `400 20px ${FB}`, `500 20px ${FB}`, `700 20px ${FB}`, `900 20px ${FB}`, `600 40px ${FN}`, `400 20px ${FN}`].map(f => document.fonts.load(f, sample))),
+        new Promise(r => setTimeout(r, 3000)),
+      ]);
+    } catch (e) {}
+    const SW = land ? 1920 : 1080, FX = SM + SPD, FW = SW - 2 * (SM + SPD);
+    const LW = 800, CG = 56;
+    const left = land ? [FX, LW] : [FX, FW], right = land ? [FX + LW + CG, FW - LW - CG] : [FX, FW];
+    setCol(FX, FW);
+    const chips = layoutChips(ctx, shareChips());
+    const G = SH.gap, card = hasCard();
+    const headH = 64 + 56 + 20 + chips.rows * 46 + G;
+    const leftH = land ? SH.stats + (card ? G + cardH() : 0) : 0;
+    const rightH = land ? tableH() + G + SH.foot : 0;
+    const bodyH = land ? Math.max(leftH, rightH) : SH.stats + G + tableH() + (card ? G + cardH() : 0) + G + SH.foot;
+    const winH = headH + bodyH + 52, H = winH + 2 * SM, scale = 2;
+    cv.width = SW * scale; cv.height = H * scale;
+    ctx = cv.getContext('2d'); ctx.scale(scale, scale);
+
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, K.sky1); sky.addColorStop(Math.min(0.6, 700 / H), K.sky2); sky.addColorStop(1, '#e4ecf4');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, SW, H);
+    [[0.15, 90, 260], [0.83, 60, 220], [0.57, 140, 180]].forEach(([fx, y, r]) => {
+      const x = fx * SW, g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g; ctx.fillRect(x - r, y - r, 2 * r, 2 * r);
+    });
+    const wx = SM, wy = SM, ww = SW - 2 * SM, wh = winH;
+    ctx.save(); ctx.shadowColor = 'rgba(30,40,70,.22)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 8;
+    roundRect(ctx, wx, wy, ww, wh, 6); ctx.fillStyle = K.surface; ctx.fill(); ctx.restore();
+    roundRect(ctx, wx, wy, ww, wh, 6); ctx.strokeStyle = K.frame; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = K.frameSoft; ctx.lineWidth = 1.5; ctx.strokeRect(wx + 12, wy + 12, ww - 24, wh - 24);
+    ctx.fillStyle = K.frame;
+    [[wx + 8, wy + 8, 1, 1], [wx + ww - 8, wy + 8, -1, 1], [wx + 8, wy + wh - 8, 1, -1], [wx + ww - 8, wy + wh - 8, -1, -1]].forEach(([x, y, sx, sy]) => {
+      ctx.fillRect(sx > 0 ? x : x - 24, sy > 0 ? y : y - 3, 24, 3);
+      ctx.fillRect(sx > 0 ? x : x - 3, sy > 0 ? y : y - 24, 3, 24);
+    });
+
+    let y = wy + 64;
+    text(ctx, '✦', CX, y + 20, `800 44px ${FD}`, K.star);
+    text(ctx, '原神聖遺物重塑計算', CX + 56, y + 22, `800 50px ${FD}`, K.ink);
+    const now = new Date();
+    text(ctx, now.getFullYear() + '/' + String(now.getMonth() + 1).padStart(2, '0') + '/' + String(now.getDate()).padStart(2, '0'), CX + CW, y + 18, `400 20px ${FN}`, K.muted, 'right');
+    y += 76;
+    chips.items.forEach(c => {
+      const cy = y + c.row * 46;
+      roundRect(ctx, CX + c.x, cy, c.w, 36, 18); ctx.fillStyle = c.k === 'g' ? K.goldSoft : K.sunken; ctx.fill();
+      if (c.k === 's') { ctx.strokeStyle = K.frameSoft; ctx.lineWidth = 1; ctx.stroke(); }
+      text(ctx, c.s, CX + c.x + 13, cy + 25, `${c.k === 's' ? 400 : 700} 20px ${FB}`, c.k === 'g' ? K.gold : K.ink);
+    });
+    const y0 = wy + headH;
+    if (land) {
+      setCol(left[0], left[1]);
+      y = shareStats(ctx, y0);
+      if (card) shareCard(ctx, y + G);
+      setCol(right[0], right[1]);
+      y = shareTable(ctx, y0) + G;
+      shareFooter(ctx, Math.max(y, y0 + bodyH - SH.foot)); // QR code 貼齊底部
+    } else {
+      y = shareStats(ctx, y0) + G;
+      y = shareTable(ctx, y) + G;
+      if (card) y = shareCard(ctx, y) + G;
+      shareFooter(ctx, y);
+    }
+    setCol(FX, FW);
+    return cv;
+  }
+
+  let shareBlob = null, shareUrl = '';
+  const UIKEY = 'artcalc-ui';
+  let ui = {}; try { ui = JSON.parse(localStorage.getItem(UIKEY)) || {}; } catch (e) {}
+  const shareMode = () => (ui.shareMode === 'portrait' ? 'portrait' : 'landscape');
+  const paintShareMode = () => $('resultImgOrient').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === shareMode() ? 'true' : 'false'));
+  const shareName = () => { const n = new Date(); return '原神聖遺物重塑-' + n.getFullYear() + String(n.getMonth() + 1).padStart(2, '0') + String(n.getDate()).padStart(2, '0') + '.png'; };
+  function paintQrSmall() {
+    const cv = $('qrSmall'), n = SITE_QR.length + 8, mod = 3, dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+    cv.width = n * mod * dpr; cv.height = n * mod * dpr;
+    const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
+    drawQR(ctx, 0, 0, mod, '#2f3441', '#fffaf0');
+  }
+  async function openShare() {
+    const dlg = $('resultImgDlg');
+    $('resultImgPic').hidden = true; $('resultImgWait').hidden = false; $('resultImgWait').textContent = '圖片產生中…';
+    $('resultImgSave').disabled = true; $('resultImgSend').hidden = true; $('copyMsg').textContent = '';
+    paintQrSmall(); paintShareMode();
+    if (!dlg.open) { if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', ''); }
+    const ticket = (openShare.ticket = (openShare.ticket || 0) + 1);
+    try {
+      const cv = await renderShare(shareMode());
+      if (ticket !== openShare.ticket) return;
+      $('resultImgPic').alt = '這次計算結果的分享圖 (' + (shareMode() === 'portrait' ? '直式' : '橫式') + ')';
+      shareBlob = await new Promise(r => cv.toBlob(r, 'image/png'));
+      if (shareUrl) URL.revokeObjectURL(shareUrl);
+      shareUrl = URL.createObjectURL(shareBlob);
+      $('resultImgPic').src = shareUrl;
+      $('resultImgPic').hidden = false; $('resultImgWait').hidden = true;
+      $('resultImgSave').disabled = false;
+      try {
+        const file = new File([shareBlob], shareName(), { type: 'image/png' });
+        $('resultImgSend').hidden = !(navigator.canShare && navigator.canShare({ files: [file] }));
+      } catch (e) {}
+    } catch (e) {
+      $('resultImgWait').textContent = '圖片產生失敗，請重新整理後再試一次。';
+    }
+  }
+  $('resultImgBtn').addEventListener('click', openShare);
+  $('resultImgOrient').addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b || b.dataset.v === shareMode()) return;
+    ui.shareMode = b.dataset.v; try { localStorage.setItem(UIKEY, JSON.stringify(ui)); } catch (err) {}
+    openShare();
+  });
+  $('resultImgClose').addEventListener('click', () => $('resultImgDlg').close());
+  $('resultImgDlg').addEventListener('click', e => { if (e.target === $('resultImgDlg')) $('resultImgDlg').close(); });
+  $('resultImgSave').addEventListener('click', () => {
+    if (!shareUrl) return;
+    const a = document.createElement('a'); a.href = shareUrl; a.download = shareName();
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+  $('resultImgSend').addEventListener('click', async () => {
+    try { await navigator.share({ files: [new File([shareBlob], shareName(), { type: 'image/png' })], title: '原神聖遺物重塑計算', text: SITE }); } catch (e) {}
+  });
+  const selectUrl = () => { try { const r = document.createRange(); r.selectNodeContents($('siteUrl')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e) {} };
+  $('copyUrl').addEventListener('click', () => {
+    const done = ok => { $('copyMsg').textContent = ok ? '已複製' : '請手動選取網址複製'; };
+    try { navigator.clipboard.writeText(SITE).then(() => done(true), () => { selectUrl(); done(false); }); } catch (e) { selectUrl(); done(false); }
+  });
+
   refresh(true);
 })();
 </script>
