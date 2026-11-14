@@ -68,6 +68,7 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 .stat .k { font-size: .8rem; color: var(--muted); letter-spacing: .04em; }
 .stat .v { font-family: var(--f-num); font-weight: 600; font-size: 1.85rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
 .stat .s { font-size: .8rem; color: var(--muted); }
+.stat .v small { font-size: .5em; font-weight: 500; margin-right: 2px; }
 .stat.hero { background: linear-gradient(150deg, var(--hero-a), var(--hero-b)); color: var(--hero-ink); position: relative; overflow: hidden; }
 .stat.hero::after { content: "★★★★★"; position: absolute; right: 10px; top: 8px; font-size: .62rem; letter-spacing: 1px; opacity: .55; }
 .stat.hero .k, .stat.hero .s { color: var(--hero-ink); opacity: .9; }
@@ -125,7 +126,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .tabs button { font: inherit; font-size: .92rem; font-weight: 500; padding: 7px 18px; border-radius: 999px; border: 1px solid var(--frame); background: var(--surface); color: var(--ink); cursor: pointer; }
 .tabs button[aria-selected="true"] { background: var(--btn); color: var(--btn-ink); border-color: var(--btn); font-weight: 700; }
 .rules-page { max-width: 980px; display: grid; gap: 20px; }
-.legend-note { margin-left: auto; font-family: var(--f-body); font-size: .74rem; font-weight: 400; color: var(--muted); }
+.legend-segs { margin-left: auto; font-family: var(--f-body); font-weight: 400; }
 /* 分享結果視窗 (跟抽卡頁一樣) */
 .note { font-size: .8rem; color: var(--muted); margin: 0; }
 .seg { display: inline-flex; border: 1px solid var(--frame-soft); border-radius: 999px; overflow: hidden; background: var(--sunken); }
@@ -348,9 +349,9 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       </fieldset>
       <hr>
       <fieldset>
-        <legend><span class="dot"></span>副詞條與目標<span class="legend-note">長按可以拖動順序</span></legend>
+        <legend><span class="dot"></span>副詞條與目標<span class="mini-segs legend-segs" id="condSeg" role="group" aria-label="目標種類"><button type="button" data-v="cnt">次數</button><button type="button" data-v="val">數值</button><button type="button" data-v="each">逐條</button></span></legend>
         <div class="subrows" id="rows"></div>
-        <p class="hint">金色圓圈是重塑的選定詞條，選兩個。次數只算升級跳，選最大代表不限制。</p>
+        <p class="hint">金色圓圈是重塑的選定詞條，選兩個。次數只算升級跳，選最大代表不限制。長按卡片可以拖動順序。</p>
       </fieldset>
       <hr>
       <fieldset>
@@ -371,14 +372,14 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       <div class="summary">
         <div class="stat hero"><span class="k">全部條件同時符合</span><span class="v" id="pct">-</span><span class="s" id="pctDesc"></span></div>
         <div class="stat"><span class="k" id="need80K">八成機率成功，需要重塑</span><span class="v" id="need80">-</span><span class="s" id="need80Desc"></span></div>
-        <div class="stat"><span class="k">升級跳的次數</span><span class="v" id="nUp">-</span><span class="s" id="nUpDesc"></span></div>
+        <div class="stat"><span class="k">每版本 4 個羽毛</span><span class="v" id="nUp">-</span><span class="s" id="nUpDesc"></span></div>
       </div>
       <div id="warn"></div>
 
       <section class="card frame">
         <h2>每個詞條升級跳幾次的機率</h2>
         <div class="tbl-wrap"><table class="gtable" id="tbl"></table></div>
-        <p class="hint">金色格子是符合目標的次數 (最多跳幾次以內)，設數值目標時，淡金色代表跳這麼多次「有機會」到目標，最後一欄已經把數值的機率算進去。結果是把所有強化路徑和數值檔位逐一列舉的精確值，不是隨機模擬。</p>
+        <p class="hint">金色是符合目標的次數，淡金色是有機會達到數值目標，最後一欄已算進數值的機率。全部是精確值。</p>
       </section>
 
       <section class="card frame">
@@ -512,6 +513,9 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       if (!(r.init >= -1 && r.init <= 3)) r.init = -1;
       if (r.target != null && !isFinite(r.target)) r.target = null;
     });
+    // 目標種類 S.cond：cnt 全部次數、val 全部數值、each 逐條 (每列自己選)。舊的設定沒有這個欄位時，四列一樣就用那一種
+    if (!['cnt', 'val', 'each'].includes(S.cond)) S.cond = S.rows.every(r => r.mode === S.rows[0].mode) ? S.rows[0].mode : 'each';
+    if (S.cond !== 'each') S.rows.forEach(r => { r.mode = S.cond; });
     S.cJumps = Math.max(0, Math.min(S.cJumps | 0, N()));
     S.cost = S.cost === 1 ? 1 : 2;
     if (locked().length > 2) S.rows.forEach((r, i) => { if (i > 1) r.lock = false; });
@@ -570,13 +574,14 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
         </div>
         <div class="cond">
           <div class="cond-head"><span>${r.mode === 'cnt' ? '最多跳幾次' : '最後的數值'}${tag}</span>
-            <span class="mini-segs" role="group" aria-label="目標種類"><button type="button" data-i="${i}" data-k="mode" data-v="cnt" class="${r.mode === 'cnt' ? 'on' : ''}">次數</button><button type="button" data-i="${i}" data-k="mode" data-v="val" class="${r.mode === 'val' ? 'on' : ''}">數值</button></span>
+            <span class="mini-segs" role="group" aria-label="目標種類"${S.cond === 'each' ? '' : ' hidden'}><button type="button" data-i="${i}" data-k="mode" data-v="cnt" class="${r.mode === 'cnt' ? 'on' : ''}">次數</button><button type="button" data-i="${i}" data-k="mode" data-v="val" class="${r.mode === 'val' ? 'on' : ''}">數值</button></span>
           </div>
           ${body}
         </div>
       </div>`;
     }).join('');
 
+    document.querySelectorAll('#condSeg button').forEach(b => { b.classList.toggle('on', b.dataset.v === S.cond); b.setAttribute('aria-pressed', b.dataset.v === S.cond); });
     const two = lk.length === 2;
     document.querySelectorAll('#gSeg button').forEach(b => {
       const v = +b.dataset.v;
@@ -673,6 +678,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     const i = +t.dataset.i, v = parseTarget(i, t.value), w = $('rows').querySelector(`.vwarn[data-w="${i}"]`);
     if (w) w.hidden = !(v != null && v > maxDisp(S.rows[i]));
   });
+  $('condSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b && b.dataset.v !== S.cond) { S.cond = b.dataset.v; refresh(false); } });
   $('comboOn').addEventListener('change', e => { S.comboOn = e.target.checked; refresh(false); });
   $('comboBox').addEventListener('click', e => { const b = e.target.closest('button[data-k="combo"]'); if (b) { S.cJumps = +b.dataset.v; refresh(false); } });
 
@@ -680,6 +686,14 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   // 八成機率那格的小字：重塑時換算成啟聖之塵 (每次 S.cost 個)
   const need80Sub = (k80, act) => (!isFinite(k80) ? '不可能達成'
     : act === '重塑' ? `約 ${(k80 * S.cost).toLocaleString()} 個啟聖之塵 (每次 ${S.cost} 個)` : '一般強化，不用啟聖之塵');
+  /* 第三格：八成機率要用的啟聖之塵，照每版本 4 個、一版本 42 天換算 */
+  const PER_VER = 4, VER_DAYS = 42;
+  function versionTime(k80, act) {
+    if (act !== '重塑') return { v: '-', s: '一般強化，不用啟聖之塵', t: '-' };
+    if (!isFinite(k80)) return { v: '-', s: '不可能達成', t: '-' };
+    const ver = k80 * S.cost / PER_VER, txt = ver < 10 ? String(+ver.toFixed(1)) : String(Math.round(ver));
+    return { v: `<small>大約</small> ${txt} 版本`, t: `大約 ${txt} 版本`, s: `大約 ${Math.round(ver * VER_DAYS).toLocaleString()} 天` };
+  }
   let lastP = 0, lastCalc = null;
   function renderCalc() {
     const { success, marginal } = E.exact(calcOpts()), n = N();
@@ -693,8 +707,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     $('need80K').textContent = `八成機率成功，需要${act}`;
     $('need80').textContent = isFinite(k80) ? `${k80.toLocaleString()} 顆` : '-';
     $('need80Desc').textContent = need80Sub(k80, act);
-    $('nUp').textContent = n + ' 次';
-    $('nUpDesc').textContent = S.init === 4 ? '初始 4 詞條' : '初始 3 詞條，+4 先新增詞條';
+    const vt = versionTime(k80, act);
+    $('nUp').innerHTML = vt.v; $('nUpDesc').textContent = vt.s;
 
     let h = '<tr><th style="text-align:left">詞條</th>';
     for (let k = 0; k <= n; k++) h += `<th>跳 ${k} 次</th>`;
@@ -771,9 +785,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     }).join('');
     sim.flash = -1;
     const X = effG();
-    let v = `已升級跳 ${sim.rolls} / ${N()} 次`;
-    if (X > 0) v += `，選定詞條已中 ${sim.hits} 次 (保底 ${X} 次)`;
-    if (sim.level >= 20) v += `<br>結果：${simOk() ? '<span class="ok">符合你的目標 ✓</span>' : '<span class="ng">不符合目標 ✗</span>'}`;
+    let v = X > 0 ? `選定詞條已中 ${sim.hits} 次 (保底 ${X} 次)` : '';
+    if (sim.level >= 20) v += `${v ? '<br>' : ''}結果：${simOk() ? '<span class="ok">符合你的目標 ✓</span>' : '<span class="ng">不符合目標 ✗</span>'}`;
     $('verdict').innerHTML = v;
     const done = sim.level >= 20;
     $('bMain').innerHTML = done ? `<span class="ic">↻</span>${reshape ? '重塑' : '換一顆再強化'}` : '<span class="ic">▲</span>強化到 +20';
@@ -952,7 +965,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     };
     box(CX + hw + gap, `八成機率成功，需要${d.act}`, isFinite(d.k80) ? `${d.k80.toLocaleString()} 顆` : '-',
       need80Sub(d.k80, d.act));
-    box(CX + hw + gap + bw + gap, '升級跳的次數', `${d.n} 次`, S.init === 4 ? '初始 4 詞條' : '初始 3 詞條，+4 先新增詞條');
+    const vt = versionTime(d.k80, d.act);
+    box(CX + hw + gap + bw + gap, `每版本 ${PER_VER} 個羽毛`, vt.t, vt.s);
     return y + H;
   }
 
@@ -1544,6 +1558,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 
   function applyRelic(p, label, cost, icon) {
     const old = S.rows;
+    if (S.cond === 'val') S.cond = 'cnt'; // 帶入時目標一律是次數
     S.init = p.init;
     S.cost = cost === 1 ? 1 : 2;
     S.rows = p.subs.map(s => {
