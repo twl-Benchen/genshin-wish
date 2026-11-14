@@ -159,7 +159,30 @@
     return { ok: true, init, level: plus, subs };
   }
 
-  const api = { STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix };
+  /* 重塑方案：一顆 +20 五星聖遺物 (parseRelic 的結果) 重塑一次，達成目標的機率
+   * goals：1 或 2 個 { stat, mode: 'val' 最後顯示值至少 target (畫面單位，見 toDisp) | 'cnt' 升級跳至少 n 次 }
+   * 選定詞條：目標詞條；只有一個目標時，另一個選定詞條隨便挑 (四個詞條對稱，不影響目標的機率)
+   * 初始那一檔重塑後保留 (見 HANDOFF.md 的待辦)
+   * 回傳 { ok, p, avg (每個目標重塑後的平均顯示值), lock } 或 { ok: false, reason: 'missing' } */
+  function reshapeOdds(parsed, goals, guarantee) {
+    const idx = goals.map(g => parsed.subs.findIndex(s => s.stat === g.stat));
+    if (!parsed.ok || parsed.subs.length !== 4) return { ok: false, reason: 'relic' };
+    if (idx.some(i => i < 0)) return { ok: false, reason: 'missing' };
+    const lock = [...new Set(idx)];
+    for (let i = 0; lock.length < 2 && i < 4; i++) if (!lock.includes(i)) lock.push(i);
+    const base = { init: parsed.init, guarantee, locked: lock.slice(0, 2) };
+    const sub = k => parsed.subs[idx[k]];
+    const cond = (k, c) => {
+      const g = goals[k], j = c[idx[k]] - 1;
+      return g.mode === 'cnt' ? (j >= g.n ? 1 : 0) : probAtLeast(sub(k).stat, j, sub(k).initTier, g.target);
+    };
+    const p = exact(Object.assign({}, base, { weight: c => goals.reduce((w, g, k) => w * cond(k, c), 1) })).success;
+    const mean = (k, c) => { let m = 0; valueDist(sub(k).stat, c[idx[k]] - 1, sub(k).initTier).forEach((q, d) => { m += q * d; }); return m; };
+    const avg = goals.map((g, k) => exact(Object.assign({}, base, { weight: c => mean(k, c) })).success);
+    return { ok: true, p: Math.min(1, p), avg, lock: base.locked };
+  }
+
+  const api = { STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix, reshapeOdds };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.ArtifactEngine = api;
 })(typeof window !== 'undefined' ? window : this);

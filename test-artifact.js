@@ -110,5 +110,30 @@ eq('成功率 10%，八成要幾顆', E.trialsFor(0.1, 0.8), 16);
   eq('時之沙 生命值 269', E.fmtValue('hp', sands.subs[3].total), '269');
 }
 
+// 12. 重塑方案 (reshapeOdds)
+{
+  const flower = E.parseRelic([501203, 501064, 501232, 501221, 501232, 501224, 501201, 501203, 501223], 21);
+  eq('重塑方案 升級跳至少 0 次 → 100%', E.reshapeOdds(flower, [{ stat: 'cd', mode: 'cnt', n: 0 }], 2).p, 1);
+  eq('重塑方案 沒有這個詞條', E.reshapeOdds(flower, [{ stat: 'em', mode: 'cnt', n: 1 }], 2).reason, 'missing');
+  // 單一目標跟直接用 exact 算的一樣：暴傷 (第 4 個詞條) 選定，升級跳至少 2 次
+  const want = E.exact({ init: 4, guarantee: 2, locked: [3, 0], accept: c => c[3] - 1 >= 2 }).success;
+  check('重塑方案 暴傷至少跳 2 次 = exact', E.reshapeOdds(flower, [{ stat: 'cd', mode: 'cnt', n: 2 }], 2).p, want);
+  // 數值目標 vs 蒙地卡羅：雙暴同時選定，暴擊至少 10.0%、暴傷至少 20.0%，初始那一檔保留
+  const goals = [{ stat: 'cr', mode: 'val', target: 100 }, { stat: 'cd', mode: 'val', target: 200 }];
+  const r = E.reshapeOdds(flower, goals, 2);
+  const o = { init: 4, guarantee: 2, locked: r.lock };
+  let ok = 0, sumCd = 0;
+  for (let t = 0; t < T; t++) {
+    const c = E.simulateCounts(o);
+    let h0 = E.byId.cr.tiers[flower.subs[0].initTier], h3 = E.byId.cd.tiers[flower.subs[3].initTier];
+    for (let k = 1; k < c[0]; k++) h0 += E.rollValue('cr');
+    for (let k = 1; k < c[3]; k++) h3 += E.rollValue('cd');
+    if (E.toDisp('cr', h0) >= 100 && E.toDisp('cd', h3) >= 200) ok++;
+    sumCd += E.toDisp('cd', h3);
+  }
+  check('重塑方案 雙暴數值 蒙地卡羅比對', ok / T, r.p, 0.004);
+  check('重塑方案 暴傷平均顯示值 蒙地卡羅比對', sumCd / T / 1000, r.avg[1] / 1000, 0.0005);
+}
+
 console.log(fail ? `\n${fail} 項失敗` : '\n全部通過');
 process.exit(fail ? 1 : 0);

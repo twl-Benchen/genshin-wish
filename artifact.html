@@ -327,8 +327,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .rl-main { position: relative; display: grid; align-content: end; justify-items: end; min-height: 84px; padding: 2px 4px; }
 .rl-main img { position: absolute; left: -6px; top: -6px; width: 84px; height: 84px; opacity: .9;
   -webkit-mask-image: linear-gradient(90deg, #000 35%, transparent 92%); mask-image: linear-gradient(90deg, #000 35%, transparent 92%); }
-.rl-main .mn { position: relative; font-size: .76rem; opacity: .9; text-shadow: 0 1px 3px rgba(0, 0, 0, .7); }
-.rl-main b { position: relative; font: 700 1.6rem var(--f-num); line-height: 1.15; text-shadow: 0 1px 4px rgba(0, 0, 0, .7); }
+.rl-main .mn { position: relative; font-size: .95rem; font-weight: 700; margin-bottom: 6px; text-shadow: 0 1px 3px rgba(0, 0, 0, .8); }
+.rl-main b { position: relative; font: 600 1.25rem var(--f-num); text-shadow: 0 1px 4px rgba(0, 0, 0, .7); }
 .rl-foot { position: relative; display: flex; gap: 6px; align-items: center; font-size: .66rem; }
 .rl-foot .stars { color: #ffd86b; letter-spacing: 0; }
 .rl-foot .plus { font-family: var(--f-num); background: rgba(0, 0, 0, .45); border-radius: 4px; padding: 0 5px; }
@@ -336,12 +336,34 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .rs { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 0 6px; padding-bottom: 3px; border-bottom: 1px solid rgba(255, 255, 255, .12); min-width: 0; }
 .rs .nm { font-size: .7rem; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rs b { font: 600 .98rem var(--f-num); }
-/* 每次一條：第七到第十檔越來越長、越亮，第一條是初始那次 (下面加一個小點) */
+/* 每次一條 (第一條是初始那次)：第七到第十檔越來越長、越亮 */
 .rs .dots { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; height: 9px; }
 .rs .dots i { position: relative; height: 4px; border-radius: 2px; background: #fff; }
 .rs .dots i.t0 { width: 6px; opacity: .3; } .rs .dots i.t1 { width: 10px; opacity: .5; } .rs .dots i.t2 { width: 14px; opacity: .75; } .rs .dots i.t3 { width: 18px; opacity: 1; background: #ffe7a6; }
-.rs .dots i.first::after { content: ""; position: absolute; left: 50%; top: 6px; width: 3px; height: 3px; margin-left: -1.5px; border-radius: 50%; background: #fff; }
-.sc-detail { gap: 10px; }
+
+.sc-bottom { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 900px) { .sc-bottom { grid-template-columns: minmax(0, 1fr); } }
+.sc-detail, .sc-plan { gap: 10px; }
+.sc-detail > *, .sc-plan > * { min-width: 0; }
+.plan-tbl, .sc-tbl { min-width: 0; }
+@media (max-width: 520px) { .plan-tbl td, .plan-tbl th, .sc-tbl td, .sc-tbl th { padding: 5px 3px; font-size: .76rem; } .sc-plan .segs button { font-size: .8rem; } }
+.sc-tbl .proc b { color: var(--ink); }
+.sc-tbl .proc span { color: var(--muted); }
+.plan-goals { display: grid; gap: 8px; }
+.plan-goal { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+.pg-top { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; }
+.pg-x { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--frame-soft); background: var(--sunken); color: var(--muted); cursor: pointer; }
+.pg-val { display: flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--muted); }
+.pg-val input { width: 90px; height: 34px; font: 600 .95rem var(--f-num); color: var(--ink); background: var(--sunken); border: 1px solid var(--frame-soft); border-radius: 6px; padding: 0 8px; }
+.pg-val .num-seg { flex: 1; }
+.linkbtn { font: inherit; font-size: .82rem; color: var(--gold); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; justify-self: start; }
+.plan-tbl td, .plan-tbl th { font-size: .82rem; }
+.plan-tbl td small { display: block; color: var(--muted); font-size: .7rem; font-weight: 400; }
+.plan-tbl tr[data-r] { cursor: pointer; }
+.plan-tbl tr.best td { background: var(--gold-soft); }
+.plan-tbl tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--gold); }
+.plan-tbl tr.na td { color: var(--muted); }
+.best-tag { background: var(--gold); color: #fff; }
 .sc-credit { margin: 0; font-size: .76rem; color: var(--muted); text-align: center; }
 .sc-credit a { color: var(--gold); }
 .sc-tbl td small { color: var(--muted); font-size: .72rem; }
@@ -470,7 +492,10 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     <p class="sc-msg" id="scMsg" role="status">輸入 UID 查詢遊戲裡「角色展示」的角色和聖遺物。資料來自 Enka.Network，遊戲裡要先打開「顯示角色詳情」。</p>
     <div class="sc-avatars" id="scAvatars" role="tablist" aria-label="角色"></div>
     <div id="scCard"></div>
-    <section class="card frame sc-detail" id="scDetail" hidden></section>
+    <div class="sc-bottom" id="scBottom" hidden>
+      <section class="card frame sc-plan" id="scPlan"></section>
+      <section class="card frame sc-detail" id="scDetail"></section>
+    </div>
     <p class="sc-credit">角色、武器、聖遺物資料與圖片來自 <a href="https://enka.network/" target="_blank" rel="noopener">Enka.Network</a>，遊戲素材版權屬於 HoYoverse。本網站與 Enka.Network、HoYoverse 無關。</p>
   </div>
 
@@ -684,7 +709,30 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     return { ok: true, init, level: plus, subs };
   }
 
-  const api = { STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix };
+  /* 重塑方案：一顆 +20 五星聖遺物 (parseRelic 的結果) 重塑一次，達成目標的機率
+   * goals：1 或 2 個 { stat, mode: 'val' 最後顯示值至少 target (畫面單位，見 toDisp) | 'cnt' 升級跳至少 n 次 }
+   * 選定詞條：目標詞條；只有一個目標時，另一個選定詞條隨便挑 (四個詞條對稱，不影響目標的機率)
+   * 初始那一檔重塑後保留 (見 HANDOFF.md 的待辦)
+   * 回傳 { ok, p, avg (每個目標重塑後的平均顯示值), lock } 或 { ok: false, reason: 'missing' } */
+  function reshapeOdds(parsed, goals, guarantee) {
+    const idx = goals.map(g => parsed.subs.findIndex(s => s.stat === g.stat));
+    if (!parsed.ok || parsed.subs.length !== 4) return { ok: false, reason: 'relic' };
+    if (idx.some(i => i < 0)) return { ok: false, reason: 'missing' };
+    const lock = [...new Set(idx)];
+    for (let i = 0; lock.length < 2 && i < 4; i++) if (!lock.includes(i)) lock.push(i);
+    const base = { init: parsed.init, guarantee, locked: lock.slice(0, 2) };
+    const sub = k => parsed.subs[idx[k]];
+    const cond = (k, c) => {
+      const g = goals[k], j = c[idx[k]] - 1;
+      return g.mode === 'cnt' ? (j >= g.n ? 1 : 0) : probAtLeast(sub(k).stat, j, sub(k).initTier, g.target);
+    };
+    const p = exact(Object.assign({}, base, { weight: c => goals.reduce((w, g, k) => w * cond(k, c), 1) })).success;
+    const mean = (k, c) => { let m = 0; valueDist(sub(k).stat, c[idx[k]] - 1, sub(k).initTier).forEach((q, d) => { m += q * d; }); return m; };
+    const avg = goals.map((g, k) => exact(Object.assign({}, base, { weight: c => mean(k, c) })).success);
+    return { ok: true, p: Math.min(1, p), avg, lock: base.locked };
+  }
+
+  const api = { STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix, reshapeOdds };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.ArtifactEngine = api;
 })(typeof window !== 'undefined' ? window : this);
@@ -1422,7 +1470,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     showTab('show');
     if (!/^\d{9,10}$/.test(uid)) { scMsg('UID 是 9 或 10 位數字，請再確認一次。', true); return; }
     if (SC.busy) return;
-    SC.uid = uid; SC.sel = 0; SC.relic = -1;
+    SC.uid = uid; SC.sel = 0; SC.relic = 0;
     try { localStorage.setItem(UIDKEY, uid); } catch (e) {}
     try { history.replaceState(null, '', '#uid-' + uid); } catch (e) {}
     const hit = SC.cache.get(uid);
@@ -1447,7 +1495,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 
   function renderShow() {
     const d = SC.data;
-    if (!d) { $('scPlayer').innerHTML = ''; $('scAvatars').innerHTML = ''; $('scCard').innerHTML = ''; $('scDetail').hidden = true; return; }
+    if (!d) { $('scPlayer').innerHTML = ''; $('scAvatars').innerHTML = ''; $('scCard').innerHTML = ''; $('scBottom').hidden = true; return; }
     const p = d.playerInfo || {};
     $('scPlayer').innerHTML = `<b>${esc(p.nickname || '旅行者')}</b>
       <span>冒險等級 ${p.level || '-'}</span><span>世界等級 ${p.worldLevel != null ? p.worldLevel : '-'}</span>
@@ -1456,7 +1504,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     const list = d.avatarInfoList || [];
     if (!list.length) {
       scMsg('這個帳號的角色展示沒有公開角色詳情。遊戲裡打開「角色展示」並開啟「顯示角色詳情」，大約幾分鐘後再查一次。', true);
-      $('scAvatars').innerHTML = ''; $('scCard').innerHTML = ''; $('scDetail').hidden = true; return;
+      $('scAvatars').innerHTML = ''; $('scCard').innerHTML = ''; $('scBottom').hidden = true; return;
     }
     scMsg('');
     SC.sel = Math.min(SC.sel, list.length - 1);
@@ -1537,6 +1585,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       <div class="sc-relics">${relics.map((r, i) => relicHtml(r, i)).join('') || '<p class="muted">沒有裝備聖遺物</p>'}</div>
     </div>`;
     renderDetail(relics);
+    if (!$('scBottom').hidden) renderPlan();
   }
 
   function relicHtml(r, i) {
@@ -1557,25 +1606,34 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   }
 
   // 點聖遺物：下方顯示每個詞條的初始數值與每次升級跳的數值，可以帶入計算
+  function selectRelic(i) {
+    SC.relic = i;
+    document.querySelectorAll('.sc-relic').forEach(b => { const on = +b.dataset.r === i; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+    const av = (SC.data.avatarInfoList || [])[SC.sel];
+    if (av) renderDetail(relicsOf(av));
+    renderPlanResult();
+  }
+
   function renderDetail(relics) {
-    const box = $('scDetail'), r = relics[SC.relic];
-    if (!r) { box.hidden = true; return; }
-    box.hidden = false;
+    const box = $('scDetail');
+    if (!relics.length) { $('scBottom').hidden = true; return; }
+    $('scBottom').hidden = false;
+    if (!relics[SC.relic]) SC.relic = 0;
+    const r = relics[SC.relic];
     const c = charInfo(SC.data.avatarInfoList[SC.sel]), p = r.parsed;
-    const title = `<h2>${esc(c.n)}・${r.slot}的詞條明細</h2>`;
+    const title = `<h2>${r.slot}的詞條明細</h2>`;
     if (!p.ok) { box.innerHTML = title + '<p class="hint">只有五星聖遺物可以拆出初始數值和每次升級跳的數值。</p>'; return; }
     const pctRank = ['七', '八', '九', '十'];
     const can = p.subs.length === 4 && p.level >= 20;
     box.innerHTML = `${title}
-      <p class="hint">初始 ${p.init} 詞條，+${p.level}${p.init === 3 && p.subs.length === 4 ? `，+4 新增「${byId[p.subs[3].stat].name}」` : ''}。橫條是每一次 (第一條是初始，下面有小點)，越長越亮代表檔位越高。</p>
+      <p class="hint">初始 ${p.init} 詞條，+${p.level}${p.init === 3 && p.subs.length === 4 ? `，+4 新增「${byId[p.subs[3].stat].name}」` : ''}。升級過程裡粗體是初始數值，後面是每次升級跳加的數值；橫條越長越亮代表檔位越高。</p>
       <div class="tbl-wrap"><table class="gtable sc-tbl">
-        <tr><th style="text-align:left">詞條</th><th>初始</th><th>升級跳</th><th>次數</th><th>目前</th></tr>
+        <tr><th style="text-align:left">詞條</th><th>升級過程</th><th>次數</th><th>目前</th></tr>
         ${p.subs.map((s, k) => {
           const t = byId[s.stat].tiers;
           const added = p.init === 3 && k === 3;
           return `<tr><td class="name">${byId[s.stat].name}${added ? ' <span class="tag">+4 出現</span>' : ''}</td>
-            <td class="num">${E.fmtValue(s.stat, t[s.initTier])} <small>第${pctRank[s.initTier]}檔</small></td>
-            <td class="num">${s.rolls.length ? s.rolls.map(x => '+' + E.fmtValue(s.stat, t[x])).join('、') : '<span class="muted">沒有跳</span>'}</td>
+            <td class="num proc"><b title="初始，第${pctRank[s.initTier]}檔">${E.fmtValue(s.stat, t[s.initTier])}</b>${s.rolls.map(x => ` <span title="第${pctRank[x]}檔">+${E.fmtValue(s.stat, t[x])}</span>`).join('')}</td>
             <td class="num">${s.rolls.length}</td>
             <td class="num"><b>${E.fmtValue(s.stat, s.total)}</b></td></tr>`;
         }).join('')}
@@ -1584,6 +1642,99 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       <span class="hint" style="align-self:center">${can ? '會換成這四個詞條和初始詞條數，初始那一檔也一起填好，選定詞條和目標保留原本的設定。' : '要升到 +20 才能重塑。'}</span></div>`;
     if (can) $('scApply').onclick = () => applyRelic(p, `${c.n}・${r.slot}`);
   }
+
+
+  /* ---------- 重塑方案：輸入想提升的詞條，算五件聖遺物各重塑一次的成功率，比較哪件最划算 ---------- */
+  // 啟聖之塵：花、羽每次 1 個，沙、杯、冠每次 2 個
+  const DUST = { 生之花: 1, 死之羽: 1, 時之沙: 2, 空之杯: 2, 理之冠: 2 };
+  const PKEY = 'artcalc-plan';
+  const goal = (stat, inc) => ({ stat, mode: 'val', inc, n: 2 });
+  SC.plan = { g: 2, goals: [goal('cd', 77)] };
+  try { const v = JSON.parse(localStorage.getItem(PKEY)); if (v && Array.isArray(v.goals) && v.goals.length) SC.plan = Object.assign(SC.plan, v); } catch (e) {}
+  const savePlan = () => { try { localStorage.setItem(PKEY, JSON.stringify(SC.plan)); } catch (e) {} };
+  const unitOf = stat => (byId[stat].pct ? '%' : '');
+  const incText = g => (byId[g.stat].pct ? (g.inc / 10).toFixed(1) : String(g.inc));
+
+  function renderPlan() {
+    const P = SC.plan;
+    const used = P.goals.map(g => g.stat);
+    $('scPlan').innerHTML = `<h2>重塑方案</h2>
+      <p class="hint">設定想提升的詞條，比較這個角色的五件聖遺物各重塑一次的成功率和要花的啟聖之塵。</p>
+      <div class="segs" id="planG">${[[2, '重塑'], [3, '高階重塑'], [4, '諭告重塑']].map(([v, t]) => `<button type="button" data-v="${v}" class="${P.g === v ? 'on' : ''}">${t}</button>`).join('')}</div>
+      <div class="plan-goals">${P.goals.map((g, i) => `<div class="plan-goal">
+        <div class="pg-top"><select data-i="${i}" data-k="stat" aria-label="目標詞條">${ORDER.map(id => `<option value="${id}"${id === g.stat ? ' selected' : ''}${used.includes(id) && id !== g.stat ? ' disabled' : ''}>${byId[id].name}</option>`).join('')}</select>
+          <span class="mini-segs"><button type="button" data-i="${i}" data-k="mode" data-v="val" class="${g.mode === 'val' ? 'on' : ''}">數值</button><button type="button" data-i="${i}" data-k="mode" data-v="cnt" class="${g.mode === 'cnt' ? 'on' : ''}">次數</button></span>
+          ${P.goals.length > 1 ? `<button type="button" class="pg-x" data-i="${i}" data-k="del" aria-label="刪除這個目標">✕</button>` : ''}</div>
+        ${g.mode === 'val'
+          ? `<label class="pg-val">比現在至少提升<input type="number" inputmode="decimal" min="0" step="${byId[g.stat].pct ? '0.1' : '1'}" data-i="${i}" data-k="inc" value="${incText(g)}">${unitOf(g.stat)}</label>`
+          : `<div class="pg-val">升級跳至少<div class="num-seg" role="group" aria-label="升級跳至少幾次">${[1, 2, 3, 4, 5].map(v => `<button type="button" data-i="${i}" data-k="n" data-v="${v}" class="${g.n === v ? 'on' : ''}">${v}</button>`).join('')}</div>次</div>`}
+      </div>`).join('')}</div>
+      ${P.goals.length < 2 ? '<button type="button" class="linkbtn" id="planAdd">+ 再加一個詞條 (兩個都要達成)</button>' : ''}
+      <div id="planOut"></div>`;
+    renderPlanResult();
+  }
+
+  function renderPlanResult() {
+    const out = $('planOut'); if (!out) return;
+    const av = (SC.data.avatarInfoList || [])[SC.sel];
+    const relics = av ? relicsOf(av) : [];
+    const P = SC.plan;
+    const rows = relics.map((r, i) => {
+      const cost = DUST[r.slot] || 2, p = r.parsed;
+      const base = { i, r, cost };
+      if (!p.ok) return Object.assign(base, { why: '不是五星' });
+      if (p.level < 20 || p.subs.length < 4) return Object.assign(base, { why: '還沒 +20' });
+      const subOf = st => p.subs.find(s => s.stat === st);
+      const goals = P.goals.map(g => {
+        const s = subOf(g.stat);
+        return g.mode === 'cnt' ? { stat: g.stat, mode: 'cnt', n: g.n } : { stat: g.stat, mode: 'val', target: (s ? E.toDisp(g.stat, s.total) : 0) + Math.max(0, g.inc || 0) };
+      });
+      const res = E.reshapeOdds(p, goals, P.g);
+      if (!res.ok) return Object.assign(base, { why: '沒有這個詞條' });
+      const cur = P.goals.map(g => { const s = subOf(g.stat); return g.mode === 'cnt' ? `${s.rolls.length} 次` : E.fmtValue(g.stat, s.total); });
+      const avg = P.goals.map((g, k) => g.mode === 'cnt' ? '' : E.dispText(g.stat, Math.round(res.avg[k])));
+      return Object.assign(base, { p: res.p, cur, avg, exp: res.p > 0 ? cost / res.p : Infinity, n80: E.trialsFor(res.p, 0.8) });
+    });
+    const ok = rows.filter(x => x.p > 0).sort((a, b) => a.exp - b.exp);
+    const best = ok[0];
+    const order = ok.concat(rows.filter(x => !(x.p > 0)));
+    const dust = n => (isFinite(n) ? `${n.toFixed(n < 10 ? 1 : 0)} 個` : '-');
+    out.innerHTML = `<div class="tbl-wrap"><table class="gtable plan-tbl">
+      <tr><th style="text-align:left">部位</th><th>目前</th><th>每次成功率</th><th>平均要花</th></tr>
+      ${order.map(x => x.why || !(x.p > 0)
+        ? `<tr class="na" data-r="${x.i}"><td class="name">${x.r.slot}</td><td colspan="3">${x.why || '不可能達成'}</td></tr>`
+        : `<tr data-r="${x.i}" class="${x === best ? 'best' : ''}${SC.relic === x.i ? ' sel' : ''}" title="點一下看這件的詞條明細">
+            <td class="name">${x.r.slot}${x === best ? ' <span class="tag best-tag">最划算</span>' : ''}<small>每次 ${x.cost} 個</small></td>
+            <td class="num">${x.cur.join('<br>')}${x.avg.some(Boolean) ? `<small>重塑後平均 ${x.avg.filter(Boolean).join('、')}</small>` : ''}</td>
+            <td class="num">${fmtP(x.p)}</td>
+            <td class="num"><b>${dust(x.exp)}</b>${isFinite(x.n80) ? `<small>八成機率：${x.n80} 次 (${x.n80 * x.cost} 個)</small>` : ''}</td></tr>`).join('')}
+    </table></div>
+    <p class="hint">「平均要花」= 每次消耗的啟聖之塵 ÷ 每次成功率，下面的「八成機率」是重塑幾次後，至少成功一次的機率有八成。數值目標是跟這件現在的數值比，初始那一檔重塑後保留。重塑會重新分配升級跳，其他詞條可能變少。</p>`;
+  }
+
+  $('scPlan').addEventListener('click', e => {
+    const P = SC.plan, b = e.target.closest('button');
+    if (!b) { const tr = e.target.closest('tr[data-r]'); if (tr) selectRelic(+tr.dataset.r); return; }
+    if (b.closest('#planG')) { P.g = +b.dataset.v; }
+    else if (b.id === 'planAdd') { const st = ORDER.find(id => !P.goals.some(g => g.stat === id)); P.goals.push(goal(st, byId[st].pct ? 39 : 20)); }
+    else if (b.dataset.k === 'del') { P.goals.splice(+b.dataset.i, 1); }
+    else if (b.dataset.k === 'mode') { P.goals[+b.dataset.i].mode = b.dataset.v; }
+    else if (b.dataset.k === 'n') { P.goals[+b.dataset.i].n = +b.dataset.v; }
+    else return;
+    savePlan(); renderPlan();
+  });
+  $('scPlan').addEventListener('change', e => {
+    const t = e.target, g = SC.plan.goals[+t.dataset.i];
+    if (!g) return;
+    if (t.dataset.k === 'stat') { g.stat = t.value; g.inc = byId[t.value].pct ? Math.round(byId[t.value].tiers[3] / 10) : Math.round(byId[t.value].tiers[3] / 100); savePlan(); renderPlan(); }
+  });
+  $('scPlan').addEventListener('input', e => {
+    const t = e.target, g = SC.plan.goals[+t.dataset.i];
+    if (!g || t.dataset.k !== 'inc') return;
+    const v = parseFloat(t.value);
+    g.inc = isFinite(v) && v > 0 ? Math.round(v * (byId[g.stat].pct ? 10 : 1)) : 0;
+    savePlan(); renderPlanResult();
+  });
 
   function applyRelic(p, label) {
     const old = S.rows;
@@ -1609,16 +1760,14 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   ['uidInput', 'uidInput2'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); loadUid(e.target.value); } }));
   $('scAvatars').addEventListener('click', e => {
     const b = e.target.closest('.sc-av'); if (!b) return;
-    SC.sel = +b.dataset.i; SC.relic = -1;
+    SC.sel = +b.dataset.i; SC.relic = 0;
     document.querySelectorAll('.sc-av').forEach(x => x.setAttribute('aria-selected', x === b ? 'true' : 'false'));
     renderCard();
   });
   $('scCard').addEventListener('click', e => {
     const b = e.target.closest('.sc-relic'); if (!b) return;
     const i = +b.dataset.r;
-    SC.relic = SC.relic === i ? -1 : i;
-    renderCard();
-    if (SC.relic >= 0) $('scDetail').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    selectRelic(i);
   });
 
   try { const u = localStorage.getItem(UIDKEY); if (u) setUid(u); } catch (e) {}
