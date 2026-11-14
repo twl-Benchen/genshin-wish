@@ -5,7 +5,7 @@
 
 兩個頁面左上角的圓形按鈕可以互相切換。
 
-**角色展示 (用 UID 查聖遺物)：https://twl-benchen.github.io/genshin-wish/artifact.html#uid-你的UID**
+**角色聖遺物 (用 UID 查聖遺物)：https://twl-benchen.github.io/genshin-wish/artifact.html#uid-你的UID**
 
 
 <img width="1299" height="1552" alt="twl-benchen github io_genshin-wish_ (1)" src="https://github.com/user-attachments/assets/c399a4bb-3bc3-4dcc-8292-21a17aec5edd" />
@@ -26,7 +26,7 @@
 - **合計限制**：可以另外要求兩個選定詞條加起來至少升級跳幾次。
 - **重塑模擬**：仿遊戲聖遺物卡，升級跳的次數用黃色圓圈標在左邊，按一次重塑一顆並累計成功率。
 - **批量模擬**：一次模擬 10 萬顆，跟精確值對照。
-- **角色展示**：輸入 UID 讀取遊戲內角色展示的角色、武器、屬性和聖遺物 (資料來自 Enka.Network)。點聖遺物可以看每個詞條的初始數值和每次升級跳了多少，+20 的五星聖遺物可以一鍵帶入重塑計算。
+- **角色聖遺物**：輸入 UID 讀取遊戲內角色展示的角色、武器、屬性和聖遺物 (資料來自 Enka.Network)。點聖遺物可以看每個詞條的初始數值和每次升級跳了多少，+20 的五星聖遺物可以一鍵帶入重塑計算。
 
 ## 期望抽數計算功能
 

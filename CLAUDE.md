@@ -10,7 +10,7 @@
 - 動到聖遺物計算時執行 `node test-artifact.js`，驗證案例全部要通過。
 - 動到抽卡計算邏輯時執行 `node test.js`，精確值和蒙地卡羅結果要對得上 (平均差距約 0.2 抽以內)，`HANDOFF.md` 裡的驗證數值也要一起更新。
 - `engine.js` 與 `artifact-engine.js` 要同時能在瀏覽器 (`window.GachaEngine`、`window.ArtifactEngine`) 和 Node (`module.exports`) 使用。
-- 網頁是純前端單檔，不加建置工具、不加後端，外部資源只用 Google Fonts。例外只有聖遺物頁的「角色展示」：資料經過自己的 Cloudflare Worker (`worker/enka-proxy.js`，網址 https://enka-proxy.twl-benchen.workers.dev) 向 Enka.Network 查詢，圖片直接用 `https://enka.network/ui/`。不要再加其他後端或外部來源。
+- 網頁是純前端單檔，不加建置工具、不加後端，外部資源只用 Google Fonts。例外只有聖遺物頁的「角色聖遺物」：資料經過自己的 Cloudflare Worker (`worker/enka-proxy.js`，網址 https://enka-proxy.twl-benchen.workers.dev) 向 Enka.Network 查詢，圖片直接用 `https://enka.network/ui/` (分享圖畫聖遺物圖示時，跨網域失敗會改走 Worker 的 `/ui/`)。不要再加其他後端或外部來源。
 
 ## 規則與資料
 

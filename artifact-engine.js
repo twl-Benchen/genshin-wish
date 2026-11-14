@@ -182,17 +182,23 @@
     return { ok: true, p: Math.min(1, p), avg, lock: base.locked };
   }
 
-  /* 重塑划不划算 (角色展示的重塑方案)
+  // 平均一跳 (四個檔位的平均，內部單位同 tiers)，「幾個詞條」都用這個當單位
+  const avgRoll = stat => byId[stat].tiers.reduce((a, b) => a + b, 0) / 4;
+
+  /* 重塑划不划算 (角色聖遺物的重塑方案)
    * weight：詞條 → 2 (主要詞條)、1 (次要詞條)、0 (其他，包含攻擊、生命、防禦固定值)
-   * 有效詞條數 = Σ 權重/2 × 每次的檔位比例 (第七到第十檔 0.7、0.8、0.9、1.0，含初始)
-   * 重塑只重新分配升級跳、初始保留。重塑「變好」= 升級跳的有效詞條數比原本至少多 0.7 個 (MIN_GAIN)，
+   * 有效詞條數 = Σ 權重/2 × 數值 ÷ 平均一跳 (四個檔位的平均，約最高檔的 0.85；例如暴傷 7.77% ≈ 1.18 詞條)，含初始
+   *   檔位比例第七到第十檔是 0.7、0.8、0.9、1.0 倍最高檔，所以每次是 RATIO / 85 個詞條
+   * 重塑只重新分配升級跳、初始保留。重塑「變好」= 升級跳的有效詞條數比原本至少多 0.7 個 (MIN_GAIN，以平均一跳為單位)，
    * 包含把歪掉的升級跳拿回來，也包含升級跳都在有用詞條、但這次跳出夠多更高的檔位 (結果不好可以不換)。
-   * 門檻 0.7 是使用者決定的：只多零點幾個的檔位運氣不算，一次拿回最低檔 (0.7) 的升級跳就算
+   * 門檻 0.7 是使用者決定的：只多零點幾個的檔位運氣不算，一次拿回最低檔 (0.82 個) 的升級跳就算
    * 大約需要幾次 = 1 / 變好機率 (幾何分布的期望值)
    * 選定詞條是權重最高的兩個 (同權重照順序)，保底用一般重塑 (2 次)
    * 回傳 { ok, total (目前有效詞條數), pUp (每次重塑變好的機率), tries (平均要重塑幾次，不可能變好時 Infinity), lock } */
   const RATIO = [70, 80, 90, 100];
-  const MIN_GAIN = 140; // 0.7 個有效詞條 (×200)
+  // 內部用整數：主要詞條每次 2 × RATIO，次要 1 × RATIO，有效詞條數 = 整數 ÷ UNIT
+  const UNIT = 170; // 2 (主要詞條權重) × 85 (平均一跳的檔位比例)
+  const MIN_GAIN = 0.7 * UNIT; // 0.7 個有效詞條
   const upCache = new Map();
   // 主要詞條升級跳 jm 次、次要詞條 js 次時，升級跳有效詞條數 (×200 的整數) 的分布
   function upDist(jm, js) {
@@ -207,7 +213,7 @@
   }
   /* mode：'tier' 追高檔 (上面說的，看檔位，至少多 0.7 個才算變好)
    *       'count' 不歪 (只看升級跳的次數落在哪，不看檔位；有用詞條的升級跳比原本多就算變好，
-   *               升級跳全在主要詞條時不可能變好，畫面顯示「已經最好」)。有效詞條數也只算次數 */
+   *               升級跳全在主要詞條時不可能變好，畫面顯示「已經最好」)。有效詞條數兩個模式一樣，都照數值算 */
   function reshapeValue(parsed, weight, guarantee, mode) {
     if (!parsed || !parsed.ok || parsed.subs.length !== 4) return { ok: false };
     const w = parsed.subs.map(s => weight[s.stat] || 0);
@@ -223,11 +229,11 @@
       upDist(jm, js).forEach((q, v) => { if (v - up >= MIN_GAIN) pUp += p * q; });
     });
     pUp = Math.min(1, pUp);
-    return { ok: true, total: (init + up) / 200, pUp, tries: pUp > 1e-12 ? 1 / pUp : Infinity, lock };
+    return { ok: true, total: (init + up) / UNIT, pUp, tries: pUp > 1e-12 ? 1 / pUp : Infinity, lock };
   }
   function reshapeCount(parsed, w, guarantee) {
     const now = parsed.subs.reduce((a, s, i) => a + w[i] * s.rolls.length, 0);
-    const total = parsed.subs.reduce((a, s, i) => a + w[i] * (1 + s.rolls.length), 0) / 2;
+    const total = parsed.subs.reduce((a, s, i) => a + w[i] * (RATIO[s.initTier] + s.rolls.reduce((b, t) => b + RATIO[t], 0)), 0) / UNIT;
     const lock = [0, 1, 2, 3].sort((a, b) => w[b] - w[a] || a - b).slice(0, 2).sort((a, b) => a - b);
     let pUp = 0;
     E_each({ init: parsed.init, guarantee: guarantee == null ? 2 : guarantee, locked: lock }, (c, p) => {
@@ -259,7 +265,7 @@
     })(0, 0, 1);
   }
 
-  const api = { STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix, reshapeOdds, reshapeValue, RATIO, MIN_GAIN, pityStep };
+  const api = { STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix, reshapeOdds, reshapeValue, RATIO, MIN_GAIN, UNIT, pityStep, avgRoll };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.ArtifactEngine = api;
 })(typeof window !== 'undefined' ? window : this);
