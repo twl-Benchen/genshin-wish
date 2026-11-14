@@ -303,12 +303,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .sc-name span { font-size: .8rem; opacity: .85; }
 .sc-lv { left: 18px; top: 58px; font: 600 1rem var(--f-num); display: grid; gap: 4px; }
 .sc-lv .cons { font: 500 .8rem var(--f-body); background: rgba(0, 0, 0, .35); border-radius: 999px; padding: 1px 10px; justify-self: start; }
-.sc-talents { display: flex; justify-content: center; gap: 26px; padding: 4px 0 10px; }
-.tl { position: relative; width: 50px; height: 50px; border-radius: 50%; background: rgba(0, 0, 0, .35); border: 1.5px solid rgba(255, 255, 255, .5); display: grid; place-items: center; }
-.tl img { width: 38px; height: 38px; }
-.tl span { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); font: 700 .75rem var(--f-num); background: #ece5d8; color: #2b3142; border-radius: 999px; padding: 0 7px; }
-.tl.up span { background: var(--el3); color: #10202a; }
-.sc-mid { position: relative; z-index: 1; padding: 22px 16px; display: grid; gap: 14px; align-content: start; }
+.sc-mid { position: relative; z-index: 1; padding: 22px 16px; display: flex; flex-direction: column; gap: 14px; }
+.sc-mid .sc-stats { flex: 1; align-content: space-evenly; }
 .sc-weapon { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; align-items: center; }
 .sc-weapon img { width: 76px; height: 76px; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .4)); }
 .sc-weapon .wn { font-family: var(--f-display); font-size: 1.05rem; margin-bottom: 4px; }
@@ -329,9 +325,10 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .sc-relic:hover { background: rgba(0, 0, 0, .3); }
 .sc-relic.on { border-color: var(--el3); background: rgba(0, 0, 0, .34); box-shadow: inset 0 0 0 1px var(--el3); }
 .rl-main { position: relative; display: grid; align-content: end; justify-items: end; min-height: 84px; padding: 2px 4px; }
-.rl-main img { position: absolute; left: -6px; top: -6px; width: 84px; height: 84px; opacity: .9; }
-.rl-main .mn { position: relative; font-size: .68rem; opacity: .85; }
-.rl-main b { position: relative; font: 600 1.25rem var(--f-num); text-shadow: 0 1px 4px rgba(0, 0, 0, .6); }
+.rl-main img { position: absolute; left: -6px; top: -6px; width: 84px; height: 84px; opacity: .9;
+  -webkit-mask-image: linear-gradient(90deg, #000 35%, transparent 92%); mask-image: linear-gradient(90deg, #000 35%, transparent 92%); }
+.rl-main .mn { position: relative; font-size: .76rem; opacity: .9; text-shadow: 0 1px 3px rgba(0, 0, 0, .7); }
+.rl-main b { position: relative; font: 700 1.6rem var(--f-num); line-height: 1.15; text-shadow: 0 1px 4px rgba(0, 0, 0, .7); }
 .rl-foot { position: relative; display: flex; gap: 6px; align-items: center; font-size: .66rem; }
 .rl-foot .stars { color: #ffd86b; letter-spacing: 0; }
 .rl-foot .plus { font-family: var(--f-num); background: rgba(0, 0, 0, .45); border-radius: 4px; padding: 0 5px; }
@@ -339,10 +336,11 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .rs { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 0 6px; padding-bottom: 3px; border-bottom: 1px solid rgba(255, 255, 255, .12); min-width: 0; }
 .rs .nm { font-size: .7rem; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rs b { font: 600 .98rem var(--f-num); }
-.rs .dots { grid-column: 1 / -1; display: flex; gap: 3px; height: 5px; }
-.rs .dots i { width: 12px; height: 4px; border-radius: 2px; background: #fff; }
-.rs .dots i.t0 { opacity: .35; } .rs .dots i.t1 { opacity: .55; } .rs .dots i.t2 { opacity: .78; } .rs .dots i.t3 { opacity: 1; }
-.rs .dots i.first { width: 6px; }
+/* 每次一條：第七到第十檔越來越長、越亮，第一條是初始那次 (下面加一個小點) */
+.rs .dots { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; height: 9px; }
+.rs .dots i { position: relative; height: 4px; border-radius: 2px; background: #fff; }
+.rs .dots i.t0 { width: 6px; opacity: .3; } .rs .dots i.t1 { width: 10px; opacity: .5; } .rs .dots i.t2 { width: 14px; opacity: .75; } .rs .dots i.t3 { width: 18px; opacity: 1; background: #ffe7a6; }
+.rs .dots i.first::after { content: ""; position: absolute; left: 50%; top: 6px; width: 3px; height: 3px; margin-left: -1.5px; border-radius: 50%; background: #fff; }
 .sc-detail { gap: 10px; }
 .sc-credit { margin: 0; font-size: .76rem; color: var(--muted); text-align: center; }
 .sc-credit a { color: var(--gold); }
@@ -1483,8 +1481,6 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     const c = charInfo(av), pal = EL[c.e] || EL.None, fp = av.fightPropMap || {};
     const lv = av.propMap && av.propMap['4001'] ? av.propMap['4001'].val : '-';
     const cons = (av.talentIdList || []).length;
-    const extra = av.proudSkillExtraLevelMap || {};
-    const talents = c.s.map((sid, k) => ({ icon: c.k[k], lv: ((av.skillLevelMap || {})[sid] || 1) + (extra[c.p[k]] || 0), up: !!extra[c.p[k]] }));
     const cos = av.costumeId && c.c[av.costumeId];
     const art = cos ? UI('UI_Costume_' + cos) : UI('UI_Gacha_AvatarImg_' + c.i);
 
@@ -1531,13 +1527,12 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       <div class="sc-art">
         <div class="splash-box"><img class="splash" src="${art}" alt="" onerror="this.style.display='none'"></div>
         <div class="sc-name"><b>${esc(c.n)}</b></div>
-        <div class="sc-lv">Lv. ${lv} / ${lv > 90 ? 100 : 90}<span class="cons" title="命之座">命座 ${cons}</span></div>
+        <div class="sc-lv">Lv. ${lv}<span class="cons" title="命之座">命座 ${cons}</span></div>
       </div>
       <div class="sc-mid">
         ${weaponHtml}
         <div class="sc-stats">${rows.map(r => `<div class="st"><span>${r[0]}</span><b>${r[1]}</b>${r[2] ? `<small>${r[2]}</small>` : ''}</div>`).join('')}</div>
         ${setHtml}
-        <div class="sc-talents">${talents.map((t, k) => `<div class="tl${t.up ? ' up' : ''}" title="${['普通攻擊', '元素戰技', '元素爆發'][k] || ''}${t.up ? '，命之座 +3' : ''}"><img src="${UI(t.icon)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'"><span>${t.lv}</span></div>`).join('')}</div>
       </div>
       <div class="sc-relics">${relics.map((r, i) => relicHtml(r, i)).join('') || '<p class="muted">沒有裝備聖遺物</p>'}</div>
     </div>`;
@@ -1572,7 +1567,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     const pctRank = ['七', '八', '九', '十'];
     const can = p.subs.length === 4 && p.level >= 20;
     box.innerHTML = `${title}
-      <p class="hint">初始 ${p.init} 詞條，+${p.level}${p.init === 3 && p.subs.length === 4 ? `，+4 新增「${byId[p.subs[3].stat].name}」` : ''}。圓點是每一次 (第一個是初始)，顏色越深檔位越高。</p>
+      <p class="hint">初始 ${p.init} 詞條，+${p.level}${p.init === 3 && p.subs.length === 4 ? `，+4 新增「${byId[p.subs[3].stat].name}」` : ''}。橫條是每一次 (第一條是初始，下面有小點)，越長越亮代表檔位越高。</p>
       <div class="tbl-wrap"><table class="gtable sc-tbl">
         <tr><th style="text-align:left">詞條</th><th>初始</th><th>升級跳</th><th>次數</th><th>目前</th></tr>
         ${p.subs.map((s, k) => {
