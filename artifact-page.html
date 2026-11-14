@@ -205,7 +205,9 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .sc-av { flex: none; position: relative; width: 68px; height: 68px; border-radius: 50%; padding: 0; border: 3px solid var(--frame-soft); background: linear-gradient(160deg, #6b5b8f, #3b3556); cursor: pointer; }
 .sc-av.q5 { background: linear-gradient(160deg, #b5793a, #7a4a22); }
 .relic-tip { position: fixed; z-index: 50; pointer-events: none; display: grid; gap: 3px; padding: 9px 12px; border-radius: 6px; border: 1px solid var(--frame); background: var(--surface); color: var(--ink); box-shadow: 0 8px 24px rgba(30, 40, 70, .25); font-size: .82rem; white-space: nowrap; }
-.relic-tip b { font-family: var(--f-display); font-size: .88rem; margin-bottom: 2px; }
+.relic-tip b { font-family: var(--f-display); font-size: .88rem; }
+.relic-tip .tip-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 2px; }
+.relic-tip .tip-pill { font-size: .72rem; font-weight: 600; padding: 1px 9px; border-radius: 999px; background: var(--gold-soft); color: var(--gold); border: 1px solid var(--frame-soft); }
 .relic-tip div { display: grid; grid-template-columns: 6.5em auto; gap: 8px; }
 .relic-tip .nm { color: var(--muted); }
 .relic-tip .pr { font-family: var(--f-num); }
@@ -1678,7 +1680,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     const av = (SC.data.avatarInfoList || [])[SC.sel], r = av && relicsOf(av)[+b.dataset.r];
     if (!r || !r.parsed.ok) { tip.hidden = true; tip.owner = null; return; }
     const p = r.parsed;
-    tip.innerHTML = `<b>${r.slot}的升級過程</b>` + p.subs.map((x, k) => {
+    tip.innerHTML = `<div class="tip-head"><b>${r.slot}的升級過程</b><span class="tip-pill">初始 ${p.init} 詞條</span></div>` + p.subs.map((x, k) => {
       const t = byId[x.stat].tiers, added = p.init === 3 && k === 3;
       return `<div><span class="nm">${byId[x.stat].name}</span><span class="pr">${E.fmtValue(x.stat, t[x.initTier])}${added ? ' (+4 出現)' : ''}${x.rolls.map(v => ` <em>+${E.fmtValue(x.stat, t[v])}</em>`).join('')}</span></div>`;
     }).join('');
