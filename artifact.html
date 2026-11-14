@@ -140,9 +140,9 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 .lockbtn svg { width: 28px; height: 28px; display: block; }
 .lockbtn .c { fill: transparent; stroke: var(--frame); stroke-width: 1.5; }
 .lockbtn .s { fill: var(--frame); }
-.lockbtn[aria-pressed="true"] .c { fill: url(#lk-gold); stroke: #f6dc9a; }
-.lockbtn[aria-pressed="true"] .s { fill: #fff8e4; }
-.lockbtn:hover:not(:disabled) svg { filter: drop-shadow(0 0 4px rgba(224, 169, 58, .7)); }
+.lockbtn[aria-pressed="true"] .c { fill: #eecc7b; stroke: none; }
+.lockbtn[aria-pressed="true"] .s { fill: #cc842c; }
+.lockbtn:hover:not(:disabled) .c { stroke: var(--gold); }
 .lockbtn:disabled { opacity: .3; cursor: not-allowed; }
 .cond { display: grid; gap: 8px; padding-left: 26px; font-size: .85rem; color: var(--muted); }
 .cond-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
@@ -199,17 +199,17 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .asub { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto 24px; gap: 8px; align-items: center; min-height: 40px; border-bottom: 1px dashed #cfc6b4; font-size: .98rem; }
 .asub:last-child { border-bottom: 0; }
 .asub .mk { display: grid; place-items: center; }
-.asub .mk i { width: 6px; height: 6px; border-radius: 50%; background: #495366; }
 /* 升級跳的次數：黃色圓圈 */
-.asub .mk b { width: 21px; height: 21px; border-radius: 50%; background: linear-gradient(160deg, #f6dc9a, #d9a43a); color: #3d2a10; font: 900 .86rem/21px 'Arial Black', 'Noto Sans TC', system-ui, sans-serif; -webkit-text-stroke: .4px #3d2a10; text-align: center; box-shadow: 0 0 0 1px rgba(160, 110, 40, .45); }
+.asub .mk b { width: 21px; height: 21px; border-radius: 50%; background: #e6cc8d; color: #83570a; font: 900 .86rem/21px 'Arial Black', 'Noto Sans TC', system-ui, sans-serif; -webkit-text-stroke: .4px #83570a; text-align: center; }
 .asub .val { font-family: var(--f-num); font-weight: 600; text-align: right; }
 .asub .lk svg { width: 22px; height: 22px; display: block; }
-.asub .lk .c { fill: url(#lk-gold); stroke: #f6dc9a; stroke-width: 1.5; }
-.asub .lk .s { fill: #fff8e4; }
+.asub .lk .c { fill: #eecc7b; }
+.asub .lk .s { fill: #cc842c; }
 .asub.pending { opacity: .45; }
 .asub.flash { animation: fl .8s ease; }
 @keyframes fl { from { background: #ffe7a6; } to { background: transparent; } }
-.tally { font-size: .85rem; color: var(--muted); }
+.log .tally { color: var(--muted); }
+.log .bt b { color: var(--gold); }
 .verdict { font-size: .9rem; }
 .verdict .ok { color: var(--good); font-weight: 700; } .verdict .ng { color: var(--bad); font-weight: 700; }
 .btns { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -223,13 +223,16 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .log div:last-child { border-bottom: 0; }
 .log .f { color: var(--gold); font-weight: 600; }
 .log .lvl { font-family: var(--f-num); color: var(--muted); display: inline-block; width: 36px; }
-.batch { font-size: .88rem; background: var(--sunken); border-radius: 6px; padding: 8px 10px; }
+.tabbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.tabs button { font: inherit; font-size: .92rem; font-weight: 500; padding: 7px 18px; border-radius: 999px; border: 1px solid var(--frame); background: var(--surface); color: var(--ink); cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--btn); color: var(--btn-ink); border-color: var(--btn); font-weight: 700; }
+.rules-page { max-width: 980px; display: grid; gap: 20px; }
 .rules { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; font-size: .9rem; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="lk-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3cf7a"/><stop offset="1" stop-color="#c98f2c"/></linearGradient></defs></svg>
 <div class="wrap">
   <div class="site-head">
     <a class="switch-link" href="./" aria-label="切換到期望抽數計算" title="期望抽數計算：角色與武器要準備幾抽">
@@ -248,7 +251,14 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
     </header>
   </div>
 
-  <div class="layout">
+  <div class="tabbar">
+    <nav class="tabs" role="tablist" aria-label="頁面">
+      <button type="button" role="tab" id="tabBtnCalc" aria-controls="tabCalc" aria-selected="true">計算</button>
+      <button type="button" role="tab" id="tabBtnRules" aria-controls="tabRules" aria-selected="false">重塑規則</button>
+    </nav>
+  </div>
+
+  <div class="layout" id="tabCalc" role="tabpanel" aria-labelledby="tabBtnCalc">
     <form class="panel frame" id="form" autocomplete="off" onsubmit="return false">
       <fieldset>
         <legend><span class="dot"></span>初始詞條數</legend>
@@ -304,17 +314,19 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
             <div class="verdict" id="verdict"></div>
             <div class="btns">
               <button type="button" class="gbtn" id="bMain"></button>
+              <button type="button" class="gbtn light" id="bBatch"><span class="ic">∑</span>批量模擬十萬顆</button>
             </div>
-            <div class="tally" id="tally"></div>
             <div class="log" id="log"></div>
-            <div class="btns"><button type="button" class="gbtn light" id="bBatch"><span class="ic">∑</span>批量模擬 100,000 顆</button></div>
-            <div class="batch" id="batch" hidden></div>
           </div>
         </div>
       </section>
 
+    </div>
+  </div>
+
+  <div class="rules-page" id="tabRules" role="tabpanel" aria-labelledby="tabBtnRules" hidden>
       <section class="card frame">
-        <h2>規則說明</h2>
+        <h2>重塑規則</h2>
         <ul class="rules">
           <li>重塑用「啟聖之塵」把已經 +20 的五星聖遺物重新分配升級跳的部分，要先選兩個副詞條當作選定詞條。</li>
           <li>初始 4 詞條在 +4、+8、+12、+16、+20 共升級跳 5 次。初始 3 詞條在 +4 新增第 4 個詞條，之後 +8 到 +20 共升級跳 4 次。</li>
@@ -324,7 +336,6 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
           <li>每次 (含初始) 的數值是四個檔位之一，機率相等。遊戲內部取到小數點後兩位，畫面上百分比四捨五入到小數點後一位，固定值四捨五入到整數。例如暴擊傷害最高檔顯示 7.8%，實際是 7.77%，6 次都最高檔是 46.62%，顯示 46.6%。</li>
         </ul>
       </section>
-    </div>
   </div>
 </div>
 
@@ -478,7 +489,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
   // 每列：stat 副詞條、lock 是否選定、mode 目標種類 (cnt 升級跳次數 / val 數值)、
   // max 最多升級跳幾次 (大於等於 N 代表沒有限制)、init 初始那一檔 (-1 隨機，0..3 第七到第十檔)、target 數值目標 (畫面單位，見 E.toDisp)
   const row = (stat, lock) => ({ stat, lock, mode: 'cnt', max: 5, init: -1, target: null });
-  let S = { init: 4, g: 2, rows: [row('cr', true), row('cd', true), row('atkp', false), row('er', false)], comboOn: true, cJumps: 3 };
+  let S = { init: 4, g: 2, rows: [row('cr', true), row('cd', true), row('atkp', false), row('er', false)], comboOn: false, cJumps: 3 };
   try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.rows && s.rows.length === 4) S = Object.assign(S, s); } catch (e) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 
@@ -648,14 +659,13 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
   }
 
   /* ---------- 重塑模擬 ---------- */
-  let sim, tally = { n: 0, ok: 0 };
+  let sim, tally = { n: 0, ok: 0 }, batchHtml = '';
   function newSim() {
     sim = {
       level: 0, counts: [1, 1, 1, 1],
       vals: S.rows.map(r => (r.mode === 'val' && r.init >= 0 ? byId[r.stat].tiers[r.init] : E.rollValue(r.stat))),
       shown: S.init === 4 ? 4 : 3, rolls: 0, hits: 0, log: [], flash: -1,
     };
-    $('batch').hidden = true;
   }
   function upgrade() {
     if (sim.level >= 20) return;
@@ -689,7 +699,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
     $('artBody').innerHTML = S.rows.map((r, i) => {
       const pending = i >= sim.shown, j = sim.counts[i] - 1;
       return `<div class="asub${pending ? ' pending' : ''}${sim.flash === i ? ' flash' : ''}">
-        <span class="mk">${j > 0 && !pending ? `<b aria-label="升級跳 ${j} 次">${j}</b>` : '<i></i>'}</span>
+        <span class="mk">${j > 0 && !pending ? `<b aria-label="升級跳 ${j} 次">${j}</b>` : ''}</span>
         <span>${name(i)}</span>
         <span class="val">${pending ? '+4 出現' : E.fmtValue(r.stat, sim.vals[i])}</span>
         <span class="lk">${r.lock ? STAR : ''}</span></div>`;
@@ -702,12 +712,16 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
     $('verdict').innerHTML = v;
     const done = sim.level >= 20;
     $('bMain').innerHTML = done ? `<span class="ic">↻</span>${reshape ? '重塑' : '換一顆再強化'}` : '<span class="ic">▲</span>強化到 +20';
-    $('tally').innerHTML = tally.n ? `已${reshape ? '重塑' : '強化'} ${tally.n} 顆，成功 ${tally.ok} 顆 (${(tally.ok / tally.n * 100).toFixed(1)}%，精確值 ${fmtP(lastP)})` : '';
+    // 重塑紀錄和批量模擬結果共用同一個區塊，按批量模擬時蓋掉紀錄，再按重塑就換回紀錄
     const lg = $('log');
-    lg.innerHTML = sim.log.length ? sim.log.map(x => `<div>${x}</div>`).join('') : '<div style="color:var(--muted)">按「強化到 +20」看一次結果，之後同一個按鈕會變成「重塑」，每按一次就重塑一顆。</div>';
+    if (batchHtml) lg.innerHTML = batchHtml;
+    else {
+      const head = tally.n ? `<div class="tally">已${reshape ? '重塑' : '強化'} ${tally.n} 顆，成功 ${tally.ok} 顆 (${(tally.ok / tally.n * 100).toFixed(1)}%，精確值 ${fmtP(lastP)})</div>` : '';
+      lg.innerHTML = head + (sim.log.length ? sim.log.map(x => `<div>${x}</div>`).join('') : '<div style="color:var(--muted)">按「強化到 +20」看一次結果，之後同一個按鈕會變成「重塑」，每按一次就重塑一顆。</div>');
+    }
     lg.scrollTop = lg.scrollHeight;
   }
-  $('bMain').onclick = () => { if (sim.level >= 20) newSim(); finish(); renderSim(); };
+  $('bMain').onclick = () => { batchHtml = ''; if (sim.level >= 20) newSim(); finish(); renderSim(); };
   $('bBatch').onclick = () => {
     const T = 100000, o = calcOpts();
     let ok = 0;
@@ -725,14 +739,32 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
       }
       if (good) ok++;
     }
-    const b = $('batch');
-    b.hidden = false;
-    b.innerHTML = `模擬 ${T.toLocaleString()} 顆，成功 ${ok.toLocaleString()} 顆，成功率 <b>${(ok / T * 100).toFixed(2)}%</b>。<br><span style="color:var(--muted)">精確值是 ${fmtP(lastP)}，兩者應該很接近。</span>`;
+    batchHtml = `<div class="bt">批量模擬十萬顆，成功 ${ok.toLocaleString()} 顆，成功率 <b>${(ok / T * 100).toFixed(2)}%</b>。</div><div style="color:var(--muted)">精確值是 ${fmtP(lastP)}，兩者應該很接近。按「${$('bMain').textContent.replace('↻', '').trim()}」回到重塑紀錄。</div>`;
+    renderSim();
   };
+
+  // ---- 分頁：計算 / 重塑規則 (跟抽卡頁一樣) ----
+  function showTab(name) {
+    const rules = name === 'rules';
+    $('tabCalc').hidden = rules;
+    $('tabRules').hidden = !rules;
+    $('tabBtnCalc').setAttribute('aria-selected', rules ? 'false' : 'true');
+    $('tabBtnRules').setAttribute('aria-selected', rules ? 'true' : 'false');
+    try { history.replaceState(null, '', rules ? '#rules' : location.pathname + location.search); } catch (e) {}
+  }
+  $('tabBtnCalc').addEventListener('click', () => showTab('calc'));
+  $('tabBtnRules').addEventListener('click', () => showTab('rules'));
+  document.querySelector('.tabs').addEventListener('keydown', e => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    const toRules = $('tabBtnCalc').getAttribute('aria-selected') === 'true';
+    showTab(toRules ? 'rules' : 'calc');
+    $(toRules ? 'tabBtnRules' : 'tabBtnCalc').focus();
+  });
+  if (location.hash === '#rules') showTab('rules');
 
   function refresh(resetSim) {
     renderSetup(); renderCalc();
-    if (resetSim || !sim) { tally = { n: 0, ok: 0 }; newSim(); }
+    if (resetSim || !sim) { tally = { n: 0, ok: 0 }; batchHtml = ''; newSim(); }
     renderSim();
   }
   refresh(true);
