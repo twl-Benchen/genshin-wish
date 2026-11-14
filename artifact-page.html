@@ -266,7 +266,11 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .rs .dots i { position: relative; height: 4px; border-radius: 2px; background: #fff; }
 .rs .dots i.t0 { width: 6px; opacity: .3; } .rs .dots i.t1 { width: 10px; opacity: .5; } .rs .dots i.t2 { width: 14px; opacity: .75; } .rs .dots i.t3 { width: 18px; opacity: 1; background: #ffe7a6; }
 
-.sc-bottom { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.sc-bottom { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
+/* 重塑方案和詞條明細兩格一樣高：右邊的帶入按鈕貼齊底部 */
+.sc-detail { display: flex; flex-direction: column; }
+.sc-detail .apply-box { margin-top: auto; padding-top: 4px; }
+@media (max-width: 900px) { .sc-bottom { align-items: start; } }
 @media (max-width: 900px) { .sc-bottom { grid-template-columns: minmax(0, 1fr); } }
 .sc-detail, .sc-plan { gap: 10px; }
 .sc-detail > *, .sc-plan > * { min-width: 0; }
@@ -289,10 +293,10 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .plan-tbl .muted { color: var(--muted); font-weight: 400; }
 .plan-auto { margin: 0; }
 .apply-box { display: grid; justify-items: center; gap: 6px; margin-top: 4px; }
-.apply-btn { height: 52px; min-width: min(280px, 100%); font-size: 1.18rem; font-weight: 700; padding: 6px 30px 6px 8px; }
+.apply-btn { height: 60px; min-width: min(320px, 100%); font-size: 1.35rem; font-weight: 700; padding: 6px 34px 6px 10px; }
 .apply-box .hint { max-width: 32em; text-align: center; line-height: 1.6; }
-.apply-btn .ic { width: 34px; height: 34px; background: var(--frame); border-color: var(--frame); color: var(--btn); }
-.apply-btn .ic svg { width: 18px; height: 18px; }
+.apply-btn .ic { width: 40px; height: 40px; background: var(--frame); border-color: var(--frame); color: var(--btn); }
+.apply-btn .ic svg { width: 21px; height: 21px; }
 .plan-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
 .plan-tbl tr[data-r] { cursor: pointer; }
 .plan-tbl tr.best td { background: var(--gold-soft); }
@@ -1482,7 +1486,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
         }).join('')}
       </table></div>
       <div class="apply-box"><button type="button" class="gbtn apply-btn" id="scApply"${can ? '' : ' disabled'}><span class="ic"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13.5 3 8.2h3.2V2.5h3.6v5.7H13Z" fill="currentColor"/></svg></span>帶入重塑計算</button>
-      <span class="hint">${can ? '計算詳細機率：把這件的四個詞條和初始數值帶到計算頁，算出重塑的精確成功機率，以及大約要幾個版本的羽毛。目標會照重塑方案先設好 (主要詞條不限制、次要詞條最多跳 2 次、其他詞條不能跳)，帶入後還可以再改。' : '要升到 +20 才能重塑。'}</span></div>`;
+      <span class="hint">${can ? '計算詳細機率：把這件的四個詞條和初始數值帶到計算頁，算出重塑的精確成功機率，以及大約要幾個版本的羽毛。' : '要升到 +20 才能重塑。'}</span></div>`;
     if (can) $('scApply').onclick = () => applyRelic(p, `${c.n}・${r.slot}`, DUST[r.slot] || 2, r.f.icon);
   }
 
