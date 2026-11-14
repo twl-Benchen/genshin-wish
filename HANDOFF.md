@@ -300,7 +300,7 @@
 
 2026-11-14 加入。設定欄最上面有 UID 欄位 (右邊放大鏡)，分頁列有「角色聖遺物」藥丸按鈕 (順序：計算、角色聖遺物、重塑規則)，兩個都會進到這個分頁。讀取中顯示骨架畫面 (頭像列和角色卡的底色區塊，深淺漸變動畫)。網址 `artifact.html#showcase` 直接開這頁，`artifact.html#uid-900211203` 會直接查這個 UID，可以分享。最後查的 UID 存在 localStorage `artcalc-uid`。
 
-資料來源：Enka.Network 的 `https://enka.network/api/uid/{UID}/` (遊戲內「角色展示」，玩家要開「顯示角色詳情」)。Enka 沒有開 CORS (瀏覽器直接呼叫會 Failed to fetch)，所以經過自己的 Cloudflare Worker `https://enka-proxy.twl-benchen.workers.dev/uid/{UID}`，原始碼備份在 `worker/enka-proxy.js` (只允許 twl-benchen.github.io、只轉發 /uid/數字、帶自訂 User-Agent)。Cloudflare 的 Cache API 在 workers.dev 網址上不生效，所以 Worker 不快取，改在網頁裡依回應的 `ttl` 記住查過的 UID。Enka 的規則：不要列舉 UID、要帶 User-Agent、有動態限流 (429)。錯誤碼 400 格式錯、404 找不到玩家、424 維護或改版、429 限流。
+資料來源：Enka.Network 的 `https://enka.network/api/uid/{UID}/` (遊戲內「角色展示」，玩家要開「顯示角色詳情」)。Enka 沒有開 CORS (瀏覽器直接呼叫會 Failed to fetch)，所以經過自己的 Cloudflare Worker `https://enka-proxy.twl-benchen.workers.dev/uid/{UID}`，原始碼備份在 `worker/enka-proxy.js` (只轉發 /uid/數字 與 /ui/圖示名.png、帶自訂 User-Agent)。Origin 不是 twl-benchen.github.io 的請求 (包含 curl 這類沒有 Origin 的) 一律回 403、不轉發給 Enka，避免別人借用中繼害自己的 User-Agent 被限流 (2026-11-14 補上，之前只設 CORS 標頭，其實誰都能用)。分享圖載入圖示用 `crossOrigin = 'anonymous'`，會帶 Origin，所以 /ui/ 也照樣能用。Cloudflare 的 Cache API 在 workers.dev 網址上不生效，所以 Worker 不快取，改在網頁裡依回應的 `ttl` 記住查過的 UID：記憶體加 localStorage `artcalc-uidcache` (只留最近 3 個 UID)，ttl 內重新整理頁面也不會再查一次，這是 Enka API 文件的要求。Enka 的規則：不要列舉 UID、要帶 User-Agent、有動態限流 (429)。錯誤碼 400 格式錯、404 找不到玩家、424 維護或改版、429 限流。
 
 畫面：仿 Enka 的三欄角色卡 (立繪與天賦、武器與屬性、五個聖遺物)，底色跟著元素，手機時變成單欄。點聖遺物會在下方顯示詞條明細 (每個詞條初始那一檔、每次升級跳的數值、次數、目前數值)，+20 的五星聖遺物可以按「帶入重塑計算」：換成這四個詞條 (照出現順序，初始 3 詞條時第 4 個是 +4 新增的)、初始詞條數，並把每個詞條的「初始那一檔」填好；同一個詞條原本的選定、目標設定保留。
 
@@ -310,7 +310,7 @@
 
 套裝名稱：API 的 `flat.setNameTextMapHash` 在 Enka 的繁中名稱表查不到 (實測顯示「沒有套裝效果」)，改用聖遺物圖示名 `UI_RelicIcon_{套裝ID}_{部位}` 裡的套裝 ID 查 enka-data.js 的 `sets` (來自 relics.json 的 Sets)。沒有 2 件以上的套裝時不顯示套裝區塊。
 
-版面：立繪放在比左欄寬 35% 的框裡，延伸到中間欄底下，從大約左欄 70% 處往右淡出 (mask-image)；不顯示天賦 (使用者決定拿掉)，中間欄的屬性列平均撐滿高度、套裝放最下面；立繪上只留角色名、目前等級 (Lv. 95，不寫上限)、命座。聖遺物圖示右側漸層到透明，主詞條名稱放大加粗 (數值維持原大小)；副詞條下面每次一條 (第一條是初始)，第七到第十檔越來越長越亮 (第十檔淡金色)。「在 Enka 開啟」放在上方資訊列右邊。
+版面：立繪放在比左欄寬 35% 的框裡，延伸到中間欄底下，從大約左欄 70% 處往右淡出 (mask-image)；不顯示天賦 (使用者決定拿掉)，中間欄的屬性列平均撐滿高度、套裝放最下面；立繪上只留角色名、目前等級 (Lv. 95，不寫上限)、命座。聖遺物圖示右側漸層到透明，主詞條名稱放大加粗 (數值維持原大小)；副詞條下面每次一條 (第一條是初始)，第七到第十檔越來越長越亮 (第十檔淡金色)。「在 Enka 開啟」放在上方資訊列右邊。角色卡左下角 (Enka 卡片放 UID 的位置) 有一行淡淡的小字「排版風格來自 Enka.Network」，連到 enka.network。
 
 來源標註：Enka 的 API 文件沒有要求標註來源，也沒有使用條款，但頁面底部仍寫「資料與圖片來自 Enka.Network，遊戲素材版權屬於 HoYoverse，本網站與兩者無關」。
 

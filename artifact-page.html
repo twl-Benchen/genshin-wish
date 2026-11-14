@@ -227,6 +227,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .sc-name b { font-family: var(--f-display); font-size: 1.7rem; }
 .sc-name span { font-size: .8rem; opacity: .85; }
 .sc-lv { left: 18px; top: 58px; font: 600 1rem var(--f-num); display: grid; gap: 4px; }
+.sc-style { position: absolute; z-index: 1; left: 18px; bottom: 12px; font-size: .72rem; color: #fff; opacity: .6; text-decoration: none; text-shadow: 0 1px 3px rgba(0, 0, 0, .6); }
+.sc-style:hover { opacity: .95; }
 .sc-lv .cons { font: 500 .8rem var(--f-body); background: rgba(0, 0, 0, .35); border-radius: 999px; padding: 1px 10px; justify-self: start; }
 .sc-mid { position: relative; z-index: 1; padding: 22px 16px; display: flex; flex-direction: column; gap: 14px; }
 .sc-mid .sc-stats { flex: 1; align-content: space-evenly; }
@@ -1256,6 +1258,27 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   const D = window.EnkaData;
   const UIDKEY = 'artcalc-uid';
   const SC = { uid: '', data: null, sel: 0, relic: -1, cache: new Map(), busy: false };
+  // 查詢結果照 Enka 回傳的 ttl 存進 localStorage，ttl 內重新整理頁面不會再查一次 (Enka 的要求)，只留最近 3 個 UID
+  const CACHEKEY = 'artcalc-uidcache';
+  function cacheGet(uid) {
+    const m = SC.cache.get(uid);
+    if (m && m.until > Date.now()) return m.data;
+    try {
+      const all = JSON.parse(localStorage.getItem(CACHEKEY) || '{}'), hit = all[uid];
+      if (hit && hit.until > Date.now()) { SC.cache.set(uid, hit); return hit.data; }
+    } catch (e) {}
+    return null;
+  }
+  function cachePut(uid, data) {
+    const item = { data, until: Date.now() + Math.max(30, data.ttl || 60) * 1000 };
+    SC.cache.set(uid, item);
+    try {
+      const all = JSON.parse(localStorage.getItem(CACHEKEY) || '{}'), now = Date.now();
+      delete all[uid];
+      const keep = Object.entries(all).filter(([, v]) => v && v.until > now).sort((a, b) => b[1].until - a[1].until).slice(0, 2);
+      localStorage.setItem(CACHEKEY, JSON.stringify(Object.fromEntries([[uid, item], ...keep])));
+    } catch (e) { try { localStorage.removeItem(CACHEKEY); } catch (e2) {} }
+  }
   const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const loc = h => (h == null ? '' : D.loc[String(h)] || '');
   // 元素配色：深、中、亮
@@ -1293,8 +1316,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     SC.uid = uid; SC.sel = 0; SC.relic = 0; SC.pickBest = true;
     try { localStorage.setItem(UIDKEY, uid); } catch (e) {}
     try { history.replaceState(null, '', '#uid-' + uid); } catch (e) {}
-    const hit = SC.cache.get(uid);
-    if (hit && hit.until > Date.now()) { SC.data = hit.data; renderShow(); return; }
+    const hit = cacheGet(uid);
+    if (hit) { SC.data = hit; renderShow(); return; }
     SC.busy = true; SC.data = null; renderShow(); scMsg(''); renderSkeleton();
     try {
       const res = await fetch(`${PROXY}/uid/${uid}`);
@@ -1304,7 +1327,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       }
       const data = await res.json();
       SC.data = data;
-      SC.cache.set(uid, { data, until: Date.now() + Math.max(30, data.ttl || 60) * 1000 });
+      cachePut(uid, data);
     } catch (e) {
       SC.data = null;
       scMsg(e && e.message && !/fetch/i.test(e.message) ? e.message : '連不上資料來源，請檢查網路後再試一次。', true);
@@ -1410,6 +1433,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
         <div class="splash-box"><img class="splash" src="${art}" alt="" onerror="this.style.display='none'"></div>
         <div class="sc-name"><b>${esc(c.n)}</b></div>
         <div class="sc-lv">Lv. ${lv}<span class="cons" title="命之座">命座 ${cons}</span></div>
+        <a class="sc-style" href="https://enka.network/" target="_blank" rel="noopener">排版風格來自 Enka.Network</a>
       </div>
       <div class="sc-mid">
         ${weaponHtml}
