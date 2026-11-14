@@ -182,25 +182,42 @@
     return { ok: true, p: Math.min(1, p), avg, lock: base.locked };
   }
 
-  /* 重塑划不划算 (角色展示的重塑方案)：只看升級跳落在哪些詞條，不看檔位
+  /* 重塑划不划算 (角色展示的重塑方案)
    * weight：詞條 → 2 (主要詞條)、1 (次要詞條)、0 (其他，包含攻擊、生命、防禦固定值)
-   * 有效詞條數 = Σ 權重/2 × 次數 (含初始)。重塑只重新分配升級跳、初始保留，
-   * 重塑「變好」= 升級跳的有效詞條數比原本多 (結果不好可以不換)，大約需要幾次 = 1 / 變好機率 (幾何分布的期望值)
+   * 有效詞條數 = Σ 權重/2 × 每次的檔位比例 (第七到第十檔 0.7、0.8、0.9、1.0，含初始)
+   * 重塑只重新分配升級跳、初始保留。重塑「變好」= 升級跳的有效詞條數比原本多，
+   * 包含把歪掉的升級跳拿回來，也包含升級跳都在有用詞條、但這次跳出更高的檔位 (結果不好可以不換)
+   * 大約需要幾次 = 1 / 變好機率 (幾何分布的期望值)
    * 選定詞條是權重最高的兩個 (同權重照順序)，保底用一般重塑 (2 次)
    * 回傳 { ok, total (目前有效詞條數), pUp (每次重塑變好的機率), tries (平均要重塑幾次，不可能變好時 Infinity), lock } */
+  const RATIO = [70, 80, 90, 100];
+  const upCache = new Map();
+  // 主要詞條升級跳 jm 次、次要詞條 js 次時，升級跳有效詞條數 (×200 的整數) 的分布
+  function upDist(jm, js) {
+    const key = jm + '|' + js;
+    if (upCache.has(key)) return upCache.get(key);
+    let d = new Map([[0, 1]]);
+    const add = w => { const nx = new Map(); d.forEach((q, v) => RATIO.forEach(r => { const k = v + w * r; nx.set(k, (nx.get(k) || 0) + q / 4); })); d = nx; };
+    for (let i = 0; i < jm; i++) add(2);
+    for (let i = 0; i < js; i++) add(1);
+    upCache.set(key, d);
+    return d;
+  }
   function reshapeValue(parsed, weight, guarantee) {
     if (!parsed || !parsed.ok || parsed.subs.length !== 4) return { ok: false };
     const w = parsed.subs.map(s => weight[s.stat] || 0);
     if (!w.some(x => x > 0)) return { ok: false, reason: 'none' };
-    const now = parsed.subs.reduce((a, s, i) => a + w[i] * s.rolls.length, 0);
-    const total = parsed.subs.reduce((a, s, i) => a + w[i] * (1 + s.rolls.length), 0) / 2;
+    const up = parsed.subs.reduce((a, s, i) => a + w[i] * s.rolls.reduce((b, t) => b + RATIO[t], 0), 0);
+    const init = parsed.subs.reduce((a, s, i) => a + w[i] * RATIO[s.initTier], 0);
     const lock = [0, 1, 2, 3].sort((a, b) => w[b] - w[a] || a - b).slice(0, 2).sort((a, b) => a - b);
     let pUp = 0;
     E_each({ init: parsed.init, guarantee: guarantee == null ? 2 : guarantee, locked: lock }, (c, p) => {
-      if (c.reduce((a, n, i) => a + w[i] * (n - 1), 0) > now) pUp += p;
+      let jm = 0, js = 0;
+      c.forEach((n, i) => { if (w[i] === 2) jm += n - 1; else if (w[i] === 1) js += n - 1; });
+      upDist(jm, js).forEach((q, v) => { if (v > up) pUp += p * q; });
     });
     pUp = Math.min(1, pUp);
-    return { ok: true, total, pUp, tries: pUp > 1e-12 ? 1 / pUp : Infinity, lock };
+    return { ok: true, total: (init + up) / 200, pUp, tries: pUp > 1e-12 ? 1 / pUp : Infinity, lock };
   }
   // 列舉每一組最終次數 (含初始 1 次) 和它的機率
   function E_each(o, fn) {
@@ -213,7 +230,7 @@
     })(0, 0, 1);
   }
 
-  const api = { STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix, reshapeOdds, reshapeValue };
+  const api = { STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix, reshapeOdds, reshapeValue, RATIO };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.ArtifactEngine = api;
 })(typeof window !== 'undefined' ? window : this);

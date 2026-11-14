@@ -147,18 +147,25 @@ eq('成功率 10%，八成要幾顆', E.trialsFor(0.1, 0.8), 16);
     空之杯: P([501202, 501222, 501234, 501053, 501221, 501204, 501224, 501054, 501203]),
     理之冠: P([501063, 501201, 501032, 501232, 501202, 501063, 501062, 501061, 501203]),
   };
-  for (const k of ['生之花', '死之羽', '時之沙', '理之冠']) eq(`魈 ${k} 升級跳都在主要詞條，重塑不會變好`, E.reshapeValue(xiao[k], W, 2).pUp, 0);
-  const cup = E.reshapeValue(xiao.空之杯, W, 2);
-  // 空之杯：攻擊 (固定值) 歪了一次，選定暴擊、暴傷；變好 = 5 次升級跳都不落在攻擊
-  let ok = 0;
-  for (let t = 0; t < T; t++) { const c = E.simulateCounts({ init: 4, guarantee: 2, locked: cup.lock }); if (c[3] === 1) ok++; }
-  check('魈 空之杯 重塑變好機率 蒙地卡羅比對', ok / T, cup.pUp, 0.004);
-  eq('魈 空之杯 有效詞條數', cup.total, 7);
+  // 每件都跟蒙地卡羅比對：變好 = 升級跳的有效詞條數 (含檔位) 比原本多
+  for (const k of Object.keys(xiao)) {
+    const pr = xiao[k], r = E.reshapeValue(pr, W, 2);
+    const w = pr.subs.map(s => W[s.stat] || 0);
+    const up0 = pr.subs.reduce((a, s, i) => a + w[i] * s.rolls.reduce((b, t) => b + E.RATIO[t], 0), 0);
+    let ok = 0;
+    for (let t = 0; t < 100000; t++) {
+      const c = E.simulateCounts({ init: pr.init, guarantee: 2, locked: r.lock });
+      let v = 0;
+      c.forEach((n, i) => { for (let j = 1; j < n; j++) v += w[i] * E.RATIO[Math.floor(Math.random() * 4)]; });
+      if (v > up0) ok++;
+    }
+    check(`魈 ${k} 重塑變好機率 蒙地卡羅比對`, ok / 100000, r.pUp, 0.006);
+  }
   // 使用者的例子：主要詞條雙暴，A (暴擊 1、暴傷 4，升級跳全在主要) 重塑不會變好，B (暴擊 2、暴傷 1、次要 1、沒用 1) 會
   const A = { ok: true, init: 4, level: 20, subs: [{ stat: 'cr', initTier: 3, rolls: [3] }, { stat: 'cd', initTier: 3, rolls: [3, 3, 3, 3] }, { stat: 'hp', initTier: 3, rolls: [] }, { stat: 'def', initTier: 3, rolls: [] }] };
   const B = { ok: true, init: 4, level: 20, subs: [{ stat: 'cr', initTier: 3, rolls: [3, 3] }, { stat: 'cd', initTier: 3, rolls: [3] }, { stat: 'atkp', initTier: 3, rolls: [3] }, { stat: 'hp', initTier: 3, rolls: [3] }] };
   const WA = { cr: 2, cd: 2, atkp: 1 };
-  eq('例子 A 重塑不會變好', E.reshapeValue(A, WA, 2).pUp, 0);
+  eq('例子 A 主要詞條全滿而且都是最高檔，重塑不會變好', E.reshapeValue(A, WA, 2).pUp, 0);
   eq('例子 B 重塑有機會變好', E.reshapeValue(B, WA, 2).pUp > 0, true);
   eq('沒有主要或次要詞條', E.reshapeValue(xiao.生之花, { em: 2 }, 2).reason, 'none');
 }
