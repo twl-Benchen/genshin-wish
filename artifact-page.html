@@ -371,7 +371,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
     if (k === 'target') r.target = parseTarget(i, t.value);
     refresh(k === 'stat' || k === 'init');
   });
-  /* 長按卡片 (0.4 秒，手指不動) 進入拖動，經過上下卡片的一半就互換，放開後重新計算 */
+  /* 長按卡片 (0.25 秒，手指不動) 進入拖動，經過上下卡片的一半就互換，放開後重新計算 */
   (() => {
     const box = $('rows');
     let timer = 0, start = null, drag = null;
@@ -386,7 +386,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
         card.classList.add('dragging'); box.classList.add('sorting');
         try { card.setPointerCapture(drag.id); } catch (err) {}
         if (navigator.vibrate) navigator.vibrate(15);
-      }, 400);
+      }, 250);
     });
     box.addEventListener('pointermove', e => {
       if (start && !drag && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 8) cancel();
