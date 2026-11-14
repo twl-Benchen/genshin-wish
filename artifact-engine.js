@@ -1,42 +1,78 @@
-/* 聖遺物定軌計算核心：瀏覽器 (window.ArtifactEngine) 與 Node (module.exports) 共用
+/* 聖遺物重塑計算核心：瀏覽器 (window.ArtifactEngine) 與 Node (module.exports) 共用
  *
- * 模型 (詳見 HANDOFF.md 的「聖遺物定軌」一節)
- * - 四個副詞條各自從 1 次 (初始) 開始，強化次數 n：初始 4 詞條 5 次，初始 3 詞條 4 次 (+4 新增的詞條也算 1 次)
+ * 模型 (詳見 HANDOFF.md 的「聖遺物重塑」一節)
+ * - 四個副詞條各自從 1 次 (初始) 開始，升級跳的次數 n：初始 4 詞條 5 次，初始 3 詞條 4 次 (+4 新增的詞條也算 1 次)
  * - 一般強化每次四個詞條各 1/4
- * - 定軌保底 X：兩個定軌詞條合計至少跳 X 次。前面完全隨機，只有剩下的次數等於還沒達成的保底次數時，
- *   才強制跳到兩個定軌詞條之一 (各 1/2)
+ * - 重塑保底 X：兩個選定詞條合計至少跳 X 次。前面完全隨機，只有剩下的次數等於還沒達成的保底次數時，
+ *   才強制跳到兩個選定詞條之一 (各 1/2)
+ * - 每次 (含初始) 的數值是四檔之一，各 1/4。遊戲內部取到小數點後兩位，畫面顯示時百分比四捨五入到小數點後一位，
+ *   固定值四捨五入到整數。所以數值一律用「百分之一」的整數計算，避免浮點誤差
  */
 (function (root) {
+  // tiers：第七到第十檔的精確值 (乘 100 的整數)
   const STATS = [
-    { id: 'hp',   name: '生命值',       max: 298.75, pct: false },
-    { id: 'atk',  name: '攻擊力',       max: 19.45,  pct: false },
-    { id: 'def',  name: '防禦力',       max: 23.15,  pct: false },
-    { id: 'hpp',  name: '生命值%',      max: 5.83,   pct: true },
-    { id: 'atkp', name: '攻擊力%',      max: 5.83,   pct: true },
-    { id: 'defp', name: '防禦力%',      max: 7.29,   pct: true },
-    { id: 'em',   name: '元素精通',     max: 23.31,  pct: false },
-    { id: 'er',   name: '元素充能效率', max: 6.48,   pct: true },
-    { id: 'cr',   name: '暴擊率',       max: 3.89,   pct: true },
-    { id: 'cd',   name: '暴擊傷害',     max: 7.77,   pct: true },
+    { id: 'hp',   name: '生命值',       pct: false, tiers: [20913, 23900, 26888, 29875] },
+    { id: 'atk',  name: '攻擊力',       pct: false, tiers: [1362, 1555, 1751, 1945] },
+    { id: 'def',  name: '防禦力',       pct: false, tiers: [1620, 1852, 2083, 2315] },
+    { id: 'hpp',  name: '生命值%',      pct: true,  tiers: [408, 466, 525, 583] },
+    { id: 'atkp', name: '攻擊力%',      pct: true,  tiers: [408, 466, 525, 583] },
+    { id: 'defp', name: '防禦力%',      pct: true,  tiers: [510, 583, 656, 729] },
+    { id: 'em',   name: '元素精通',     pct: false, tiers: [1632, 1865, 2098, 2331] },
+    { id: 'er',   name: '元素充能效率', pct: true,  tiers: [453, 518, 583, 648] },
+    { id: 'cr',   name: '暴擊率',       pct: true,  tiers: [272, 311, 350, 389] },
+    { id: 'cd',   name: '暴擊傷害',     pct: true,  tiers: [544, 622, 699, 777] },
   ];
-  const TIERS = [0.7, 0.8, 0.9, 1.0];
+  const byId = Object.fromEntries(STATS.map(s => [s.id, s]));
 
   const upgrades = init => (init === 4 ? 5 : 4);
 
-  // 這一步是否被保底強制 (rem：剩下幾次，hits：定軌詞條已中幾次)
+  /* 顯示值：精確值 (百分之一整數) → 畫面上的單位
+   * 百分比用「十分之一 %」(46.62% → 466)，固定值用整數 (1792.5 → 1793)，都是四捨五入 */
+  const toDisp = (statId, h) => (byId[statId].pct ? Math.round(h / 10) : Math.round(h / 100));
+  const dispText = (statId, d) => (byId[statId].pct ? (d / 10).toFixed(1) + '%' : d.toLocaleString('en-US'));
+  const fmtValue = (statId, h) => dispText(statId, toDisp(statId, h));
+
+  /* 最終顯示值的分布 (Map：顯示值 → 機率)
+   * jumps：升級跳的次數，init：初始那一檔 0..3，null 代表初始也是隨機 */
+  const distCache = new Map();
+  function valueDist(statId, jumps, init) {
+    const key = statId + '|' + jumps + '|' + init;
+    if (distCache.has(key)) return distCache.get(key);
+    const t = byId[statId].tiers;
+    let sums = new Map(init == null ? t.map(v => [v, 0.25]) : [[t[init], 1]]);
+    for (let k = 0; k < jumps; k++) {
+      const nx = new Map();
+      sums.forEach((p, s) => t.forEach(v => nx.set(s + v, (nx.get(s + v) || 0) + p / 4)));
+      sums = nx;
+    }
+    const out = new Map();
+    sums.forEach((p, s) => { const d = toDisp(statId, s); out.set(d, (out.get(d) || 0) + p); });
+    distCache.set(key, out);
+    return out;
+  }
+  // 顯示值至少 target (畫面單位) 的機率
+  function probAtLeast(statId, jumps, init, target) {
+    let p = 0;
+    valueDist(statId, jumps, init).forEach((q, d) => { if (d >= target) p += q; });
+    return Math.min(1, p);
+  }
+
+  // 這一步是否被保底強制 (rem：剩下幾次，hits：選定詞條已中幾次)
   function isForced(X, hits, rem) {
     const need = Math.max(0, X - hits);
     return X > 0 && need > 0 && need >= rem;
   }
 
   /* 精確計算：列舉所有強化路徑 (最多 4^5 = 1024 條)
-   * opts = { init: 3|4, guarantee: 0..4, locked: [i, j] 或 [], accept: counts => bool }
+   * opts = { init: 3|4, guarantee: 0..4, locked: [i, j] 或 [],
+   *          weight: counts => 這組次數下符合條件的機率 (0..1)，或 accept: counts => bool }
+   * counts 是四個詞條的總次數 (含初始 1 次)
    * 回傳 { success, marginal[4][次數], comboDist[合計次數] } */
   function exact(opts) {
     const n = upgrades(opts.init);
     const lk = opts.locked && opts.locked.length === 2 ? opts.locked : [];
     const X = lk.length === 2 ? Math.min(opts.guarantee || 0, n) : 0;
-    const accept = opts.accept || (() => true);
+    const weight = opts.weight || (opts.accept ? (c => (opts.accept(c) ? 1 : 0)) : (() => 1));
     const marginal = [0, 1, 2, 3].map(() => new Array(n + 2).fill(0));
     const comboDist = new Array(n + 3).fill(0);
     const c = [1, 1, 1, 1];
@@ -45,7 +81,7 @@
       if (step === n) {
         for (let i = 0; i < 4; i++) marginal[i][c[i]] += p;
         if (lk.length === 2) comboDist[c[lk[0]] + c[lk[1]]] += p;
-        if (accept(c)) success += p;
+        success += p * weight(c);
         return;
       }
       if (isForced(X, hits, n - step)) {
@@ -84,12 +120,17 @@
     return c;
   }
 
-  const rollValue = (statId, rand) => {
-    const s = STATS.find(x => x.id === statId);
-    return s.max * TIERS[Math.floor((rand || Math.random)() * 4)];
-  };
+  // 隨機一檔的精確值 (百分之一整數)
+  const rollValue = (statId, rand) => byId[statId].tiers[Math.floor((rand || Math.random)() * 4)];
 
-  const api = { STATS, TIERS, upgrades, isForced, exact, pickRoll, simulateCounts, rollValue };
+  // 每顆成功機率 p，要重塑幾顆才有 prob 的機率至少成功一次
+  function trialsFor(p, prob) {
+    if (p <= 0) return Infinity;
+    if (p >= prob || p >= 1) return 1;
+    return Math.ceil(Math.log(1 - prob) / Math.log(1 - p) - 1e-9);
+  }
+
+  const api = { STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.ArtifactEngine = api;
 })(typeof window !== 'undefined' ? window : this);
