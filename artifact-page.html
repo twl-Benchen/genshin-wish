@@ -169,12 +169,13 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .sc-player { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; font-size: .88rem; color: var(--muted); min-width: 0; }
 .sc-player b { font-family: var(--f-display); font-size: 1.15rem; color: var(--ink); }
 .sc-player .sig { flex-basis: 100%; font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sc-player { position: relative; padding-right: 130px; }
-.sc-player .enka-link { position: absolute; right: 0; top: 50%; transform: translateY(-50%); color: var(--gold); font-size: .98rem; font-weight: 700; text-underline-offset: 3px; white-space: nowrap; }
+.sc-player { position: relative; padding-right: 150px; }
+.sc-player .enka-link { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--gold); font-size: .98rem; font-weight: 700; text-underline-offset: 3px; white-space: nowrap; }
 @media (max-width: 700px) { .sc-player { padding-right: 0; } .sc-player .enka-link { position: static; transform: none; flex-basis: 100%; } }
 .sc-msg { margin: 0; font-size: .88rem; color: var(--muted); }
 .sc-msg.bad { color: var(--bad); }
 .sc-avatars { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 10px; scrollbar-width: thin; }
+@media (min-width: 701px) { .sc-avatars > :first-child { margin-left: auto; } .sc-avatars > :last-child { margin-right: auto; } }
 .sc-av { flex: none; position: relative; width: 68px; height: 68px; border-radius: 50%; padding: 0; border: 3px solid var(--frame-soft); background: linear-gradient(160deg, #6b5b8f, #3b3556); cursor: pointer; }
 .sc-av.q5 { background: linear-gradient(160deg, #b5793a, #7a4a22); }
 .sc-av img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
@@ -240,15 +241,17 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .sc-detail > *, .sc-plan > * { min-width: 0; }
 .plan-tbl, .sc-tbl { min-width: 0; }
 @media (max-width: 520px) { .plan-tbl td, .plan-tbl th, .sc-tbl td, .sc-tbl th { padding: 5px 3px; font-size: .76rem; } .sc-plan .segs button { font-size: .8rem; } }
-.sc-tbl .proc b { color: var(--ink); }
+.sc-tbl .proc { text-align: left; white-space: nowrap; }
+.sc-tbl .proc b, .sc-tbl .proc .add { color: var(--ink); }
+.sc-tbl small.exact { display: block; font-size: .7rem; color: var(--muted); font-weight: 400; }
 .sc-tbl .proc span { color: var(--muted); }
-.plan-goals { display: grid; gap: 8px; }
-.plan-goal { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
-.pg-top { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; }
-.pg-x { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--frame-soft); background: var(--sunken); color: var(--muted); cursor: pointer; }
-.pg-val { display: flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--muted); }
-.pg-val input { width: 90px; height: 34px; font: 600 .95rem var(--f-num); color: var(--ink); background: var(--sunken); border: 1px solid var(--frame-soft); border-radius: 6px; padding: 0 8px; }
-.pg-val .num-seg { flex: 1; }
+.pill-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; }
+.pill-lab { font-size: .8rem; color: var(--muted); font-weight: 500; white-space: nowrap; }
+.pills { display: flex; flex-wrap: nowrap; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.pills::-webkit-scrollbar { display: none; }
+.pill { flex: none; font: inherit; font-size: .84rem; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--frame); background: var(--surface); color: var(--ink); cursor: pointer; opacity: .45; transition: opacity .15s; }
+.pill:hover { opacity: .75; }
+.pill.on { opacity: 1; background: var(--btn); color: var(--btn-ink); border-color: var(--btn); font-weight: 700; }
 .linkbtn { font: inherit; font-size: .82rem; color: var(--gold); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; justify-self: start; }
 .plan-tbl td, .plan-tbl th { font-size: .82rem; }
 .plan-tbl td small { display: block; color: var(--muted); font-size: .7rem; font-weight: 400; }
@@ -1324,16 +1327,16 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     const pctRank = ['七', '八', '九', '十'];
     const can = p.subs.length === 4 && p.level >= 20;
     box.innerHTML = `${title}
-      <p class="hint">初始 ${p.init} 詞條，+${p.level}${p.init === 3 && p.subs.length === 4 ? `，+4 新增「${byId[p.subs[3].stat].name}」` : ''}。升級過程裡粗體是初始數值，後面是每次升級跳加的數值；橫條越長越亮代表檔位越高。</p>
+      <p class="hint">初始 ${p.init} 詞條，+${p.level}${p.init === 3 && p.subs.length === 4 ? `，+4 新增「${byId[p.subs[3].stat].name}」` : ''}。升級過程裡粗體是初始數值 (+4 新增的不加粗)，後面是每次升級跳加的數值。數值下面是遊戲內部的實際值 (小數點後兩位)，從每一次的檔位直接加總，所以只有一種可能。</p>
       <div class="tbl-wrap"><table class="gtable sc-tbl">
-        <tr><th style="text-align:left">詞條</th><th>升級過程</th><th>次數</th><th>目前</th></tr>
+        <tr><th style="text-align:left">詞條</th><th style="text-align:left">升級過程</th><th>次數</th><th>數值</th></tr>
         ${p.subs.map((s, k) => {
           const t = byId[s.stat].tiers;
           const added = p.init === 3 && k === 3;
           return `<tr><td class="name">${byId[s.stat].name}${added ? ' <span class="tag">+4 出現</span>' : ''}</td>
-            <td class="num proc"><b title="初始，第${pctRank[s.initTier]}檔">${E.fmtValue(s.stat, t[s.initTier])}</b>${s.rolls.map(x => ` <span title="第${pctRank[x]}檔">+${E.fmtValue(s.stat, t[x])}</span>`).join('')}</td>
+            <td class="num proc">${added ? `<span class="add" title="+4 新增，第${pctRank[s.initTier]}檔">${E.fmtValue(s.stat, t[s.initTier])}</span>` : `<b title="初始，第${pctRank[s.initTier]}檔">${E.fmtValue(s.stat, t[s.initTier])}</b>`}${s.rolls.map(x => ` <span title="第${pctRank[x]}檔">+${E.fmtValue(s.stat, t[x])}</span>`).join('')}</td>
             <td class="num">${s.rolls.length}</td>
-            <td class="num"><b>${E.fmtValue(s.stat, s.total)}</b></td></tr>`;
+            <td class="num"><b>${E.fmtValue(s.stat, s.total)}</b><small class="exact">${(s.total / 100).toFixed(2)}${byId[s.stat].pct ? '%' : ''}</small></td></tr>`;
         }).join('')}
       </table></div>
       <div class="btns"><button type="button" class="gbtn" id="scApply"${can ? '' : ' disabled'}><span class="ic">⇩</span>帶入重塑計算</button>
@@ -1342,32 +1345,23 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   }
 
 
-  /* ---------- 重塑方案：輸入想提升的詞條，算五件聖遺物各重塑一次的成功率，比較哪件最划算 ---------- */
-  // 啟聖之塵：花、羽每次 1 個，沙、杯、冠每次 2 個
+  /* ---------- 重塑方案：選主要、次要詞條，比較這個角色的聖遺物哪件重塑最划算 ----------
+   * 用「有效詞條」衡量 (E.reshapeValue)：主要詞條每次最高檔算 1，次要算 0.5，其他不算。
+   * 重塑只重新分配升級跳，結果比原本差可以不換，所以只算變好的部分。保底照一般重塑 (2 次)。
+   * 啟聖之塵：花、羽每次 1 個，沙、杯、冠每次 2 個 */
   const DUST = { 生之花: 1, 死之羽: 1, 時之沙: 2, 空之杯: 2, 理之冠: 2 };
-  const PKEY = 'artcalc-plan';
-  const goal = (stat, inc) => ({ stat, mode: 'val', inc, n: 2 });
-  SC.plan = { g: 2, goals: [goal('cd', 77)] };
-  try { const v = JSON.parse(localStorage.getItem(PKEY)); if (v && Array.isArray(v.goals) && v.goals.length) SC.plan = Object.assign(SC.plan, v); } catch (e) {}
+  const PLAN_STATS = ['cr', 'cd', 'em', 'er', 'atkp', 'hpp', 'defp'];
+  const PKEY = 'artcalc-plan2';
+  SC.plan = { main: ['cr', 'cd'], sec: ['atkp'] };
+  try { const v = JSON.parse(localStorage.getItem(PKEY)); if (v && Array.isArray(v.main) && Array.isArray(v.sec)) SC.plan = { main: v.main.filter(x => PLAN_STATS.includes(x)), sec: v.sec.filter(x => PLAN_STATS.includes(x) && !v.main.includes(x)) }; } catch (e) {}
   const savePlan = () => { try { localStorage.setItem(PKEY, JSON.stringify(SC.plan)); } catch (e) {} };
-  const unitOf = stat => (byId[stat].pct ? '%' : '');
-  const incText = g => (byId[g.stat].pct ? (g.inc / 10).toFixed(1) : String(g.inc));
 
   function renderPlan() {
     const P = SC.plan;
-    const used = P.goals.map(g => g.stat);
+    const pills = (kind, list) => list.map(id => `<button type="button" class="pill${P[kind].includes(id) ? ' on' : ''}" data-kind="${kind}" data-v="${id}" aria-pressed="${P[kind].includes(id)}" title="${byId[id].name}">${SHORT_SUB[id]}</button>`).join('');
     $('scPlan').innerHTML = `<h2>重塑方案</h2>
-      <p class="hint">設定想提升的詞條，比較這個角色的五件聖遺物各重塑一次的成功率和要花的啟聖之塵。</p>
-      <div class="segs" id="planG">${[[2, '重塑'], [3, '高階重塑'], [4, '諭告重塑']].map(([v, t]) => `<button type="button" data-v="${v}" class="${P.g === v ? 'on' : ''}">${t}</button>`).join('')}</div>
-      <div class="plan-goals">${P.goals.map((g, i) => `<div class="plan-goal">
-        <div class="pg-top"><select data-i="${i}" data-k="stat" aria-label="目標詞條">${ORDER.map(id => `<option value="${id}"${id === g.stat ? ' selected' : ''}${used.includes(id) && id !== g.stat ? ' disabled' : ''}>${byId[id].name}</option>`).join('')}</select>
-          <span class="mini-segs"><button type="button" data-i="${i}" data-k="mode" data-v="val" class="${g.mode === 'val' ? 'on' : ''}">數值</button><button type="button" data-i="${i}" data-k="mode" data-v="cnt" class="${g.mode === 'cnt' ? 'on' : ''}">次數</button></span>
-          ${P.goals.length > 1 ? `<button type="button" class="pg-x" data-i="${i}" data-k="del" aria-label="刪除這個目標">✕</button>` : ''}</div>
-        ${g.mode === 'val'
-          ? `<label class="pg-val">比現在至少提升<input type="number" inputmode="decimal" min="0" step="${byId[g.stat].pct ? '0.1' : '1'}" data-i="${i}" data-k="inc" value="${incText(g)}">${unitOf(g.stat)}</label>`
-          : `<div class="pg-val">升級跳至少<div class="num-seg" role="group" aria-label="升級跳至少幾次">${[1, 2, 3, 4, 5].map(v => `<button type="button" data-i="${i}" data-k="n" data-v="${v}" class="${g.n === v ? 'on' : ''}">${v}</button>`).join('')}</div>次</div>`}
-      </div>`).join('')}</div>
-      ${P.goals.length < 2 ? '<button type="button" class="linkbtn" id="planAdd">+ 再加一個詞條 (兩個都要達成)</button>' : ''}
+      <div class="pill-row"><span class="pill-lab">主要詞條</span><div class="pills">${pills('main', PLAN_STATS)}</div></div>
+      <div class="pill-row"><span class="pill-lab">次要詞條</span><div class="pills">${pills('sec', PLAN_STATS.filter(id => !P.main.includes(id)))}</div></div>
       <div id="planOut"></div>`;
     renderPlanResult();
   }
@@ -1376,62 +1370,38 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     const out = $('planOut'); if (!out) return;
     const av = (SC.data.avatarInfoList || [])[SC.sel];
     const relics = av ? relicsOf(av) : [];
-    const P = SC.plan;
+    const W = {};
+    SC.plan.sec.forEach(id => { W[id] = 1; });
+    SC.plan.main.forEach(id => { W[id] = 2; });
+    if (!SC.plan.main.length) { out.innerHTML = '<p class="hint">先選至少一個主要詞條。</p>'; return; }
     const rows = relics.map((r, i) => {
-      const cost = DUST[r.slot] || 2, p = r.parsed;
-      const base = { i, r, cost };
-      if (!p.ok) return Object.assign(base, { why: '不是五星' });
-      if (p.level < 20 || p.subs.length < 4) return Object.assign(base, { why: '還沒 +20' });
-      const subOf = st => p.subs.find(s => s.stat === st);
-      const goals = P.goals.map(g => {
-        const s = subOf(g.stat);
-        return g.mode === 'cnt' ? { stat: g.stat, mode: 'cnt', n: g.n } : { stat: g.stat, mode: 'val', target: (s ? E.toDisp(g.stat, s.total) : 0) + Math.max(0, g.inc || 0) };
-      });
-      const res = E.reshapeOdds(p, goals, P.g);
-      if (!res.ok) return Object.assign(base, { why: '沒有這個詞條' });
-      const cur = P.goals.map(g => { const s = subOf(g.stat); return g.mode === 'cnt' ? `${s.rolls.length} 次` : E.fmtValue(g.stat, s.total); });
-      const avg = P.goals.map((g, k) => g.mode === 'cnt' ? '' : E.dispText(g.stat, Math.round(res.avg[k])));
-      return Object.assign(base, { p: res.p, cur, avg, exp: res.p > 0 ? cost / res.p : Infinity, n80: E.trialsFor(res.p, 0.8) });
-    });
-    const ok = rows.filter(x => x.p > 0).sort((a, b) => a.exp - b.exp);
-    const best = ok[0];
-    const order = ok.concat(rows.filter(x => !(x.p > 0)));
-    const dust = n => (isFinite(n) ? `${n.toFixed(n < 10 ? 1 : 0)} 個` : '-');
+      if (!r.parsed.ok || r.parsed.level < 20) return null;
+      const v = E.reshapeValue(r.parsed, W, 2);
+      if (!v.ok) return null;
+      const cost = DUST[r.slot] || 2;
+      return { i, r, cost, v, per: v.gain / cost };
+    }).filter(Boolean).sort((a, b) => b.per - a.per);
+    if (!rows.length) { out.innerHTML = '<p class="hint">這個角色的 +20 五星聖遺物都沒有選的詞條。</p>'; return; }
+    const best = rows[0].per > 0 ? rows[0] : null;
+    const f2 = x => x.toFixed(2);
     out.innerHTML = `<div class="tbl-wrap"><table class="gtable plan-tbl">
-      <tr><th style="text-align:left">部位</th><th>目前</th><th>每次成功率</th><th>平均要花</th></tr>
-      ${order.map(x => x.why || !(x.p > 0)
-        ? `<tr class="na" data-r="${x.i}"><td class="name">${x.r.slot}</td><td colspan="3">${x.why || '不可能達成'}</td></tr>`
-        : `<tr data-r="${x.i}" class="${x === best ? 'best' : ''}${SC.relic === x.i ? ' sel' : ''}" title="點一下看這件的詞條明細">
-            <td class="name">${x.r.slot}${x === best ? ' <span class="tag best-tag">最划算</span>' : ''}<small>每次 ${x.cost} 個</small></td>
-            <td class="num">${x.cur.join('<br>')}${x.avg.some(Boolean) ? `<small>重塑後平均 ${x.avg.filter(Boolean).join('、')}</small>` : ''}</td>
-            <td class="num">${fmtP(x.p)}</td>
-            <td class="num"><b>${dust(x.exp)}</b>${isFinite(x.n80) ? `<small>八成機率：${x.n80} 次 (${x.n80 * x.cost} 個)</small>` : ''}</td></tr>`).join('')}
+      <tr><th style="text-align:left">部位</th><th>有效詞條</th><th>重塑變好</th><th>平均收益</th></tr>
+      ${rows.map(x => `<tr data-r="${x.i}" class="${x === best ? 'best' : ''}${SC.relic === x.i ? ' sel' : ''}" title="點一下看這件的詞條明細">
+        <td class="name">${x.r.slot}${x === best ? ' <span class="tag best-tag">最划算</span>' : ''}<small>每次 ${x.cost} 個啟聖之塵</small></td>
+        <td class="num">${x.v.total.toFixed(1)}<small>選定 ${x.v.lock.map(k => SHORT_SUB[x.r.parsed.subs[k].stat]).join('、')}</small></td>
+        <td class="num">${fmtP(x.v.pUp)}</td>
+        <td class="num"><b>+${f2(x.v.gain)}</b><small>每個塵 +${f2(x.per)}</small></td></tr>`).join('')}
     </table></div>
-    <p class="hint">「平均要花」= 每次消耗的啟聖之塵 ÷ 每次成功率，下面的「八成機率」是重塑幾次後，至少成功一次的機率有八成。數值目標是跟這件現在的數值比，初始那一檔重塑後保留。重塑會重新分配升級跳，其他詞條可能變少。</p>`;
+    <p class="hint">有效詞條：主要詞條每跳一次最高檔算 1，次要詞條算 0.5，其他不算。重塑只重新分配升級跳 (初始數值保留)，結果比原本差可以不換，所以「平均收益」只算變好的部分，依每個啟聖之塵的收益排序。保底照一般重塑 (2 次)，要算其他重塑種類或指定數值，請在詞條明細按「帶入重塑計算」。</p>`;
   }
 
   $('scPlan').addEventListener('click', e => {
-    const P = SC.plan, b = e.target.closest('button');
+    const P = SC.plan, b = e.target.closest('.pill');
     if (!b) { const tr = e.target.closest('tr[data-r]'); if (tr) selectRelic(+tr.dataset.r); return; }
-    if (b.closest('#planG')) { P.g = +b.dataset.v; }
-    else if (b.id === 'planAdd') { const st = ORDER.find(id => !P.goals.some(g => g.stat === id)); P.goals.push(goal(st, byId[st].pct ? 39 : 20)); }
-    else if (b.dataset.k === 'del') { P.goals.splice(+b.dataset.i, 1); }
-    else if (b.dataset.k === 'mode') { P.goals[+b.dataset.i].mode = b.dataset.v; }
-    else if (b.dataset.k === 'n') { P.goals[+b.dataset.i].n = +b.dataset.v; }
-    else return;
+    const kind = b.dataset.kind, id = b.dataset.v, list = P[kind];
+    if (list.includes(id)) list.splice(list.indexOf(id), 1);
+    else { list.push(id); if (kind === 'main') P.sec = P.sec.filter(x => x !== id); }
     savePlan(); renderPlan();
-  });
-  $('scPlan').addEventListener('change', e => {
-    const t = e.target, g = SC.plan.goals[+t.dataset.i];
-    if (!g) return;
-    if (t.dataset.k === 'stat') { g.stat = t.value; g.inc = byId[t.value].pct ? Math.round(byId[t.value].tiers[3] / 10) : Math.round(byId[t.value].tiers[3] / 100); savePlan(); renderPlan(); }
-  });
-  $('scPlan').addEventListener('input', e => {
-    const t = e.target, g = SC.plan.goals[+t.dataset.i];
-    if (!g || t.dataset.k !== 'inc') return;
-    const v = parseFloat(t.value);
-    g.inc = isFinite(v) && v > 0 ? Math.round(v * (byId[g.stat].pct ? 10 : 1)) : 0;
-    savePlan(); renderPlanResult();
   });
 
   function applyRelic(p, label) {
