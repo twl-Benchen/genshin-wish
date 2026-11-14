@@ -133,6 +133,9 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 .subrows { display: grid; gap: 8px; }
 .subrow { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
 .subrow.locked { border-color: var(--gold); background: var(--gold-soft); }
+.subrow { -webkit-touch-callout: none; transition: box-shadow .15s; }
+.subrow.dragging { position: relative; z-index: 5; box-shadow: 0 10px 26px rgba(30, 40, 70, .28); cursor: grabbing; user-select: none; -webkit-user-select: none; }
+.subrows.sorting .subrow:not(.dragging) { transition: transform .15s; }
 .subrow .top { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
 .subrow .idx { font-family: var(--f-num); color: var(--muted); font-size: .85rem; }
 /* 選定詞條：仿遊戲裡副詞條右邊的金色圓圈十字星 */
@@ -156,6 +159,7 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 .num-seg button.on { background: var(--btn); color: var(--btn-ink); }
 .valrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
 .valrow label { display: grid; gap: 3px; font-size: .78rem; }
+.vwarn { grid-column: 1 / -1; margin: 0; font-size: .78rem; color: var(--bad); }
 .valrow select, .valrow input { height: 34px; font-family: var(--f-num); }
 .valrow input { width: 100%; font: inherit; font-family: var(--f-num); font-size: .92rem; color: var(--ink); background: var(--sunken); border: 1px solid var(--frame-soft); border-radius: 6px; padding: 0 8px; min-width: 0; box-sizing: border-box; }
 .tag { font-size: .7rem; padding: 0 7px; border-radius: 999px; background: var(--violet-soft); color: var(--violet); white-space: nowrap; }
@@ -266,13 +270,12 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
           <button type="button" data-v="3">初始 3 詞條</button>
           <button type="button" data-v="4">初始 4 詞條</button>
         </div>
-        <p class="hint" id="initHint"></p>
       </fieldset>
       <hr>
       <fieldset>
         <legend><span class="dot"></span>副詞條與目標</legend>
         <div class="subrows" id="rows"></div>
-        <p class="hint">右邊的金色圓圈是重塑時的選定詞條，要選兩個。目標可以設「最多跳幾次」(只算升級跳，初始那 1 次不算) 或「最後的數值」至少多少。選最大的次數代表沒有限制，選 0 代表這個詞條升級時一次都不能跳。</p>
+        <p class="hint">金色圓圈是重塑的選定詞條，選兩個。次數只算升級跳，選最大代表不限制。長按卡片可以拖動排序。</p>
       </fieldset>
       <hr>
       <fieldset>
@@ -483,6 +486,8 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
   const E = window.ArtifactEngine;
   const byId = E.byId;
   const KEY = 'artcalc-v3';
+  // 副詞條選單的順序
+  const ORDER = ['cr', 'cd', 'em', 'er', 'atkp', 'hpp', 'defp', 'atk', 'hp', 'def'];
   const $ = id => document.getElementById(id);
   const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle class="c" cx="12" cy="12" r="10.25"/><path class="s" d="M12 3.6Q13.2 10.8 20.4 12Q13.2 13.2 12 20.4Q10.8 13.2 3.6 12Q10.8 10.8 12 3.6Z"/></svg>';
 
@@ -499,7 +504,8 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
   const name = i => byId[S.rows[i].stat].name;
   const isPct = i => byId[S.rows[i].stat].pct;
   // 預設數值目標：平均每檔 × 3 次 (初始 + 升級跳 2 次)
-  const defTarget = stat => { const t = byId[stat].tiers; return E.toDisp(stat, Math.round((t[0] + t[1] + t[2] + t[3]) / 4 * 3)); };
+  // 數值目標的最大值：初始那一檔 (隨機時用最高檔) + 升級跳全部最高檔
+  const maxDisp = r => { const t = byId[r.stat].tiers; return E.toDisp(r.stat, (r.init >= 0 ? t[r.init] : t[3]) + N() * t[3]); };
   const toUnit = (i, d) => (isPct(i) ? (d / 10).toFixed(1) : String(d));
 
   function clamp() {
@@ -507,7 +513,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
       r.max = Math.max(0, Math.min(r.max == null ? 5 : r.max | 0, 5));
       if (r.mode !== 'val') r.mode = 'cnt';
       if (!(r.init >= -1 && r.init <= 3)) r.init = -1;
-      if (r.target == null || !isFinite(r.target)) r.target = defTarget(r.stat);
+      if (r.target != null && !isFinite(r.target)) r.target = null;
     });
     S.cJumps = Math.max(0, Math.min(S.cJumps | 0, N()));
     if (locked().length > 2) S.rows.forEach((r, i) => { if (i > 1) r.lock = false; });
@@ -518,6 +524,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
   function rowProb(i, c) {
     const r = S.rows[i];
     if (r.mode === 'cnt') return c - 1 <= cap(r) ? 1 : 0;
+    if (r.target == null) return 1; // 沒填代表沒有要求
     return E.probAtLeast(r.stat, c - 1, r.init < 0 ? null : r.init, r.target);
   }
   function weight(c) {
@@ -541,13 +548,10 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
   function renderSetup() {
     clamp();
     document.querySelectorAll('#initSeg button').forEach(b => b.classList.toggle('on', +b.dataset.v === S.init));
-    $('initHint').textContent = S.init === 4
-      ? '強化到 +20 共升級跳 5 次 (+4、+8、+12、+16、+20)。'
-      : '+4 新增第 4 個詞條 (下面第 4 列)，之後 +8 到 +20 共升級跳 4 次。';
 
     const used = S.rows.map(r => r.stat), lk = locked();
     $('rows').innerHTML = S.rows.map((r, i) => {
-      const so = E.STATS.map(s => `<option value="${s.id}"${s.id === r.stat ? ' selected' : ''}${used.includes(s.id) && s.id !== r.stat ? ' disabled' : ''}>${s.name}</option>`).join('');
+      const so = ORDER.map(id => byId[id]).map(s => `<option value="${s.id}"${s.id === r.stat ? ' selected' : ''}${used.includes(s.id) && s.id !== r.stat ? ' disabled' : ''}>${s.name}</option>`).join('');
       const dis = !r.lock && lk.length >= 2;
       const tag = S.init === 3 && i === 3 ? ' <span class="tag">+4 出現</span>' : '';
       const t = byId[r.stat].tiers;
@@ -558,7 +562,8 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
               <option value="-1"${r.init < 0 ? ' selected' : ''}>隨機</option>
               ${t.map((v, k) => `<option value="${k}"${r.init === k ? ' selected' : ''}>${E.fmtValue(r.stat, v)}</option>`).join('')}
             </select></label>
-            <label>最後至少${isPct(i) ? ' (%)' : ''}<input type="number" inputmode="decimal" data-i="${i}" data-k="target" min="0" step="${isPct(i) ? '0.1' : '1'}" value="${toUnit(i, r.target)}" aria-label="${name(i)}數值目標"></label>
+            <label>最後至少${isPct(i) ? ' (%)' : ''}<input type="number" inputmode="decimal" data-i="${i}" data-k="target" min="0" step="${isPct(i) ? '0.1' : '1'}" value="${r.target == null ? '' : toUnit(i, r.target)}" placeholder="最大值 ${toUnit(i, maxDisp(r))}" aria-label="${name(i)}數值目標"></label>
+            <p class="vwarn" data-w="${i}"${r.target != null && r.target > maxDisp(r) ? '' : ' hidden'}>超過最大值，最大值是 ${E.dispText(r.stat, maxDisp(r))}</p>
           </div>`;
       return `<div class="subrow${r.lock ? ' locked' : ''}">
         <div class="top"><span class="idx">${i + 1}</span>
@@ -605,10 +610,65 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
   });
   $('rows').addEventListener('change', e => {
     const t = e.target, i = +t.dataset.i, r = S.rows[i], k = t.dataset.k;
-    if (k === 'stat') { r.stat = t.value; r.init = -1; r.target = defTarget(r.stat); }
+    if (k === 'stat') { r.stat = t.value; r.init = -1; r.target = null; }
     if (k === 'init') r.init = +t.value;
-    if (k === 'target') { const x = parseFloat(t.value); r.target = isFinite(x) ? Math.max(0, Math.round(isPct(i) ? x * 10 : x)) : defTarget(r.stat); }
+    if (k === 'target') r.target = parseTarget(i, t.value);
     refresh(k === 'stat' || k === 'init');
+  });
+  /* 長按卡片 (0.4 秒，手指不動) 進入拖動，經過上下卡片的一半就互換，放開後重新計算 */
+  (() => {
+    const box = $('rows');
+    let timer = 0, start = null, drag = null;
+    const cancel = () => { clearTimeout(timer); timer = 0; start = null; };
+    box.addEventListener('pointerdown', e => {
+      const card = e.target.closest('.subrow');
+      if (!card || e.button > 0 || e.target.closest('select, input, button')) return;
+      start = { x: e.clientX, y: e.clientY, card, id: e.pointerId };
+      timer = setTimeout(() => {
+        const cards = [...box.children];
+        drag = { card, idx: cards.indexOf(card), y0: start.y, id: start.id };
+        card.classList.add('dragging'); box.classList.add('sorting');
+        try { card.setPointerCapture(drag.id); } catch (err) {}
+        if (navigator.vibrate) navigator.vibrate(15);
+      }, 400);
+    });
+    box.addEventListener('pointermove', e => {
+      if (start && !drag && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 8) cancel();
+      if (!drag || e.pointerId !== drag.id) return;
+      const cards = [...box.children];
+      let dy = e.clientY - drag.y0;
+      const nb = dy < 0 ? cards[drag.idx - 1] : cards[drag.idx + 1];
+      if (nb && Math.abs(dy) > nb.offsetHeight / 2 + 4) {
+        const j = drag.idx + (dy < 0 ? -1 : 1);
+        [S.rows[drag.idx], S.rows[j]] = [S.rows[j], S.rows[drag.idx]];
+        const top = drag.card.getBoundingClientRect().top;
+        if (dy < 0) box.insertBefore(drag.card, nb); else box.insertBefore(nb, drag.card);
+        drag.y0 += drag.card.getBoundingClientRect().top - top; // 卡片換位後重新以新位置為基準
+        drag.idx = j;
+        dy = e.clientY - drag.y0;
+      }
+      drag.card.style.transform = `translateY(${dy}px)`;
+    });
+    const end = () => {
+      cancel();
+      if (!drag) return;
+      drag.card.style.transform = ''; drag.card.classList.remove('dragging'); box.classList.remove('sorting');
+      drag = null;
+      refresh(true);
+    };
+    box.addEventListener('pointerup', end);
+    box.addEventListener('pointercancel', end);
+    // 拖動時不要捲動頁面 (手機)
+    box.addEventListener('touchmove', e => { if (drag) e.preventDefault(); }, { passive: false });
+    box.addEventListener('contextmenu', e => { if (drag || timer) e.preventDefault(); });
+  })();
+
+  const parseTarget = (i, v) => { const x = parseFloat(v); return isFinite(x) ? Math.max(0, Math.round(isPct(i) ? x * 10 : x)) : null; };
+  // 一邊輸入一邊檢查有沒有超過最大值 (還沒離開輸入框，不重算)
+  $('rows').addEventListener('input', e => {
+    const t = e.target; if (t.dataset.k !== 'target') return;
+    const i = +t.dataset.i, v = parseTarget(i, t.value), w = $('rows').querySelector(`.vwarn[data-w="${i}"]`);
+    if (w) w.hidden = !(v != null && v > maxDisp(S.rows[i]));
   });
   $('comboOn').addEventListener('change', e => { S.comboOn = e.target.checked; refresh(false); });
   $('comboBox').addEventListener('click', e => { const b = e.target.closest('button[data-k="combo"]'); if (b) { S.cJumps = +b.dataset.v; refresh(false); } });
@@ -635,7 +695,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
     h += '<th>符合目標</th></tr>';
     S.rows.forEach((r, i) => {
       let inP = 0;
-      const goal = r.mode === 'cnt' ? (cap(r) < n ? `最多跳 ${cap(r)} 次` : '沒有限制') : `至少 ${E.dispText(r.stat, r.target)}`;
+      const goal = r.mode === 'cnt' ? (cap(r) < n ? `最多跳 ${cap(r)} 次` : '沒有限制') : (r.target == null ? '沒有要求' : `至少 ${E.dispText(r.stat, r.target)}`);
       h += `<tr><td class="name">${name(i)}${r.lock ? ' <span class="tag" style="background:var(--gold-soft);color:var(--gold)">選定</span>' : ''}<br><span style="font-size:.74rem;color:var(--muted)">${goal}</span></td>`;
       for (let k = 0; k <= n; k++) {
         const p = marginal[i][k + 1], w = rowProb(i, k + 1);
@@ -652,9 +712,6 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
     if (maxSum < n) w.push(`四個詞條最多跳的次數加起來只有 ${maxSum} 次，但一定會跳滿 ${n} 次，不可能達成。`);
     const lk2 = locked();
     if (S.comboOn && lk2.length === 2 && lk2.reduce((a, i) => a + (S.rows[i].mode === 'cnt' ? cap(S.rows[i]) : n), 0) < S.cJumps) w.push(`兩個選定詞條最多跳的次數加起來不到合計要求的 ${S.cJumps} 次，不可能達成。`);
-    S.rows.forEach((r, i) => {
-      if (r.mode === 'val' && E.probAtLeast(r.stat, n, r.init < 0 ? null : r.init, r.target) <= 0) w.push(`${name(i)}就算 ${n} 次全跳最高檔也到不了 ${E.dispText(r.stat, r.target)}。`);
-    });
     $('warn').innerHTML = w.map(x => `<div class="warn">${x}</div>`).join('');
   }
 
@@ -687,7 +744,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
   function simOk() {
     const lk = locked();
     if (S.comboOn && lk.length === 2 && sim.counts[lk[0]] + sim.counts[lk[1]] - 2 < S.cJumps) return false;
-    return S.rows.every((r, i) => (r.mode === 'cnt' ? sim.counts[i] - 1 <= cap(r) : E.toDisp(r.stat, sim.vals[i]) >= r.target));
+    return S.rows.every((r, i) => (r.mode === 'cnt' ? sim.counts[i] - 1 <= cap(r) : r.target == null || E.toDisp(r.stat, sim.vals[i]) >= r.target));
   }
   function finish() {
     while (sim.level < 20) upgrade();
@@ -733,6 +790,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
       for (let i = 0; i < 4 && good; i++) {
         const r = S.rows[i];
         if (r.mode === 'cnt') { good = c[i] - 1 <= cap(r); continue; }
+        if (r.target == null) continue;
         let hsum = r.init >= 0 ? byId[r.stat].tiers[r.init] : E.rollValue(r.stat);
         for (let k = 1; k < c[i]; k++) hsum += E.rollValue(r.stat);
         good = E.toDisp(r.stat, hsum) >= r.target;
