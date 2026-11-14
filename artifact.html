@@ -513,7 +513,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
           <li>一般情況下每次四個詞條的機率相等，各 1/4。</li>
           <li>重塑保底是「兩個選定詞條合計至少升級跳 N 次」：一般重塑 2 次。每用 1 個啟聖之塵累積 1 點進度，到 6 點時觸發高階重塑 (3 次)，觸發 2 次高階重塑後下一次改成諭告重塑 (4 次)。</li>
           <li>保底是最後才補：前面完全隨機，只有剩下的次數剛好等於還沒達成的保底次數時，才會強制跳到兩個選定詞條之一 (各 1/2)。所以保底只會把很差的結果拉上來，不會提高跳很多次的機率。</li>
-          <li>角色展示的「重塑方案」：有效詞條數 = 主要詞條每一次照檔位算 0.7、0.8、0.9、1 (第七到第十檔)，次要詞條算一半，含初始，攻擊、生命、防禦固定值都不算。重塑變好機率是「升級跳的有效詞條數比現在多」的機率，包含把歪掉的升級跳拿回來，也包含升級跳都在有用詞條、但這次跳出更高的檔位 (結果比原本差可以不換)，大約需要幾次 = 1 ÷ 變好機率，都照一般重塑 (保底 2 次) 計算，選定詞條是最重要的兩個。排序時有考慮啟聖之塵的消耗：花、羽每次 1 個，沙、杯、冠每次 2 個，所以是比「大約需要幾次 × 每次消耗」誰最少。</li>
+          <li>角色展示的「重塑方案」：有效詞條數 = 主要詞條每一次照檔位算 0.7、0.8、0.9、1 (第七到第十檔)，次要詞條算一半，含初始，攻擊、生命、防禦固定值都不算。重塑變好機率是「升級跳的有效詞條數比現在至少多 0.7 個」的機率，例如把歪掉的一跳拿回來 (最低檔就是 0.7)，或是升級跳都在有用詞條、但這次跳出夠多更高的檔位，只多零點幾個的檔位運氣不算 (結果比原本差可以不換)，大約需要幾次 = 1 ÷ 變好機率，都照一般重塑 (保底 2 次) 計算，選定詞條是最重要的兩個。排序時有考慮啟聖之塵的消耗：花、羽每次 1 個，沙、杯、冠每次 2 個，所以是比「大約需要幾次 × 每次消耗」誰最少。</li>
           <li>每次 (含初始) 的數值是四個檔位之一，機率相等。遊戲內部取到小數點後兩位，畫面上百分比四捨五入到小數點後一位，固定值四捨五入到整數。例如暴擊傷害最高檔顯示 7.8%，實際是 7.77%，6 次都最高檔是 46.62%，顯示 46.6%。</li>
         </ul>
       </section>
@@ -741,12 +741,14 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   /* 重塑划不划算 (角色展示的重塑方案)
    * weight：詞條 → 2 (主要詞條)、1 (次要詞條)、0 (其他，包含攻擊、生命、防禦固定值)
    * 有效詞條數 = Σ 權重/2 × 每次的檔位比例 (第七到第十檔 0.7、0.8、0.9、1.0，含初始)
-   * 重塑只重新分配升級跳、初始保留。重塑「變好」= 升級跳的有效詞條數比原本多，
-   * 包含把歪掉的升級跳拿回來，也包含升級跳都在有用詞條、但這次跳出更高的檔位 (結果不好可以不換)
+   * 重塑只重新分配升級跳、初始保留。重塑「變好」= 升級跳的有效詞條數比原本至少多 0.7 個 (MIN_GAIN)，
+   * 包含把歪掉的升級跳拿回來，也包含升級跳都在有用詞條、但這次跳出夠多更高的檔位 (結果不好可以不換)。
+   * 門檻 0.7 是使用者決定的：只多零點幾個的檔位運氣不算，一次拿回最低檔 (0.7) 的升級跳就算
    * 大約需要幾次 = 1 / 變好機率 (幾何分布的期望值)
    * 選定詞條是權重最高的兩個 (同權重照順序)，保底用一般重塑 (2 次)
    * 回傳 { ok, total (目前有效詞條數), pUp (每次重塑變好的機率), tries (平均要重塑幾次，不可能變好時 Infinity), lock } */
   const RATIO = [70, 80, 90, 100];
+  const MIN_GAIN = 140; // 0.7 個有效詞條 (×200)
   const upCache = new Map();
   // 主要詞條升級跳 jm 次、次要詞條 js 次時，升級跳有效詞條數 (×200 的整數) 的分布
   function upDist(jm, js) {
@@ -770,7 +772,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     E_each({ init: parsed.init, guarantee: guarantee == null ? 2 : guarantee, locked: lock }, (c, p) => {
       let jm = 0, js = 0;
       c.forEach((n, i) => { if (w[i] === 2) jm += n - 1; else if (w[i] === 1) js += n - 1; });
-      upDist(jm, js).forEach((q, v) => { if (v > up) pUp += p * q; });
+      upDist(jm, js).forEach((q, v) => { if (v - up >= MIN_GAIN) pUp += p * q; });
     });
     pUp = Math.min(1, pUp);
     return { ok: true, total: (init + up) / 200, pUp, tries: pUp > 1e-12 ? 1 / pUp : Infinity, lock };
@@ -786,7 +788,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     })(0, 0, 1);
   }
 
-  const api = { STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix, reshapeOdds, reshapeValue, RATIO };
+  const api = { STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix, reshapeOdds, reshapeValue, RATIO, MIN_GAIN };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.ArtifactEngine = api;
 })(typeof window !== 'undefined' ? window : this);
@@ -1780,7 +1782,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
         <td class="num">${x.v.pUp > 0 ? fmtP(x.v.pUp) : '<span class="muted">0%</span>'}</td>
         <td class="num"><b>${tries(x.v.tries)}</b></td></tr>`).join('')}
     </table></div>
-    <p class="hint">有效詞條數：主要詞條每次照檔位算 0.7 到 1，次要詞條算一半。重塑變好 = 升級跳的有效詞條數比現在多，包含把歪掉的拿回來，也包含跳出更高的檔位。照一般重塑計算，排序有考慮啟聖之塵的消耗，詳細說明在「重塑規則」。</p>`;
+    <p class="hint">有效詞條數：主要詞條每次照檔位算 0.7 到 1，次要詞條算一半。重塑變好 = 升級跳的有效詞條數比現在至少多 0.7 個，例如把歪掉的一跳拿回來，或是跳出夠多更高的檔位。照一般重塑計算，排序有考慮啟聖之塵的消耗，詳細說明在「重塑規則」。</p>`;
   }
 
   $('scPlan').addEventListener('click', e => {

@@ -185,12 +185,14 @@
   /* 重塑划不划算 (角色展示的重塑方案)
    * weight：詞條 → 2 (主要詞條)、1 (次要詞條)、0 (其他，包含攻擊、生命、防禦固定值)
    * 有效詞條數 = Σ 權重/2 × 每次的檔位比例 (第七到第十檔 0.7、0.8、0.9、1.0，含初始)
-   * 重塑只重新分配升級跳、初始保留。重塑「變好」= 升級跳的有效詞條數比原本多，
-   * 包含把歪掉的升級跳拿回來，也包含升級跳都在有用詞條、但這次跳出更高的檔位 (結果不好可以不換)
+   * 重塑只重新分配升級跳、初始保留。重塑「變好」= 升級跳的有效詞條數比原本至少多 0.7 個 (MIN_GAIN)，
+   * 包含把歪掉的升級跳拿回來，也包含升級跳都在有用詞條、但這次跳出夠多更高的檔位 (結果不好可以不換)。
+   * 門檻 0.7 是使用者決定的：只多零點幾個的檔位運氣不算，一次拿回最低檔 (0.7) 的升級跳就算
    * 大約需要幾次 = 1 / 變好機率 (幾何分布的期望值)
    * 選定詞條是權重最高的兩個 (同權重照順序)，保底用一般重塑 (2 次)
    * 回傳 { ok, total (目前有效詞條數), pUp (每次重塑變好的機率), tries (平均要重塑幾次，不可能變好時 Infinity), lock } */
   const RATIO = [70, 80, 90, 100];
+  const MIN_GAIN = 140; // 0.7 個有效詞條 (×200)
   const upCache = new Map();
   // 主要詞條升級跳 jm 次、次要詞條 js 次時，升級跳有效詞條數 (×200 的整數) 的分布
   function upDist(jm, js) {
@@ -214,7 +216,7 @@
     E_each({ init: parsed.init, guarantee: guarantee == null ? 2 : guarantee, locked: lock }, (c, p) => {
       let jm = 0, js = 0;
       c.forEach((n, i) => { if (w[i] === 2) jm += n - 1; else if (w[i] === 1) js += n - 1; });
-      upDist(jm, js).forEach((q, v) => { if (v > up) pUp += p * q; });
+      upDist(jm, js).forEach((q, v) => { if (v - up >= MIN_GAIN) pUp += p * q; });
     });
     pUp = Math.min(1, pUp);
     return { ok: true, total: (init + up) / 200, pUp, tries: pUp > 1e-12 ? 1 / pUp : Infinity, lock };
@@ -230,7 +232,7 @@
     })(0, 0, 1);
   }
 
-  const api = { STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix, reshapeOdds, reshapeValue, RATIO };
+  const api = { STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix, reshapeOdds, reshapeValue, RATIO, MIN_GAIN };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.ArtifactEngine = api;
 })(typeof window !== 'undefined' ? window : this);

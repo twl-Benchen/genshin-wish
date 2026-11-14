@@ -147,7 +147,7 @@ eq('成功率 10%，八成要幾顆', E.trialsFor(0.1, 0.8), 16);
     空之杯: P([501202, 501222, 501234, 501053, 501221, 501204, 501224, 501054, 501203]),
     理之冠: P([501063, 501201, 501032, 501232, 501202, 501063, 501062, 501061, 501203]),
   };
-  // 每件都跟蒙地卡羅比對：變好 = 升級跳的有效詞條數 (含檔位) 比原本多
+  // 每件都跟蒙地卡羅比對：變好 = 升級跳的有效詞條數 (含檔位) 比原本至少多 0.7 個
   for (const k of Object.keys(xiao)) {
     const pr = xiao[k], r = E.reshapeValue(pr, W, 2);
     const w = pr.subs.map(s => W[s.stat] || 0);
@@ -157,7 +157,7 @@ eq('成功率 10%，八成要幾顆', E.trialsFor(0.1, 0.8), 16);
       const c = E.simulateCounts({ init: pr.init, guarantee: 2, locked: r.lock });
       let v = 0;
       c.forEach((n, i) => { for (let j = 1; j < n; j++) v += w[i] * E.RATIO[Math.floor(Math.random() * 4)]; });
-      if (v > up0) ok++;
+      if (v - up0 >= E.MIN_GAIN) ok++;
     }
     check(`魈 ${k} 重塑變好機率 蒙地卡羅比對`, ok / 100000, r.pUp, 0.006);
   }
