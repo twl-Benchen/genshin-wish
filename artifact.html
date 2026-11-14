@@ -195,10 +195,9 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .gtable td.zero { color: var(--muted); opacity: .5; }
 
 /* 強化模擬：仿遊戲裡的五星聖遺物卡 (副詞條是深色底、金色細框) */
-.sim { display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); gap: 18px; align-items: stretch; }
-.sim > .art { align-self: start; }
-.sim-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-@media (max-width: 700px) { .sim { grid-template-columns: minmax(0, 1fr); } .log { flex: none; max-height: 220px; } }
+.sim { display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.sim-left { display: grid; gap: 10px; min-width: 0; }
+@media (max-width: 700px) { .sim { grid-template-columns: minmax(0, 1fr); } }
 .art { border-radius: 6px; overflow: hidden; box-shadow: 0 4px 14px rgba(30, 40, 70, .18); }
 .art-top { background: linear-gradient(150deg, #8a4b20, #c27a35); color: #fff6e6; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
 .art-top .stars { color: #ffd86b; letter-spacing: 2px; font-size: .9rem; }
@@ -216,18 +215,18 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .asub.pending { opacity: .45; }
 .asub.flash { animation: fl .8s ease; }
 @keyframes fl { from { background: #ffe7a6; } to { background: transparent; } }
-.log .tally { color: var(--muted); position: sticky; top: -6px; margin-top: -6px; padding-top: 6px; background: var(--sunken); }
+.log .tally { color: var(--muted); }
 .log .bt b { color: var(--gold); }
-.verdict { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: .85rem; color: var(--muted); min-height: 26px; }
-.verdict .badge { font-size: .82rem; font-weight: 700; border-radius: 999px; padding: 2px 12px; border: 1px solid currentColor; }
-.verdict .ok { color: var(--good); background: rgba(63, 127, 82, .1); } .verdict .ng { color: var(--bad); background: rgba(181, 72, 59, .08); }
+.verdict { font-size: .9rem; padding: 0 4px; }
+.verdict:empty { display: none; }
+.verdict .ok { color: var(--good); font-weight: 700; } .verdict .ng { color: var(--bad); font-weight: 700; }
 .btns { display: flex; flex-wrap: wrap; gap: 8px; }
 .gbtn { font: inherit; font-size: .85rem; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--btn); color: var(--btn-ink); border: 0; border-radius: 999px; padding: 6px 14px 6px 6px; height: 38px; cursor: pointer; white-space: nowrap; }
 .gbtn .ic { width: 24px; height: 24px; border-radius: 50%; display: inline-grid; place-items: center; font-size: .75rem; border: 1.5px solid var(--frame); color: var(--frame); line-height: 1; }
 .gbtn.light { background: var(--sunken); color: var(--ink); border: 1px solid var(--frame-soft); }
 .gbtn:hover { filter: brightness(1.08); }
 .gbtn:disabled { opacity: .4; cursor: not-allowed; filter: none; }
-.log { flex: 1 1 0; min-height: 150px; font-size: .85rem; overflow: auto; background: var(--sunken); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-variant-numeric: tabular-nums; }
+.log { font-size: .85rem; max-height: 210px; overflow: auto; background: var(--sunken); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-variant-numeric: tabular-nums; }
 .log div { padding: 3px 0; border-bottom: 1px solid var(--line); }
 .log div:last-child { border-bottom: 0; }
 .log .f { color: var(--gold); font-weight: 600; }
@@ -499,16 +498,18 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       <section class="card frame">
         <h2>重塑模擬</h2>
         <div class="sim">
-          <div class="art">
-            <div class="art-top"><span>聖遺物 <span class="stars">★★★★★</span></span><span class="lv" id="lv">+0</span></div>
-            <div class="art-body" id="artBody"></div>
+          <div class="sim-left">
+            <div class="art">
+              <div class="art-top"><span>聖遺物 <span class="stars">★★★★★</span></span><span class="lv" id="lv">+0</span></div>
+              <div class="art-body" id="artBody"></div>
+            </div>
+            <div class="verdict" id="verdict"></div>
           </div>
-          <div class="sim-side">
+          <div style="display:grid;gap:10px;min-width:0">
             <div class="btns">
               <button type="button" class="gbtn" id="bMain"></button>
               <button type="button" class="gbtn light" id="bBatch"><span class="ic">∑</span>批量模擬十萬顆</button>
             </div>
-            <div class="verdict" id="verdict"></div>
             <div class="log" id="log"></div>
           </div>
         </div>
@@ -1000,7 +1001,14 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     if (justDragged) return;
     const card = e.target.closest('.subrow');
     const lb = e.target.closest('.lockbtn') || (card && !e.target.closest('button, select, input, label, .num-seg, .mini-segs') ? card.querySelector('.lockbtn') : null);
-    if (lb) { if (!lb.disabled) { const r = S.rows[+lb.dataset.i]; r.lock = !r.lock; refresh(true); } return; }
+    if (lb) {
+      if (!lb.disabled) {
+        const r = S.rows[+lb.dataset.i]; r.lock = !r.lock;
+        if (r.lock && locked().length === 2 && S.g === 0) S.g = 2; // 選滿兩個時，重塑保底預設勾「重塑」
+        refresh(true);
+      }
+      return;
+    }
     const b = e.target.closest('button[data-k]'); if (!b) return;
     const r = S.rows[+b.dataset.i];
     if (b.dataset.k === 'max') { r.max = +b.dataset.v; refresh(false); }
@@ -1083,7 +1091,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     if (act !== '重塑') return { v: '-', s: '一般強化，不用啟聖之塵', t: '-' };
     if (!isFinite(k80)) return { v: '-', s: '不可能達成', t: '-' };
     const ver = k80 * S.cost / PER_VER, txt = ver < 10 ? String(+ver.toFixed(1)) : String(Math.round(ver));
-    return { v: `<small>大約</small> ${txt} 版本`, t: `大約 ${txt} 版本`, s: `大約 ${Math.round(ver * VER_DAYS).toLocaleString()} 天` };
+    return { v: `<small>大約</small> ${txt} 版本`, t: `大約 ${txt} 版本`, s: `≈${Math.round(ver * VER_DAYS).toLocaleString()} 天` };
   }
   let lastP = 0, lastCalc = null;
   function renderCalc() {
@@ -1176,8 +1184,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     }).join('');
     sim.flash = -1;
     const X = effG();
-    let v = sim.level >= 20 ? (simOk() ? '<span class="badge ok">符合目標 ✓</span>' : '<span class="badge ng">不符合目標 ✗</span>') : '';
-    if (X > 0) v += `<span>選定詞條已中 ${sim.hits} 次 (保底 ${X} 次)</span>`;
+    let v = X > 0 ? `選定詞條已中 ${sim.hits} 次 (保底 ${X} 次)` : '';
+    if (sim.level >= 20) v += `${v ? '<br>' : ''}結果：${simOk() ? '<span class="ok">符合你的目標 ✓</span>' : '<span class="ng">不符合目標 ✗</span>'}`;
     $('verdict').innerHTML = v;
     const done = sim.level >= 20;
     $('bMain').innerHTML = done ? `<span class="ic">↻</span>${reshape ? '重塑' : '換一顆再強化'}` : '<span class="ic">▲</span>強化到 +20';
@@ -1961,8 +1969,11 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       r.max = SC.plan.main.includes(s.stat) ? 5 : SC.plan.sec.includes(s.stat) ? 2 : 0;
       return r;
     });
-    // 選定詞條超過兩個時只留前兩個
-    let n = 0; S.rows.forEach(r => { if (r.lock && ++n > 2) r.lock = false; });
+    // 選定詞條跟重塑方案一樣：權重最高的兩個 (主要 2、次要 1，同權重照順序)，保底預設一般重塑
+    const wt = id => (SC.plan.main.includes(id) ? 2 : SC.plan.sec.includes(id) ? 1 : 0);
+    const pick = [0, 1, 2, 3].sort((a, b) => wt(S.rows[b].stat) - wt(S.rows[a].stat) || a - b).slice(0, 2);
+    S.rows.forEach((r, i) => { r.lock = pick.includes(i); });
+    S.g = 2;
     S.src = { label, icon: icon || '', key: S.init + ':' + S.rows.map(r => r.stat).join(',') };
     refresh(true);
     showTab('calc');
