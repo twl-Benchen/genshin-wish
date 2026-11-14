@@ -150,6 +150,7 @@
 --------------------------------------------------------------------
 ## 聖遺物重塑計算
 <img width="1300" height="1380" alt="聖遺物重塑計算畫面" src="docs/artifact-preview.webp" />
+<img width="1300" alt="角色聖遺物畫面" src="docs/genshin-wish_artifact2.png" />
 
 **網址：https://twl-benchen.github.io/genshin-wish/artifact.html**
 
