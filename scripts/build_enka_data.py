@@ -13,6 +13,7 @@ out = Path(__file__).resolve().parent.parent / "enka-data.js"
 avatars = json.loads((src / "avatars.json").read_text(encoding="utf-8"))
 loc = json.loads((src / "locs.json").read_text(encoding="utf-8"))["zh-tw"]
 affixes = json.loads((src / "affixes.json").read_text(encoding="utf-8"))
+relics = json.loads((src / "relics.json").read_text(encoding="utf-8"))
 
 
 def base(path, prefix):
@@ -40,7 +41,10 @@ for key, a in avatars.items():
 # 五星副詞條：ID → [PropType, 第幾檔 1..4, 數值]，給測試核對 ID 解碼用
 affix5 = {k: [v["PropType"], v["Position"], v["Value"]] for k, v in affixes.items() if k.startswith("501")}
 
-data = {"chars": chars, "loc": loc, "affix5": affix5}
+# 聖遺物套裝：套裝 ID → 繁中名稱。API 回應的聖遺物圖示名 UI_RelicIcon_{套裝ID}_{部位} 帶有套裝 ID
+sets = {sid: loc.get(str(v.get("Name")), "") for sid, v in relics.get("Sets", {}).items()}
+
+data = {"chars": chars, "loc": loc, "affix5": affix5, "sets": sets}
 js = (
     "/* Enka.Network 資料 (由 scripts/build_enka_data.py 產生，不要手改) */\n"
     "(function (root) {\n  const data = "

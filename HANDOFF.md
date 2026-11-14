@@ -304,6 +304,14 @@
 
 `enka-data.js`：`scripts/build_enka_data.py` 從 `git clone https://github.com/EnkaNetwork/API-docs` 的 `store/gi` 產生，內容是角色 (繁中名、元素、星級、圖示名、技能順序與圖示、命座加天賦用的 ProudMap、造型)、繁中名稱表 (武器、套裝、屬性名) 與五星副詞條 ID 表，約 38 KB，build.py 內嵌進 artifact.html。圖片網址：頭像 `UI_AvatarIcon_{名}`、立繪 `UI_Gacha_AvatarImg_{名}` (有造型時 `UI_Costume_{造型}`)、武器與聖遺物用回應裡 `flat.icon`，都在 `https://enka.network/ui/{名}.png`。開發環境連不到 Enka 和它的圖片，畫面是用假資料和假圖測的，真實立繪的裁切位置要在網站上確認。
 
+套裝名稱：API 的 `flat.setNameTextMapHash` 在 Enka 的繁中名稱表查不到 (實測顯示「沒有套裝效果」)，改用聖遺物圖示名 `UI_RelicIcon_{套裝ID}_{部位}` 裡的套裝 ID 查 enka-data.js 的 `sets` (來自 relics.json 的 Sets)。沒有 2 件以上的套裝時不顯示套裝區塊。
+
+版面：立繪放在比左欄寬 35% 的框裡，延伸到中間欄底下，從大約左欄 70% 處往右淡出 (mask-image)；天賦三個圖示放在中間欄最下面 (被命座加過的等級用元素亮色)；立繪上只留角色名、等級、命座。「在 Enka 開啟」放在上方資訊列右邊。
+
+來源標註：Enka 的 API 文件沒有要求標註來源，也沒有使用條款，但頁面底部仍寫「資料與圖片來自 Enka.Network，遊戲素材版權屬於 HoYoverse，本網站與兩者無關」。
+
+流量：圖片由瀏覽器直接向 enka.network 載入，不經過 Worker；Worker 只轉一次 JSON (每次查詢 1 個請求)。Cloudflare Workers 免費方案每天 10 萬個請求，不另外算流量。
+
 部位對照 (Enka 的 equipType)：EQUIP_BRACER 生之花、EQUIP_NECKLACE 死之羽、EQUIP_SHOES 時之沙、EQUIP_RING 空之杯、EQUIP_DRESS 理之冠。
 
 ## 資料來源
