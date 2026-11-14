@@ -378,7 +378,11 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .sc-bottom { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
 /* 重塑方案和詞條明細兩格一樣高：多出來的高度平均分到帶入按鈕的上下，按鈕不會離表格太遠 */
 .sc-detail { display: flex; flex-direction: column; }
-.sc-detail .apply-box { margin: auto 0; padding-top: 4px; }
+/* 帶入按鈕那塊撐滿剩下的高度，表格到按鈕、按鈕到說明、說明到卡片底部的間距約 3:2:3 (卡片底部內距併進最後一段) */
+.sc-detail { padding-bottom: 0; }
+.sc-detail .apply-box { flex: 1; margin: -10px 0 0; gap: 0; grid-template-rows: minmax(18px, 3fr) auto minmax(12px, 2fr) auto minmax(18px, 3fr); }
+.sc-detail .apply-box > :first-child { grid-row: 2; }
+.sc-detail .apply-box > :last-child { grid-row: 4; }
 @media (max-width: 900px) { .sc-bottom { align-items: start; } }
 @media (max-width: 900px) { .sc-bottom { grid-template-columns: minmax(0, 1fr); } }
 .sc-detail, .sc-plan { gap: 10px; }
