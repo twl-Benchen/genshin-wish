@@ -116,7 +116,7 @@ h1 .star { color: var(--star-on); }
 /* 以下是聖遺物頁自己的樣式，主題色與外框沿用抽卡頁 (build.py 從 page.html 帶入) */
 .panel { padding: 22px; display: grid; gap: 20px; }
 fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 10px; min-width: 0; }
-legend { font-family: var(--f-display); font-weight: 600; font-size: 1.05rem; padding: 0; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+legend { width: 100%; box-sizing: border-box; font-family: var(--f-display); font-weight: 600; font-size: 1.05rem; padding: 0; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
 legend .dot { width: 10px; height: 10px; transform: rotate(45deg); display: inline-block; background: var(--gold); }
 .hint { font-size: .78rem; color: var(--muted); margin: 0; }
 hr { border: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--frame), transparent); margin: 0; }
@@ -232,6 +232,32 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .tabs button { font: inherit; font-size: .92rem; font-weight: 500; padding: 7px 18px; border-radius: 999px; border: 1px solid var(--frame); background: var(--surface); color: var(--ink); cursor: pointer; }
 .tabs button[aria-selected="true"] { background: var(--btn); color: var(--btn-ink); border-color: var(--btn); font-weight: 700; }
 .rules-page { max-width: 980px; display: grid; gap: 20px; }
+.legend-note { margin-left: auto; font-family: var(--f-body); font-size: .74rem; font-weight: 400; color: var(--muted); }
+/* 分享結果視窗 (跟抽卡頁一樣) */
+.note { font-size: .8rem; color: var(--muted); margin: 0; }
+.seg { display: inline-flex; border: 1px solid var(--frame-soft); border-radius: 999px; overflow: hidden; background: var(--sunken); }
+.seg button { font: inherit; font-size: .82rem; padding: 5px 12px; background: transparent; color: var(--muted); border: 0; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--frame-soft); }
+.seg button[aria-pressed="true"] { background: var(--btn); color: var(--btn-ink); font-weight: 700; }
+dialog.hist { padding: 0; border: 0; background: transparent; color: var(--ink); width: min(980px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); }
+dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
+.hist-in { padding: 24px 24px 20px; display: grid; gap: 12px; max-height: calc(100dvh - 24px); overflow-y: auto; }
+.hist-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.hist-head h2 { font-family: var(--f-display); font-size: 1.3rem; margin: 0; display: flex; gap: 8px; align-items: center; }
+.hist-head h2 span { color: var(--star-on); }
+.hist-x { width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--btn); color: var(--btn-ink); font-size: 1rem; cursor: pointer; flex: none; }
+.hist-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.hist-actions .gbtn { min-width: 130px; }
+.result-img-btn { font-size: .92rem; padding: 7px 18px 7px 7px; box-shadow: 0 2px 10px rgba(30, 40, 70, .18); }
+.result-img-orient { display: flex; justify-content: center; }
+.result-img-prev { display: grid; place-items: center; min-height: 160px; background: var(--sunken); border-radius: 6px; padding: 10px; }
+.result-img-prev img { display: block; max-width: 100%; max-height: 58vh; width: auto; height: auto; border-radius: 4px; box-shadow: 0 4px 16px rgba(30, 40, 70, .2); }
+.site-link-box { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; }
+#qrSmall { width: 123px; height: 123px; border-radius: 6px; border: 1px solid var(--frame); background: #fffaf0; }
+.site-text { display: grid; gap: 6px; min-width: 0; }
+.site-text b { font-family: var(--f-display); font-size: 1.05rem; }
+.site-text .url { font-family: var(--f-num); font-size: .85rem; color: var(--gold); word-break: break-all; user-select: all; }
+.site-act { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .rules { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; font-size: .9rem; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
@@ -260,6 +286,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
       <button type="button" role="tab" id="tabBtnCalc" aria-controls="tabCalc" aria-selected="true">計算</button>
       <button type="button" role="tab" id="tabBtnRules" aria-controls="tabRules" aria-selected="false">重塑規則</button>
     </nav>
+    <button type="button" class="gbtn result-img-btn" id="resultImgBtn"><span class="ic"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><circle cx="12" cy="3.5" r="2" fill="currentColor"/><circle cx="4" cy="8" r="2" fill="currentColor"/><circle cx="12" cy="12.5" r="2" fill="currentColor"/><path d="M10.3 4.5 5.7 7M5.7 9l4.6 2.5" stroke="currentColor" stroke-width="1.4" fill="none"/></svg></span>分享結果</button>
   </div>
 
   <div class="layout" id="tabCalc" role="tabpanel" aria-labelledby="tabBtnCalc">
@@ -273,9 +300,9 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
       </fieldset>
       <hr>
       <fieldset>
-        <legend><span class="dot"></span>副詞條與目標</legend>
+        <legend><span class="dot"></span>副詞條與目標<span class="legend-note">長按可以拖動順序</span></legend>
         <div class="subrows" id="rows"></div>
-        <p class="hint">金色圓圈是重塑的選定詞條，選兩個。次數只算升級跳，選最大代表不限制。長按卡片可以拖動排序。</p>
+        <p class="hint">金色圓圈是重塑的選定詞條，選兩個。次數只算升級跳，選最大代表不限制。</p>
       </fieldset>
       <hr>
       <fieldset>
@@ -341,6 +368,39 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
       </section>
   </div>
 </div>
+
+<dialog class="hist" id="resultImgDlg" aria-labelledby="resultImgTitle">
+  <div class="hist-in frame">
+    <div class="hist-head">
+      <h2 id="resultImgTitle"><span>✦</span>分享結果</h2>
+      <button type="button" class="hist-x" id="resultImgClose" aria-label="關閉">✕</button>
+    </div>
+    <div class="result-img-orient">
+      <div class="seg" id="resultImgOrient" role="group" aria-label="圖片方向">
+        <button type="button" data-v="landscape">橫式</button>
+        <button type="button" data-v="portrait">直式</button>
+      </div>
+    </div>
+    <div class="result-img-prev">
+      <p class="note" id="resultImgWait">圖片產生中…</p>
+      <img id="resultImgPic" alt="這次計算結果的分享圖" hidden>
+    </div>
+    <div class="hist-actions">
+      <button type="button" class="gbtn" id="resultImgSave" disabled><span class="ic">↓</span>下載圖片</button>
+      <button type="button" class="gbtn light" id="resultImgSend" hidden><span class="ic">↗</span>分享圖片</button>
+    </div>
+    <p class="note" style="text-align: center">手機也可以長按上面的圖片儲存。有按過重塑模擬的話，圖上會附最後一顆的結果。</p>
+    <hr>
+    <div class="site-link-box">
+      <canvas id="qrSmall" role="img" aria-label="網站的 QR code"></canvas>
+      <div class="site-text">
+        <b>把這個網站分享給朋友</b>
+        <span class="url" id="siteUrl">twl-benchen.github.io/genshin-wish/artifact.html</span>
+        <span class="site-act"><button type="button" class="gbtn light" id="copyUrl"><span class="ic">⧉</span>複製網址</button><span class="note" id="copyMsg" role="status"></span></span>
+      </div>
+    </div>
+  </div>
+</dialog>
 
 <script>
 /* 聖遺物重塑計算核心：瀏覽器 (window.ArtifactEngine) 與 Node (module.exports) 共用
@@ -674,10 +734,12 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
   $('comboBox').addEventListener('click', e => { const b = e.target.closest('button[data-k="combo"]'); if (b) { S.cJumps = +b.dataset.v; refresh(false); } });
 
   /* ---------- 計算結果 ---------- */
-  let lastP = 0;
+  let lastP = 0, lastCalc = null;
   function renderCalc() {
     const { success, marginal } = E.exact(calcOpts()), n = N();
     lastP = success;
+    const k80_ = E.trialsFor(success, 0.8);
+    lastCalc = { success, marginal, n, k80: k80_, act: S.g > 0 && locked().length === 2 ? '重塑' : '強化' };
     const act = S.g > 0 && locked().length === 2 ? '重塑' : '強化';
     $('pct').textContent = fmtP(success);
     $('pctDesc').textContent = success > 0 && success < 1 ? `大約每${act} ${(1 / success).toFixed(1)} 顆成功 1 顆` : (success >= 1 ? '一定成功' : '不可能達成');
@@ -825,6 +887,342 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
     if (resetSim || !sim) { tally = { n: 0, ok: 0 }; batchHtml = ''; newSim(); }
     renderSim();
   }
+
+  /* ---------- 分享結果：跟抽卡頁一樣，用 canvas 畫一張羊皮紙視窗的圖，可切換橫式/直式 ---------- */
+  const SITE = 'https://twl-benchen.github.io/genshin-wish/artifact.html';
+  // 網站首頁的 QR code (跟抽卡頁同一組，版本 4、容錯 M，用 segno 產生)。首頁左上角可以切到聖遺物頁
+  const SITE_QR = ['111111100110110001111001001111111','100000100011111111001010101000001','101110101100010011111001101011101','101110101011101010001110101011101','101110101100110101100100101011101','100000101111111110101110101000001','111111101010101010101010101111111','000000001001101100000110100000000','101111100001111101000010101111100','000101001000100010011101001101111','011110100110000110100100010010110','101001010101001100011110011011101','001100110110100000110101110011011','011011010001001110001010101000111','111000100000000000010010011001010','101010010000000010111101011011100','000010100100101001010011110110001','000001001010101011110001111101101','110101110011010101000010101110110','010010001001000011111000010111110','010000100000011010011111110111010','110010011111000101100101111100001','101000100110010110101000110110110','100111011100111100100110100011111','101101110001000101000011111110001','000000001100101000011100100010101','111111100111011100101101101010110','100000101111101000001111100011111','101110101001111100100100111111010','101110101000000110001011010010001','101110101011100000010101111101100','100000100010011010011100000011100','111111101001011001010011111100010'];
+  const K = {
+    sky1: '#8fb6dd', sky2: '#dbe7f2', surface: '#f4efe6', sunken: '#ebe3d4', head: '#e4d4b2', frame: '#d3bc8e', frameSoft: '#e3d4b4',
+    ink: '#4a5366', muted: '#847b6c', line: '#ddd0b8', gold: '#bd6932', goldSoft: '#f3e2cb', heroA: '#8a4b20', heroB: '#b77630', heroInk: '#fff6e6',
+    star: '#e0a93a', good: '#3f7f52', bad: '#b5483b', card: '#ece5d8', cardInk: '#495366',
+  };
+  const FD = '"Noto Serif TC", "Songti TC", "PMingLiU", serif';
+  const FB = '"Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif';
+  const FN = '"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace';
+  const SM = 36, SPD = 52;
+  let CX = 0, CW = 0;
+  const setCol = (x, w) => { CX = x; CW = w; };
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+  function text(ctx, s, x, y, font, color, align) {
+    ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align || 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText(s, x, y);
+    return ctx.measureText(s).width;
+  }
+  function fitFont(ctx, s, weight, size, family, maxW) {
+    let f = size;
+    do { ctx.font = `${weight} ${f}px ${family}`; if (ctx.measureText(s).width <= maxW) break; f -= 1; } while (f > 10);
+    return ctx.font;
+  }
+  function sectionTitle(ctx, s, y, right) {
+    text(ctx, '✦', CX, y, `600 26px ${FD}`, K.star);
+    text(ctx, s, CX + 34, y, `600 28px ${FD}`, K.ink);
+    if (right) text(ctx, right, CX + CW, y, `400 18px ${FB}`, K.muted, 'right');
+  }
+  function drawQR(ctx, x, y, module, dark, light) {
+    const n = SITE_QR.length, quiet = 4, size = (n + quiet * 2) * module;
+    ctx.fillStyle = light; ctx.fillRect(x, y, size, size);
+    ctx.fillStyle = dark;
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (SITE_QR[r][c] === '1') ctx.fillRect(x + (c + quiet) * module, y + (r + quiet) * module, module, module);
+    return size;
+  }
+  // 選定詞條的圓圈十字星 (跟網頁同色)
+  function drawStar(ctx, cx, cy, r) {
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fillStyle = '#eecc7b'; ctx.fill();
+    const k = r / 10.25, P = (x, y) => [cx + (x - 12) * k, cy + (y - 12) * k];
+    ctx.beginPath();
+    ctx.moveTo(...P(12, 3.6));
+    ctx.quadraticCurveTo(...P(13.2, 10.8), ...P(20.4, 12)); ctx.quadraticCurveTo(...P(13.2, 13.2), ...P(12, 20.4));
+    ctx.quadraticCurveTo(...P(10.8, 13.2), ...P(3.6, 12)); ctx.quadraticCurveTo(...P(10.8, 10.8), ...P(12, 3.6));
+    ctx.fillStyle = '#cc842c'; ctx.fill();
+  }
+  // 升級跳次數的圓圈
+  function drawJump(ctx, cx, cy, r, j) {
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fillStyle = '#e6cc8d'; ctx.fill();
+    text(ctx, String(j), cx, cy + r * 0.42, `900 ${Math.round(r * 1.25)}px ${FB}`, '#83570a', 'center');
+  }
+
+  const goalText = (r, n) => (r.mode === 'cnt' ? (cap(r) < n ? `最多跳 ${cap(r)} 次` : '沒有限制') : (r.target == null ? '沒有要求' : `至少 ${E.dispText(r.stat, r.target)}`));
+  function shareChips() {
+    const lk = locked(), two = lk.length === 2;
+    const kind = { 2: '重塑 (保底 2 次)', 3: '高階重塑 (保底 3 次)', 4: '諭告重塑 (保底 4 次)' }[effG()] || '不重塑';
+    const c = [['s', `初始 ${S.init} 詞條`], ['g', kind]];
+    if (two) c.push(['g', `選定 ${name(lk[0])} + ${name(lk[1])}`]);
+    if (S.comboOn && two) c.push(['g', `選定詞條合計至少跳 ${S.cJumps} 次`]);
+    return c;
+  }
+  function layoutChips(ctx, chips) {
+    ctx.font = `500 20px ${FB}`;
+    let x = 0, row = 0;
+    return {
+      items: chips.map(([k, s]) => {
+        const w = ctx.measureText(s).width + 26;
+        if (x > 0 && x + w > CW) { x = 0; row++; }
+        const it = { k, s, x, row, w }; x += w + 10; return it;
+      }),
+      rows: chips.length ? row + 1 : 0,
+    };
+  }
+
+  const SH = { stats: 140 + 16 + 120, tableHead: 48 + 54, row: 64, cardTitle: 48, cardTop: 62, cardRow: 56, foot: 30 + 214, gap: 34 };
+  const tableH = () => SH.tableHead + 4 * SH.row;
+  const cardH = () => SH.cardTitle + SH.cardTop + 4 * SH.cardRow + 22 + (tally.n ? 40 : 0);
+  const hasCard = () => sim && sim.level >= 20;
+
+  // 三個重點數字：成功機率 (大) + 八成機率 + 升級跳次數
+  function shareStats(ctx, y) {
+    const d = lastCalc;
+    const g = ctx.createLinearGradient(CX, y, CX + CW, y + 140);
+    g.addColorStop(0, K.heroA); g.addColorStop(1, K.heroB);
+    roundRect(ctx, CX, y, CW, 140, 6); ctx.fillStyle = g; ctx.fill();
+    text(ctx, '全部條件同時符合', CX + 24, y + 38, `500 21px ${FB}`, K.heroInk);
+    text(ctx, fmtP(d.success), CX + 24, y + 104, `600 62px ${FN}`, K.heroInk);
+    const desc = d.success > 0 && d.success < 1 ? `大約每${d.act} ${(1 / d.success).toFixed(1)} 顆成功 1 顆` : (d.success >= 1 ? '一定成功' : '不可能達成');
+    text(ctx, desc, CX + CW - 24, y + 104, `400 20px ${FB}`, K.heroInk, 'right');
+    y += 156;
+    const bw = (CW - 16) / 2;
+    const box = (x, k, v, s) => {
+      roundRect(ctx, x, y, bw, 120, 6); ctx.fillStyle = K.sunken; ctx.fill(); ctx.strokeStyle = K.frameSoft; ctx.lineWidth = 1; ctx.stroke();
+      text(ctx, k, x + 20, y + 34, `400 19px ${FB}`, K.muted);
+      text(ctx, v, x + 20, y + 80, `600 38px ${FN}`, K.ink);
+      ctx.font = fitFont(ctx, s, 400, 16, FB, bw - 40); ctx.fillStyle = K.muted; ctx.textAlign = 'left'; ctx.fillText(s, x + 20, y + 108);
+    };
+    box(CX, `八成機率成功，需要${d.act}`, isFinite(d.k80) ? `${d.k80.toLocaleString()} 顆` : '-',
+      !isFinite(d.k80) ? '不可能達成' : `${d.act} ${d.k80} 顆後至少成功 1 顆的機率 ${fmtP(1 - Math.pow(1 - d.success, d.k80))}`);
+    box(CX + bw + 16, '升級跳的次數', `${d.n} 次`, S.init === 4 ? '初始 4 詞條' : '初始 3 詞條，+4 先新增詞條');
+    return y + 120;
+  }
+
+  // 每個詞條升級跳幾次的機率表
+  function shareTable(ctx, y) {
+    const d = lastCalc, n = d.n;
+    sectionTitle(ctx, '每個詞條升級跳幾次', y + 26, '精確值');
+    y += 48;
+    const w0 = Math.round(CW * 0.27), w1 = Math.round(CW * 0.17), rest = CW - w0 - w1, cw = rest / (n + 2);
+    const xs = [0, w0, w0 + w1]; for (let k = 1; k <= n + 2; k++) xs.push(w0 + w1 + k * cw);
+    const top = y, hh = 54;
+    ctx.fillStyle = K.head; ctx.fillRect(CX, y, CW, hh);
+    const heads = ['詞條', '目標'].concat(Array.from({ length: n + 1 }, (_, k) => `跳 ${k} 次`), ['符合目標']);
+    heads.forEach((h, i) => { ctx.font = fitFont(ctx, h, 700, 18, FB, xs[i + 1] - xs[i] - 8); ctx.fillStyle = K.ink; ctx.textAlign = 'center'; ctx.fillText(h, CX + (xs[i] + xs[i + 1]) / 2, y + 34); });
+    y += hh;
+    S.rows.forEach((r, i) => {
+      const mid = y + SH.row / 2;
+      let inP = 0;
+      for (let k = 0; k <= n; k++) {
+        const p = d.marginal[i][k + 1], wgt = rowProb(i, k + 1);
+        inP += p * wgt;
+        const x = CX + xs[k + 2];
+        if (wgt >= 1) { ctx.fillStyle = K.goldSoft; ctx.fillRect(x, y, cw, SH.row); }
+        else if (wgt > 0) { ctx.fillStyle = 'rgba(243,226,203,.55)'; ctx.fillRect(x, y, cw, SH.row); }
+        ctx.font = fitFont(ctx, p === 0 ? '0' : fmtP(p), wgt > 0 ? 600 : 400, 18, FN, cw - 8);
+        ctx.fillStyle = p === 0 ? 'rgba(132,123,108,.5)' : wgt > 0 ? K.gold : K.ink; ctx.textAlign = 'center';
+        ctx.fillText(p === 0 ? '0' : fmtP(p), x + cw / 2, mid + 7);
+      }
+      let tx = CX + 14;
+      if (r.lock) { drawStar(ctx, tx + 12, mid, 12); tx += 32; }
+      ctx.font = fitFont(ctx, name(i), 500, 21, FB, w0 - (tx - CX) - 8); ctx.fillStyle = K.ink; ctx.textAlign = 'left'; ctx.fillText(name(i), tx, mid + 7);
+      const g = goalText(r, n);
+      ctx.font = fitFont(ctx, g, 400, 17, FB, w1 - 12); ctx.fillStyle = K.muted; ctx.textAlign = 'center'; ctx.fillText(g, CX + w0 + w1 / 2, mid + 6);
+      text(ctx, fmtP(inP), CX + xs[n + 3] + cw / 2, mid + 7, `600 19px ${FN}`, K.ink, 'center');
+      y += SH.row;
+    });
+    ctx.strokeStyle = K.line; ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) { const ly = top + hh + i * SH.row; ctx.beginPath(); ctx.moveTo(CX, ly); ctx.lineTo(CX + CW, ly); ctx.stroke(); }
+    xs.slice(1, -1).forEach(x => { ctx.beginPath(); ctx.moveTo(CX + x, top); ctx.lineTo(CX + x, y); ctx.stroke(); });
+    ctx.strokeStyle = K.frameSoft; ctx.strokeRect(CX, top, CW, y - top);
+    return y;
+  }
+
+  // 最後一顆重塑模擬的聖遺物卡
+  function shareCard(ctx, y) {
+    sectionTitle(ctx, '重塑模擬', y + 26, simOk() ? '符合目標 ✓' : '不符合目標 ✗');
+    y += 48;
+    const w = Math.min(CW, 620), x = CX, h = SH.cardTop + 4 * SH.cardRow + 22;
+    ctx.save(); ctx.shadowColor = 'rgba(30,40,70,.18)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 4;
+    roundRect(ctx, x, y, w, h, 8); ctx.fillStyle = K.card; ctx.fill(); ctx.restore();
+    ctx.save(); roundRect(ctx, x, y, w, h, 8); ctx.clip();
+    const g = ctx.createLinearGradient(x, y, x + w, y + SH.cardTop); g.addColorStop(0, '#8a4b20'); g.addColorStop(1, '#c27a35');
+    ctx.fillStyle = g; ctx.fillRect(x, y, w, SH.cardTop); ctx.restore();
+    const tw = text(ctx, '聖遺物', x + 20, y + 40, `500 22px ${FB}`, '#fff6e6');
+    text(ctx, '★★★★★', x + 30 + tw, y + 40, `400 20px ${FB}`, '#ffd86b');
+    roundRect(ctx, x + w - 86, y + 15, 66, 32, 4); ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fill();
+    text(ctx, '+20', x + w - 53, y + 39, `600 20px ${FN}`, '#fff6e6', 'center');
+    let ry = y + SH.cardTop + 11;
+    S.rows.forEach((r, i) => {
+      const mid = ry + SH.cardRow / 2, j = sim.counts[i] - 1;
+      if (j > 0) drawJump(ctx, x + 34, mid, 13, j);
+      text(ctx, name(i), x + 62, mid + 8, `400 22px ${FB}`, K.cardInk);
+      text(ctx, E.fmtValue(r.stat, sim.vals[i]), x + w - 64, mid + 8, `600 22px ${FN}`, K.cardInk, 'right');
+      if (r.lock) drawStar(ctx, x + w - 36, mid, 13);
+      if (i < 3) { ctx.strokeStyle = '#cfc6b4'; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(x + 20, ry + SH.cardRow); ctx.lineTo(x + w - 20, ry + SH.cardRow); ctx.stroke(); ctx.setLineDash([]); }
+      ry += SH.cardRow;
+    });
+    y += h;
+    if (tally.n) {
+      const s = `已${lastCalc.act} ${tally.n} 顆，成功 ${tally.ok} 顆 (${(tally.ok / tally.n * 100).toFixed(1)}%)，精確值 ${fmtP(lastP)}`;
+      ctx.font = fitFont(ctx, s, 400, 19, FB, CW); ctx.fillStyle = K.muted; ctx.textAlign = 'left'; ctx.fillText(s, CX, y + 32);
+      y += 40;
+    }
+    return y;
+  }
+
+  function shareFooter(ctx, y) {
+    const dg = ctx.createLinearGradient(CX, 0, CX + CW, 0);
+    dg.addColorStop(0, 'rgba(211,188,142,0)'); dg.addColorStop(0.5, K.frame); dg.addColorStop(1, 'rgba(211,188,142,0)');
+    ctx.fillStyle = dg; ctx.fillRect(CX, y, CW, 1.5);
+    y += 30;
+    roundRect(ctx, CX - 4, y - 4, 213, 213, 8); ctx.fillStyle = '#fffaf0'; ctx.fill(); ctx.strokeStyle = K.frame; ctx.lineWidth = 1.5; ctx.stroke();
+    drawQR(ctx, CX, y, 5, '#2f3441', '#fffaf0');
+    const fx = CX + 240, fw = CW - 240;
+    text(ctx, '一起來算算重塑機率', fx, y + 62, `600 34px ${FD}`, K.ink);
+    const url = SITE.replace('https://', '');
+    ctx.font = fitFont(ctx, url, 600, 22, FN, fw); ctx.fillStyle = K.gold; ctx.textAlign = 'left'; ctx.fillText(url, fx, y + 106);
+    const l1 = '掃描 QR code 後點左上角「聖遺物」，或直接前往網址';
+    const l2 = '機率依照社群整理的重塑規則精確計算，結果僅供參考，與米哈遊官方無關。';
+    ctx.font = fitFont(ctx, l1, 400, 18, FB, fw); ctx.fillStyle = K.muted; ctx.fillText(l1, fx, y + 144);
+    ctx.font = fitFont(ctx, l2, 400, 16, FB, fw); ctx.fillText(l2, fx, y + 176);
+    return y + 214;
+  }
+
+  // mode：'landscape' 橫式 (寬 1920，左欄重點數字與模擬卡，右欄機率表與 QR code) 或 'portrait' 直式 (寬 1080，由上而下)
+  async function renderShare(mode) {
+    const land = mode !== 'portrait';
+    let cv = document.createElement('canvas'), ctx = cv.getContext('2d');
+    const sample = '原神聖遺物重塑計算全部條件同時符合大約每顆成功一定不可能達成八成機率需要升級跳的次數初始詞條先新增每個幾目標精確值符合模擬已最多沒有限制要求至少選定合計保底高階諭告生命值攻擊力防禦力元素精通充能效率暴擊率傷害一起來算掃描或直接前往網址後點左上角依照社群整理規則結果僅供參考與米哈遊官方無關 0123456789,.%()+/★✦✓✗';
+    try {
+      await Promise.race([
+        Promise.all([`800 50px ${FD}`, `600 28px ${FD}`, `400 20px ${FB}`, `500 20px ${FB}`, `700 20px ${FB}`, `900 20px ${FB}`, `600 40px ${FN}`, `400 20px ${FN}`].map(f => document.fonts.load(f, sample))),
+        new Promise(r => setTimeout(r, 3000)),
+      ]);
+    } catch (e) {}
+    const SW = land ? 1920 : 1080, FX = SM + SPD, FW = SW - 2 * (SM + SPD);
+    const LW = 800, CG = 56;
+    const left = land ? [FX, LW] : [FX, FW], right = land ? [FX + LW + CG, FW - LW - CG] : [FX, FW];
+    setCol(FX, FW);
+    const chips = layoutChips(ctx, shareChips());
+    const G = SH.gap, card = hasCard();
+    const headH = 64 + 56 + 20 + chips.rows * 46 + G;
+    const leftH = land ? SH.stats + (card ? G + cardH() : 0) : 0;
+    const rightH = land ? tableH() + G + SH.foot : 0;
+    const bodyH = land ? Math.max(leftH, rightH) : SH.stats + G + tableH() + (card ? G + cardH() : 0) + G + SH.foot;
+    const winH = headH + bodyH + 52, H = winH + 2 * SM, scale = 2;
+    cv.width = SW * scale; cv.height = H * scale;
+    ctx = cv.getContext('2d'); ctx.scale(scale, scale);
+
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, K.sky1); sky.addColorStop(Math.min(0.6, 700 / H), K.sky2); sky.addColorStop(1, '#e4ecf4');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, SW, H);
+    [[0.15, 90, 260], [0.83, 60, 220], [0.57, 140, 180]].forEach(([fx, y, r]) => {
+      const x = fx * SW, g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g; ctx.fillRect(x - r, y - r, 2 * r, 2 * r);
+    });
+    const wx = SM, wy = SM, ww = SW - 2 * SM, wh = winH;
+    ctx.save(); ctx.shadowColor = 'rgba(30,40,70,.22)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 8;
+    roundRect(ctx, wx, wy, ww, wh, 6); ctx.fillStyle = K.surface; ctx.fill(); ctx.restore();
+    roundRect(ctx, wx, wy, ww, wh, 6); ctx.strokeStyle = K.frame; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = K.frameSoft; ctx.lineWidth = 1.5; ctx.strokeRect(wx + 12, wy + 12, ww - 24, wh - 24);
+    ctx.fillStyle = K.frame;
+    [[wx + 8, wy + 8, 1, 1], [wx + ww - 8, wy + 8, -1, 1], [wx + 8, wy + wh - 8, 1, -1], [wx + ww - 8, wy + wh - 8, -1, -1]].forEach(([x, y, sx, sy]) => {
+      ctx.fillRect(sx > 0 ? x : x - 24, sy > 0 ? y : y - 3, 24, 3);
+      ctx.fillRect(sx > 0 ? x : x - 3, sy > 0 ? y : y - 24, 3, 24);
+    });
+
+    let y = wy + 64;
+    text(ctx, '✦', CX, y + 20, `800 44px ${FD}`, K.star);
+    text(ctx, '原神聖遺物重塑計算', CX + 56, y + 22, `800 50px ${FD}`, K.ink);
+    const now = new Date();
+    text(ctx, now.getFullYear() + '/' + String(now.getMonth() + 1).padStart(2, '0') + '/' + String(now.getDate()).padStart(2, '0'), CX + CW, y + 18, `400 20px ${FN}`, K.muted, 'right');
+    y += 76;
+    chips.items.forEach(c => {
+      const cy = y + c.row * 46;
+      roundRect(ctx, CX + c.x, cy, c.w, 36, 18); ctx.fillStyle = c.k === 'g' ? K.goldSoft : K.sunken; ctx.fill();
+      if (c.k === 's') { ctx.strokeStyle = K.frameSoft; ctx.lineWidth = 1; ctx.stroke(); }
+      text(ctx, c.s, CX + c.x + 13, cy + 25, `${c.k === 's' ? 400 : 700} 20px ${FB}`, c.k === 'g' ? K.gold : K.ink);
+    });
+    const y0 = wy + headH;
+    if (land) {
+      setCol(left[0], left[1]);
+      y = shareStats(ctx, y0);
+      if (card) shareCard(ctx, y + G);
+      setCol(right[0], right[1]);
+      y = shareTable(ctx, y0) + G;
+      shareFooter(ctx, Math.max(y, y0 + bodyH - SH.foot)); // QR code 貼齊底部
+    } else {
+      y = shareStats(ctx, y0) + G;
+      y = shareTable(ctx, y) + G;
+      if (card) y = shareCard(ctx, y) + G;
+      shareFooter(ctx, y);
+    }
+    setCol(FX, FW);
+    return cv;
+  }
+
+  let shareBlob = null, shareUrl = '';
+  const UIKEY = 'artcalc-ui';
+  let ui = {}; try { ui = JSON.parse(localStorage.getItem(UIKEY)) || {}; } catch (e) {}
+  const shareMode = () => (ui.shareMode === 'portrait' ? 'portrait' : 'landscape');
+  const paintShareMode = () => $('resultImgOrient').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === shareMode() ? 'true' : 'false'));
+  const shareName = () => { const n = new Date(); return '原神聖遺物重塑-' + n.getFullYear() + String(n.getMonth() + 1).padStart(2, '0') + String(n.getDate()).padStart(2, '0') + '.png'; };
+  function paintQrSmall() {
+    const cv = $('qrSmall'), n = SITE_QR.length + 8, mod = 3, dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+    cv.width = n * mod * dpr; cv.height = n * mod * dpr;
+    const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
+    drawQR(ctx, 0, 0, mod, '#2f3441', '#fffaf0');
+  }
+  async function openShare() {
+    const dlg = $('resultImgDlg');
+    $('resultImgPic').hidden = true; $('resultImgWait').hidden = false; $('resultImgWait').textContent = '圖片產生中…';
+    $('resultImgSave').disabled = true; $('resultImgSend').hidden = true; $('copyMsg').textContent = '';
+    paintQrSmall(); paintShareMode();
+    if (!dlg.open) { if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', ''); }
+    const ticket = (openShare.ticket = (openShare.ticket || 0) + 1);
+    try {
+      const cv = await renderShare(shareMode());
+      if (ticket !== openShare.ticket) return;
+      $('resultImgPic').alt = '這次計算結果的分享圖 (' + (shareMode() === 'portrait' ? '直式' : '橫式') + ')';
+      shareBlob = await new Promise(r => cv.toBlob(r, 'image/png'));
+      if (shareUrl) URL.revokeObjectURL(shareUrl);
+      shareUrl = URL.createObjectURL(shareBlob);
+      $('resultImgPic').src = shareUrl;
+      $('resultImgPic').hidden = false; $('resultImgWait').hidden = true;
+      $('resultImgSave').disabled = false;
+      try {
+        const file = new File([shareBlob], shareName(), { type: 'image/png' });
+        $('resultImgSend').hidden = !(navigator.canShare && navigator.canShare({ files: [file] }));
+      } catch (e) {}
+    } catch (e) {
+      $('resultImgWait').textContent = '圖片產生失敗，請重新整理後再試一次。';
+    }
+  }
+  $('resultImgBtn').addEventListener('click', openShare);
+  $('resultImgOrient').addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b || b.dataset.v === shareMode()) return;
+    ui.shareMode = b.dataset.v; try { localStorage.setItem(UIKEY, JSON.stringify(ui)); } catch (err) {}
+    openShare();
+  });
+  $('resultImgClose').addEventListener('click', () => $('resultImgDlg').close());
+  $('resultImgDlg').addEventListener('click', e => { if (e.target === $('resultImgDlg')) $('resultImgDlg').close(); });
+  $('resultImgSave').addEventListener('click', () => {
+    if (!shareUrl) return;
+    const a = document.createElement('a'); a.href = shareUrl; a.download = shareName();
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+  $('resultImgSend').addEventListener('click', async () => {
+    try { await navigator.share({ files: [new File([shareBlob], shareName(), { type: 'image/png' })], title: '原神聖遺物重塑計算', text: SITE }); } catch (e) {}
+  });
+  const selectUrl = () => { try { const r = document.createRange(); r.selectNodeContents($('siteUrl')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e) {} };
+  $('copyUrl').addEventListener('click', () => {
+    const done = ok => { $('copyMsg').textContent = ok ? '已複製' : '請手動選取網址複製'; };
+    try { navigator.clipboard.writeText(SITE).then(() => done(true), () => { selectUrl(); done(false); }); } catch (e) { selectUrl(); done(false); }
+  });
+
   refresh(true);
 })();
 </script>
