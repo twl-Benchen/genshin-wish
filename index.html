@@ -16,6 +16,7 @@ img { max-width: 100%; }
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;800&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
 <style>
 /* 版面：仿遊戲內祈願紀錄的羊皮紙視窗 (金色雙線框、棕褐表頭、深石板色按鈕)，放在天空漸層上。左側祈願設定，右側結果；手機時單欄 */
+/*SHARED-START*/
 :root {
   --sky-top: #8fb6dd;
   --sky-bot: #dbe7f2;
@@ -103,6 +104,17 @@ h1 .star { color: var(--star-on); }
   outline: 1px solid var(--frame-soft); outline-offset: -9px;
   box-shadow: 0 6px 24px rgba(30, 40, 70, .12);
 }
+
+/* 左上角：切換到另一個工具 (抽卡計算 / 聖遺物定軌) */
+.site-head { display: flex; align-items: flex-start; gap: 14px; }
+.site-head header { flex: 1; min-width: 0; }
+.switch-link { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; width: 52px; color: var(--ink); text-decoration: none; }
+.switch-link svg { display: block; width: 48px; height: 48px; filter: drop-shadow(0 2px 4px rgba(43, 49, 66, .35)); transition: filter .25s, transform .25s; }
+.switch-link:hover svg { filter: drop-shadow(0 0 6px rgba(255, 230, 178, .9)); transform: scale(1.06); }
+.switch-link:focus-visible { outline: none; }
+.switch-link:focus-visible svg { border-radius: 50%; outline: 3px solid var(--focus); outline-offset: 2px; }
+.switch-link span { font-size: 11px; font-weight: 500; line-height: 1.2; white-space: nowrap; opacity: .85; }
+/*SHARED-END*/
 
 /* 設定欄 */
 .panel { padding: 22px; display: grid; gap: 20px; }
@@ -394,10 +406,22 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <h1><span class="star">✦</span> 原神期望抽數計算</h1>
-    <p class="lede">輸入想抽的目標和手上的資源，算出抽到的機率。</p>
-  </header>
+  <div class="site-head">
+    <a class="switch-link" href="artifact.html" aria-label="切換到聖遺物定軌計算" title="聖遺物定軌計算：副詞條次數的成功機率與強化模擬">
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <defs><linearGradient id="sw-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A5366"/><stop offset="1" stop-color="#2B3142"/></linearGradient></defs>
+        <circle cx="24" cy="24" r="21" fill="url(#sw-bg)" stroke="#D3BC8E" stroke-width="1.5"/>
+        <circle cx="24" cy="24" r="17.5" fill="none" stroke="#D3BC8E" stroke-opacity=".35" stroke-width=".8"/>
+        <g fill="#D3BC8E"><path d="M24 .8 25.6 3 24 5.2 22.4 3Z"/><path d="M24 42.8 25.6 45 24 47.2 22.4 45Z"/><path d="M.8 24 3 22.4 5.2 24 3 25.6Z"/><path d="M42.8 24 45 22.4 47.2 24 45 25.6Z"/></g>
+        <g fill="#D3BC8E"><ellipse cx="24" cy="16.5" rx="3.6" ry="6.2" transform="rotate(0 24 24)" opacity=".9"/><ellipse cx="24" cy="16.5" rx="3.6" ry="6.2" transform="rotate(72 24 24)" opacity=".9"/><ellipse cx="24" cy="16.5" rx="3.6" ry="6.2" transform="rotate(144 24 24)" opacity=".9"/><ellipse cx="24" cy="16.5" rx="3.6" ry="6.2" transform="rotate(216 24 24)" opacity=".9"/><ellipse cx="24" cy="16.5" rx="3.6" ry="6.2" transform="rotate(288 24 24)" opacity=".9"/><circle cx="24" cy="24" r="3.2" fill="#2B3142" stroke="#F2D99B" stroke-width="1.4"/></g>
+      </svg>
+      <span>聖遺物</span>
+    </a>
+    <header>
+      <h1><span class="star">✦</span> 原神期望抽數計算</h1>
+      <p class="lede">輸入想抽的目標和手上的資源，算出抽到的機率。</p>
+    </header>
+  </div>
 
   <div class="tabbar">
     <nav class="tabs" role="tablist" aria-label="頁面">

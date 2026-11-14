@@ -1,5 +1,9 @@
 # 原神期望抽數計算
-**連結：https://twl-benchen.github.io/genshin-wish/**
+**期望抽數計算：https://twl-benchen.github.io/genshin-wish/**
+
+**聖遺物定軌計算：https://twl-benchen.github.io/genshin-wish/artifact.html**
+
+兩個頁面左上角的圓形按鈕可以互相切換。
 
 
 <img width="1299" height="1552" alt="twl-benchen github io_genshin-wish_ (1)" src="https://github.com/user-attachments/assets/c399a4bb-3bc3-4dcc-8292-21a17aec5edd" />
@@ -10,7 +14,18 @@
 
 本專案與米哈遊官方無關，逐抽機率採用玩家社群擬合的模型，結果僅供參考。
 
-## 功能
+## 聖遺物定軌計算
+
+選四個副詞條和兩個定軌詞條、初始 3 或 4 詞條、定軌保底 (不定軌、2、3、4 次)，設定每個詞條可接受跳幾次，算出全部符合的精確機率。
+
+- **機率表**：每個詞條最後跳 1 到 6 次的機率，可接受範圍用金色標出。
+- **合計限制**：可以另外限制兩個定軌詞條加起來的次數。
+- **強化模擬**：仿遊戲聖遺物卡，一次 +4 或直接到 +20，保底觸發時會標示。
+- **批量模擬**：一次模擬 10 萬顆，跟精確值對照。
+
+次數包含初始的 1 次，所以「可接受 1 次」代表升級中不跳也可以。
+
+## 期望抽數計算功能
 
 ### 設定目標
 

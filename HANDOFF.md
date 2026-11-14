@@ -15,6 +15,10 @@
 | `build.py` | 把 engine.js 內嵌進 page.html，補上 `<head>`，輸出 `index.html` |
 | `index.html` | 建置後的完整單檔網頁，GitHub Pages 直接用，不要手改 |
 | `test.js` | 精確計算 vs 30 萬次蒙地卡羅的比對測試 |
+| `artifact-engine.js` | 聖遺物定軌計算核心 (`window.ArtifactEngine` / `require`) |
+| `artifact-page.html` | 聖遺物頁原始檔，`/*SHARED*/` 帶入 page.html 的共用樣式，`/*ENGINE*/` 帶入 artifact-engine.js |
+| `artifact.html` | 聖遺物頁建置產物，不要手改 |
+| `test-artifact.js` | 聖遺物驗證案例 + 蒙地卡羅比對 |
 
 修改流程：改 `engine.js` 或 `page.html` → `python3 build.py` → `node test.js` 確認數字 → commit 時 `index.html` 一起提交。
 
@@ -226,6 +230,27 @@
 - 研究 0.018% 是否代表低計數時的明光觸發機率，必要時調整模型。
 - 加上星鐵、絕區零 (參考專案的規則可以當起點，但要先查證)。
 
+## 聖遺物定軌 (artifact.html)
+
+2026-11-14 加入，原本在 twl-Benchen/genshin-artifact 開發後合併進來。抽卡和聖遺物本質上都是算抽取的機率，所以放在同一個網站，左上角切換。
+
+功能：選四個不重複的副詞條，設兩個為「定軌」，選初始 3 或 4 詞條與定軌保底 (不定軌、2、3、4 次)。每個詞條設定可接受次數，算出全部同時符合的精確機率與每個詞條最終次數的機率表，可另外限制兩個定軌詞條的合計次數。另有逐次強化模擬與 10 萬顆批量模擬。
+
+規則 (不要改錯)：
+- 初始 4 詞條：+4、+8、+12、+16、+20 共跳 5 次。初始 3 詞條：+4 新增第 4 個詞條 (畫面第 4 列)，+8 到 +20 共跳 4 次。
+- 次數包含初始的 1 次，「可接受 1 次」代表升級中不跳也可以。
+- 一般強化每次四個詞條各 1/4。
+- 定軌保底是後補不是先給：前面完全隨機，剩下的次數等於還沒達成的保底次數時，才強制跳到兩個定軌詞條之一 (各 1/2)。所以定軌詞條合計次數 C = max(X, Binomial(n, 1/2))，保底不影響 C > X 的機率。
+- 精確機率用遞迴列舉所有路徑 (最多 4^5 = 1024 條)。
+- 每次強化數值為五星最大值的 70%、80%、90%、100%。最大值：生命值 298.75，攻擊力 19.45，防禦力 23.15，生命值% 5.83，攻擊力% 5.83，防禦力% 7.29，元素精通 23.31，元素充能效率 6.48，暴擊率 3.89，暴擊傷害 7.77。
+- 設定存在 localStorage `artcalc-v1`。
+
+驗證數值 (`node test-artifact.js`)：
+- 初始 3 詞條，保底 4 次，兩個定軌詞條各 1 到 5 次 → 100%
+- 初始 4 詞條，保底 2 次，定軌合計多跳 3 次以上 → 50%
+- 初始 4 詞條，保底 2 次，定軌合計多跳剛好 2 次 → 50%
+- 初始 4 詞條，不定軌，兩詞條合計多跳 2 次以上 → 81.25%
+
 ## 資料來源
 
 - [gino8246/Gacha_Simulator](https://github.com/gino8246/Gacha_Simulator)
@@ -244,3 +269,4 @@
 - [Genshin Impact Wiki：Weapon Event Wish](https://genshin-impact.fandom.com/wiki/Weapon_Event_Wish)：75% UP、歪常駐的大保底跨期保留、命定值在卡池結束時歸 0、綜合機率 1.85%
 - [17173：2026-10-13 祈願開啟公告](https://news.17173.com/content/10132026/184857401.shtml)
 - 使用者提供的機率分析文章 (三種統計視角、派蒙工具站 2205 萬筆五星落點、約 2500 萬抽擬合)
+- 聖遺物定軌保底機制 (隨機到最後才補保底)、3 詞條強化 4 次與 4 詞條強化 5 次：[Icy Veins Dust of Enlightenment Guide](https://www.icy-veins.com/genshin-impact/artifact-rerolling)、[GameWith Dust Of Enlightenment Guide](https://gamewith.net/genshin-impact/article/show/57477)
