@@ -395,7 +395,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .plan-tbl .muted { color: var(--muted); font-weight: 400; }
 .plan-auto { margin: 0; }
 .apply-box { display: grid; justify-items: center; gap: 6px; margin-top: 4px; }
-.apply-btn { height: 48px; min-width: min(260px, 100%); font-size: 1rem; padding: 6px 30px 6px 8px; }
+.apply-btn { height: 52px; min-width: min(280px, 100%); font-size: 1.18rem; font-weight: 700; padding: 6px 30px 6px 8px; }
+.apply-box .hint { max-width: 32em; text-align: center; line-height: 1.6; }
 .apply-btn .ic { width: 34px; height: 34px; background: var(--frame); border-color: var(--frame); color: var(--btn); }
 .apply-btn .ic svg { width: 18px; height: 18px; }
 .plan-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -1097,7 +1098,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     if (act !== '重塑') return { v: '-', s: '一般強化，不用啟聖之塵', t: '-' };
     if (!isFinite(k80)) return { v: '-', s: '不可能達成', t: '-' };
     const ver = k80 * S.cost / PER_VER, txt = ver < 10 ? String(+ver.toFixed(1)) : String(Math.round(ver));
-    return { v: `<small>大約</small> ${txt} <small>個</small>版本`, t: `大約 ${txt} 個版本`, s: `≈${Math.round(ver * VER_DAYS).toLocaleString()} 天` };
+    return { v: `<small>大約</small> ${txt} 個版本`, t: `大約 ${txt} 個版本`, pre: '大約', main: `${txt} 個版本`, s: `≈${Math.round(ver * VER_DAYS).toLocaleString()} 天` };
   }
   let lastP = 0, lastCalc = null;
   function renderCalc() {
@@ -1355,23 +1356,32 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   function shareStats(ctx, y) {
     const d = lastCalc, H = SH.stats, gap = 14;
     const hw = Math.round(CW * 0.42), bw = (CW - hw - 2 * gap) / 2;
-    const g = ctx.createLinearGradient(CX, y, CX + hw, y + H);
-    g.addColorStop(0, K.heroA); g.addColorStop(1, K.heroB);
-    roundRect(ctx, CX, y, hw, H, 6); ctx.fillStyle = g; ctx.fill();
-    text(ctx, '全部條件同時符合', CX + 22, y + 36, `500 19px ${FB}`, K.heroInk);
-    text(ctx, fmtP(d.success), CX + 22, y + 98, `600 52px ${FN}`, K.heroInk);
-    const desc = d.success > 0 && d.success < 1 ? `大約每${d.act} ${(1 / d.success).toFixed(1)} 顆成功 1 顆` : (d.success >= 1 ? '一定成功' : '不可能達成');
-    ctx.font = fitFont(ctx, desc, 400, 17, FB, hw - 44); ctx.fillStyle = K.heroInk; ctx.textAlign = 'left'; ctx.fillText(desc, CX + 22, y + 132);
-    const box = (x, k, v, sub) => {
-      roundRect(ctx, x, y, bw, H, 6); ctx.fillStyle = K.sunken; ctx.fill(); ctx.strokeStyle = K.frameSoft; ctx.lineWidth = 1; ctx.stroke();
-      ctx.font = fitFont(ctx, k, 400, 17, FB, bw - 36); ctx.fillStyle = K.muted; ctx.textAlign = 'left'; ctx.fillText(k, x + 18, y + 36);
-      ctx.font = fitFont(ctx, v, 600, 36, FN, bw - 36); ctx.fillStyle = K.ink; ctx.fillText(v, x + 18, y + 92);
-      ctx.font = fitFont(ctx, sub, 400, 15, FB, bw - 36); ctx.fillStyle = K.muted; ctx.fillText(sub, x + 18, y + 128);
-    };
-    box(CX + hw + gap, `八成機率成功，需要${d.act}`, isFinite(d.k80) ? `${d.k80.toLocaleString()} 顆` : '-',
-      need80Sub(d.k80, d.act));
     const vt = versionTime(d.k80, d.act);
-    box(CX + hw + gap + bw + gap, `每版本 ${PER_VER} 個羽毛`, vt.t, vt.s);
+    const desc = d.success > 0 && d.success < 1 ? `大約每${d.act} ${(1 / d.success).toFixed(1)} 顆成功 1 顆` : (d.success >= 1 ? '一定成功' : '不可能達成');
+    // 三格：[x, 寬, 標題, 數字前的小字, 數字, 小字, 是否第一格]
+    const cells = [
+      [CX, hw, '全部條件同時符合', '', fmtP(d.success), desc, true],
+      [CX + hw + gap, bw, `八成機率成功，需要${d.act}`, '', isFinite(d.k80) ? `${d.k80.toLocaleString()} 顆` : '-', need80Sub(d.k80, d.act)],
+      [CX + hw + gap + bw + gap, bw, `每版本 ${PER_VER} 個羽毛`, vt.pre ? vt.pre + ' ' : '', vt.main || vt.t, vt.s],
+    ];
+    const valW = (pre, v, f) => { ctx.font = `500 ${Math.round(f * 0.5)}px ${FB}`; const a = pre ? ctx.measureText(pre).width + 6 : 0; ctx.font = `600 ${f}px ${FN}`; return a + ctx.measureText(v).width; };
+    let V = 46; while (V > 20 && cells.some(c => valW(c[3], c[4], V) > c[1] - 40)) V--;
+    ctx.font = `400 17px ${FB}`;
+    const kF = Math.min(...cells.map(c => { let f = 17; ctx.font = `400 ${f}px ${FB}`; while (f > 12 && ctx.measureText(c[2]).width > c[1] - 40) { f--; ctx.font = `400 ${f}px ${FB}`; } return f; }));
+    const sF = Math.min(...cells.map(c => { let f = 15; ctx.font = `400 ${f}px ${FB}`; while (f > 11 && ctx.measureText(c[5]).width > c[1] - 40) { f--; ctx.font = `400 ${f}px ${FB}`; } return f; }));
+    cells.forEach(([x, w, k, pre, v, sub, hero]) => {
+      if (hero) {
+        const g = ctx.createLinearGradient(x, y, x + w, y + H);
+        g.addColorStop(0, K.heroA); g.addColorStop(1, K.heroB);
+        roundRect(ctx, x, y, w, H, 6); ctx.fillStyle = g; ctx.fill();
+      } else { roundRect(ctx, x, y, w, H, 6); ctx.fillStyle = K.sunken; ctx.fill(); ctx.strokeStyle = K.frameSoft; ctx.lineWidth = 1; ctx.stroke(); }
+      const ink = hero ? K.heroInk : K.ink, soft = hero ? K.heroInk : K.muted;
+      text(ctx, k, x + 20, y + 36, `${hero ? 500 : 400} ${kF}px ${FB}`, soft);
+      let vx = x + 20;
+      if (pre) vx += text(ctx, pre, vx, y + 94, `500 ${Math.round(V * 0.5)}px ${FB}`, ink) + 6;
+      text(ctx, v, vx, y + 94, `600 ${V}px ${FN}`, ink);
+      text(ctx, sub, x + 20, y + 130, `400 ${sF}px ${FB}`, soft);
+    });
     return y + H;
   }
 
@@ -1847,7 +1857,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
         }).join('')}
       </table></div>
       <div class="apply-box"><button type="button" class="gbtn apply-btn" id="scApply"${can ? '' : ' disabled'}><span class="ic"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13.5 3 8.2h3.2V2.5h3.6v5.7H13Z" fill="currentColor"/></svg></span>帶入重塑計算</button>
-      <span class="hint">${can ? '計算詳細機率' : '要升到 +20 才能重塑。'}</span></div>`;
+      <span class="hint">${can ? '計算詳細機率：把這件的四個詞條和初始數值帶到計算頁，算出重塑的精確成功機率，以及大約要幾個版本的羽毛。目標會照重塑方案先設好 (主要詞條不限制、次要詞條最多跳 2 次、其他詞條不能跳)，帶入後還可以再改。' : '要升到 +20 才能重塑。'}</span></div>`;
     if (can) $('scApply').onclick = () => applyRelic(p, `${c.n}・${r.slot}`, DUST[r.slot] || 2, r.f.icon);
   }
 
