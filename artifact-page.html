@@ -66,7 +66,8 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 @media (max-width: 1040px) { .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } .summary .hero { grid-column: 1 / -1; } }
 .stat { background: var(--surface); border: 1px solid var(--frame); border-radius: 4px; padding: 14px 16px; display: grid; gap: 2px; align-content: start; }
 .stat .k { font-size: .8rem; color: var(--muted); letter-spacing: .04em; }
-.stat .v { font-family: var(--f-num); font-weight: 600; font-size: 1.85rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.stat .v { font-family: var(--f-num); font-weight: 600; font-size: 2.4rem; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (max-width: 1040px) { .stat:not(.hero) .v { font-size: 1.85rem; } }
 .stat .s { font-size: .8rem; color: var(--muted); }
 .stat .v small { font-size: .5em; font-weight: 500; margin-right: 2px; }
 .stat.hero { background: linear-gradient(150deg, var(--hero-a), var(--hero-b)); color: var(--hero-ink); position: relative; overflow: hidden; }
@@ -87,8 +88,10 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .gtable td.zero { color: var(--muted); opacity: .5; }
 
 /* 強化模擬：仿遊戲裡的五星聖遺物卡 (副詞條是深色底、金色細框) */
-.sim { display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); gap: 16px; align-items: start; }
-@media (max-width: 700px) { .sim { grid-template-columns: minmax(0, 1fr); } }
+.sim { display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); gap: 18px; align-items: stretch; }
+.sim > .art { align-self: start; }
+.sim-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+@media (max-width: 700px) { .sim { grid-template-columns: minmax(0, 1fr); } .log { flex: none; max-height: 220px; } }
 .art { border-radius: 6px; overflow: hidden; box-shadow: 0 4px 14px rgba(30, 40, 70, .18); }
 .art-top { background: linear-gradient(150deg, #8a4b20, #c27a35); color: #fff6e6; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
 .art-top .stars { color: #ffd86b; letter-spacing: 2px; font-size: .9rem; }
@@ -106,17 +109,18 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .asub.pending { opacity: .45; }
 .asub.flash { animation: fl .8s ease; }
 @keyframes fl { from { background: #ffe7a6; } to { background: transparent; } }
-.log .tally { color: var(--muted); }
+.log .tally { color: var(--muted); position: sticky; top: -6px; margin-top: -6px; padding-top: 6px; background: var(--sunken); }
 .log .bt b { color: var(--gold); }
-.verdict { font-size: .9rem; }
-.verdict .ok { color: var(--good); font-weight: 700; } .verdict .ng { color: var(--bad); font-weight: 700; }
+.verdict { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: .85rem; color: var(--muted); min-height: 26px; }
+.verdict .badge { font-size: .82rem; font-weight: 700; border-radius: 999px; padding: 2px 12px; border: 1px solid currentColor; }
+.verdict .ok { color: var(--good); background: rgba(63, 127, 82, .1); } .verdict .ng { color: var(--bad); background: rgba(181, 72, 59, .08); }
 .btns { display: flex; flex-wrap: wrap; gap: 8px; }
 .gbtn { font: inherit; font-size: .85rem; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--btn); color: var(--btn-ink); border: 0; border-radius: 999px; padding: 6px 14px 6px 6px; height: 38px; cursor: pointer; white-space: nowrap; }
 .gbtn .ic { width: 24px; height: 24px; border-radius: 50%; display: inline-grid; place-items: center; font-size: .75rem; border: 1.5px solid var(--frame); color: var(--frame); line-height: 1; }
 .gbtn.light { background: var(--sunken); color: var(--ink); border: 1px solid var(--frame-soft); }
 .gbtn:hover { filter: brightness(1.08); }
 .gbtn:disabled { opacity: .4; cursor: not-allowed; filter: none; }
-.log { font-size: .85rem; max-height: 210px; overflow: auto; background: var(--sunken); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-variant-numeric: tabular-nums; }
+.log { flex: 1 1 0; min-height: 150px; font-size: .85rem; overflow: auto; background: var(--sunken); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-variant-numeric: tabular-nums; }
 .log div { padding: 3px 0; border-bottom: 1px solid var(--line); }
 .log div:last-child { border-bottom: 0; }
 .log .f { color: var(--gold); font-weight: 600; }
@@ -145,6 +149,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .result-img-btn { font-size: .92rem; padding: 7px 18px 7px 7px; box-shadow: 0 2px 10px rgba(30, 40, 70, .18); }
 .result-img-prev { display: grid; place-items: center; min-height: 160px; background: var(--sunken); border-radius: 6px; padding: 10px; }
 .result-img-prev img { display: block; max-width: 100%; max-height: 58vh; width: auto; height: auto; border-radius: 4px; box-shadow: 0 4px 16px rgba(30, 40, 70, .2); }
+/* 電腦版預覽放大到看得清楚 (寬 620px)，視窗內可以捲動 */
+@media (min-width: 701px) { .result-img-prev img { width: min(100%, 620px); max-height: none; } }
 .site-link-box { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; }
 #qrSmall { width: 123px; height: 123px; border-radius: 6px; border: 1px solid var(--frame); background: #fffaf0; }
 .site-text { display: grid; gap: 6px; min-width: 0; }
@@ -389,12 +395,12 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
             <div class="art-top"><span>聖遺物 <span class="stars">★★★★★</span></span><span class="lv" id="lv">+0</span></div>
             <div class="art-body" id="artBody"></div>
           </div>
-          <div style="display:grid;gap:10px;min-width:0">
-            <div class="verdict" id="verdict"></div>
+          <div class="sim-side">
             <div class="btns">
               <button type="button" class="gbtn" id="bMain"></button>
               <button type="button" class="gbtn light" id="bBatch"><span class="ic">∑</span>批量模擬十萬顆</button>
             </div>
+            <div class="verdict" id="verdict"></div>
             <div class="log" id="log"></div>
           </div>
         </div>
@@ -785,8 +791,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     }).join('');
     sim.flash = -1;
     const X = effG();
-    let v = X > 0 ? `選定詞條已中 ${sim.hits} 次 (保底 ${X} 次)` : '';
-    if (sim.level >= 20) v += `${v ? '<br>' : ''}結果：${simOk() ? '<span class="ok">符合你的目標 ✓</span>' : '<span class="ng">不符合目標 ✗</span>'}`;
+    let v = sim.level >= 20 ? (simOk() ? '<span class="badge ok">符合目標 ✓</span>' : '<span class="badge ng">不符合目標 ✗</span>') : '';
+    if (X > 0) v += `<span>選定詞條已中 ${sim.hits} 次 (保底 ${X} 次)</span>`;
     $('verdict').innerHTML = v;
     const done = sim.level >= 20;
     $('bMain').innerHTML = done ? `<span class="ic">↻</span>${reshape ? '重塑' : '換一顆再強化'}` : '<span class="ic">▲</span>強化到 +20';
