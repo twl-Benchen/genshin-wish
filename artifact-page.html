@@ -269,9 +269,9 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .rs .dots i.t0 { width: 6px; opacity: .3; } .rs .dots i.t1 { width: 10px; opacity: .5; } .rs .dots i.t2 { width: 14px; opacity: .75; } .rs .dots i.t3 { width: 18px; opacity: 1; background: #ffe7a6; }
 
 .sc-bottom { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
-/* 重塑方案和詞條明細兩格一樣高：右邊的帶入按鈕貼齊底部 */
+/* 重塑方案和詞條明細兩格一樣高：多出來的高度平均分到帶入按鈕的上下，按鈕不會離表格太遠 */
 .sc-detail { display: flex; flex-direction: column; }
-.sc-detail .apply-box { margin-top: auto; padding-top: 4px; }
+.sc-detail .apply-box { margin: auto 0; padding-top: 4px; }
 @media (max-width: 900px) { .sc-bottom { align-items: start; } }
 @media (max-width: 900px) { .sc-bottom { grid-template-columns: minmax(0, 1fr); } }
 .sc-detail, .sc-plan { gap: 10px; }
