@@ -243,7 +243,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 @media (max-width: 520px) { .plan-tbl td, .plan-tbl th, .sc-tbl td, .sc-tbl th { padding: 5px 3px; font-size: .76rem; } .sc-plan .segs button { font-size: .8rem; } }
 .sc-tbl .proc { text-align: left; white-space: nowrap; }
 .sc-tbl .proc b, .sc-tbl .proc .add { color: var(--ink); }
-.sc-tbl small.exact { display: block; font-size: .7rem; color: var(--muted); font-weight: 400; }
+.sc-tbl th, .plan-tbl th { text-align: center; }
 .sc-tbl .proc span { color: var(--muted); }
 .pill-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; }
 .pill-lab { font-size: .8rem; color: var(--muted); font-weight: 500; white-space: nowrap; }
@@ -255,6 +255,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .linkbtn { font: inherit; font-size: .82rem; color: var(--gold); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; justify-self: start; }
 .plan-tbl td, .plan-tbl th { font-size: .82rem; }
 .plan-tbl td small { display: block; color: var(--muted); font-size: .7rem; font-weight: 400; }
+.plan-tbl .muted { color: var(--muted); font-weight: 400; }
 .plan-tbl tr[data-r] { cursor: pointer; }
 .plan-tbl tr.best td { background: var(--gold-soft); }
 .plan-tbl tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--gold); }
@@ -403,6 +404,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
           <li>一般情況下每次四個詞條的機率相等，各 1/4。</li>
           <li>重塑保底是「兩個選定詞條合計至少升級跳 N 次」：一般重塑 2 次。每用 1 個啟聖之塵累積 1 點進度，到 6 點時觸發高階重塑 (3 次)，觸發 2 次高階重塑後下一次改成諭告重塑 (4 次)。</li>
           <li>保底是最後才補：前面完全隨機，只有剩下的次數剛好等於還沒達成的保底次數時，才會強制跳到兩個選定詞條之一 (各 1/2)。所以保底只會把很差的結果拉上來，不會提高跳很多次的機率。</li>
+          <li>角色展示的「重塑方案」只看升級跳落在哪些詞條，不看檔位。有效詞條數 = 主要詞條的次數 + 次要詞條的次數 × 0.5 (含初始)，攻擊、生命、防禦固定值都不算。重塑變好機率是「落在主要、次要詞條的升級跳比現在多」的機率 (結果比原本差可以不換)，大約需要幾次 = 1 ÷ 變好機率，都照一般重塑 (保底 2 次) 計算，選定詞條是最重要的兩個。排序時有考慮啟聖之塵的消耗：花、羽每次 1 個，沙、杯、冠每次 2 個，所以是比「大約需要幾次 × 每次消耗」誰最少。</li>
           <li>每次 (含初始) 的數值是四個檔位之一，機率相等。遊戲內部取到小數點後兩位，畫面上百分比四捨五入到小數點後一位，固定值四捨五入到整數。例如暴擊傷害最高檔顯示 7.8%，實際是 7.77%，6 次都最高檔是 46.62%，顯示 46.6%。</li>
         </ul>
       </section>
@@ -1327,16 +1329,16 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     const pctRank = ['七', '八', '九', '十'];
     const can = p.subs.length === 4 && p.level >= 20;
     box.innerHTML = `${title}
-      <p class="hint">初始 ${p.init} 詞條，+${p.level}${p.init === 3 && p.subs.length === 4 ? `，+4 新增「${byId[p.subs[3].stat].name}」` : ''}。升級過程裡粗體是初始數值 (+4 新增的不加粗)，後面是每次升級跳加的數值。數值下面是遊戲內部的實際值 (小數點後兩位)，從每一次的檔位直接加總，所以只有一種可能。</p>
+      <p class="hint">數值是遊戲內部的實際值。</p>
       <div class="tbl-wrap"><table class="gtable sc-tbl">
-        <tr><th style="text-align:left">詞條</th><th style="text-align:left">升級過程</th><th>次數</th><th>數值</th></tr>
+        <tr><th>詞條</th><th>升級過程</th><th>次數</th><th>數值</th></tr>
         ${p.subs.map((s, k) => {
           const t = byId[s.stat].tiers;
           const added = p.init === 3 && k === 3;
           return `<tr><td class="name">${byId[s.stat].name}${added ? ' <span class="tag">+4 出現</span>' : ''}</td>
             <td class="num proc">${added ? `<span class="add" title="+4 新增，第${pctRank[s.initTier]}檔">${E.fmtValue(s.stat, t[s.initTier])}</span>` : `<b title="初始，第${pctRank[s.initTier]}檔">${E.fmtValue(s.stat, t[s.initTier])}</b>`}${s.rolls.map(x => ` <span title="第${pctRank[x]}檔">+${E.fmtValue(s.stat, t[x])}</span>`).join('')}</td>
             <td class="num">${s.rolls.length}</td>
-            <td class="num"><b>${E.fmtValue(s.stat, s.total)}</b><small class="exact">${(s.total / 100).toFixed(2)}${byId[s.stat].pct ? '%' : ''}</small></td></tr>`;
+            <td class="num"><b>${(s.total / 100).toFixed(2)}${byId[s.stat].pct ? '%' : ''}</b></td></tr>`;
         }).join('')}
       </table></div>
       <div class="btns"><button type="button" class="gbtn" id="scApply"${can ? '' : ' disabled'}><span class="ic">⇩</span>帶入重塑計算</button>
@@ -1379,20 +1381,21 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       const v = E.reshapeValue(r.parsed, W, 2);
       if (!v.ok) return null;
       const cost = DUST[r.slot] || 2;
-      return { i, r, cost, v, per: v.gain / cost };
-    }).filter(Boolean).sort((a, b) => b.per - a.per);
+      return { i, r, v, dust: v.tries * cost };
+    }).filter(Boolean).sort((a, b) => a.dust - b.dust || b.v.pUp - a.v.pUp);
     if (!rows.length) { out.innerHTML = '<p class="hint">這個角色的 +20 五星聖遺物都沒有選的詞條。</p>'; return; }
-    const best = rows[0].per > 0 ? rows[0] : null;
-    const f2 = x => x.toFixed(2);
+    const best = isFinite(rows[0].dust) ? rows[0] : null;
+    const num = x => (x.toFixed(1).endsWith('.0') ? x.toFixed(0) : x.toFixed(1));
+    const tries = t => (!isFinite(t) ? '<span class="muted">已經最好</span>' : t < 1.05 ? '1 次' : `約 ${t < 10 ? num(t) : Math.round(t)} 次`);
     out.innerHTML = `<div class="tbl-wrap"><table class="gtable plan-tbl">
-      <tr><th style="text-align:left">部位</th><th>有效詞條</th><th>重塑變好</th><th>平均收益</th></tr>
+      <tr><th>部位</th><th>有效詞條數</th><th>重塑變好機率</th><th>大約需要幾次</th></tr>
       ${rows.map(x => `<tr data-r="${x.i}" class="${x === best ? 'best' : ''}${SC.relic === x.i ? ' sel' : ''}" title="點一下看這件的詞條明細">
-        <td class="name">${x.r.slot}${x === best ? ' <span class="tag best-tag">最划算</span>' : ''}<small>每次 ${x.cost} 個啟聖之塵</small></td>
-        <td class="num">${x.v.total.toFixed(1)}<small>選定 ${x.v.lock.map(k => SHORT_SUB[x.r.parsed.subs[k].stat]).join('、')}</small></td>
-        <td class="num">${fmtP(x.v.pUp)}</td>
-        <td class="num"><b>+${f2(x.v.gain)}</b><small>每個塵 +${f2(x.per)}</small></td></tr>`).join('')}
+        <td class="name">${x.r.slot}${x === best ? ' <span class="tag best-tag">最划算</span>' : ''}</td>
+        <td class="num">${num(x.v.total)}</td>
+        <td class="num">${x.v.pUp > 0 ? fmtP(x.v.pUp) : '<span class="muted">0%</span>'}</td>
+        <td class="num"><b>${tries(x.v.tries)}</b></td></tr>`).join('')}
     </table></div>
-    <p class="hint">有效詞條：主要詞條每跳一次最高檔算 1，次要詞條算 0.5，其他不算。重塑只重新分配升級跳 (初始數值保留)，結果比原本差可以不換，所以「平均收益」只算變好的部分，依每個啟聖之塵的收益排序。保底照一般重塑 (2 次)，要算其他重塑種類或指定數值，請在詞條明細按「帶入重塑計算」。</p>`;
+    <p class="hint">只看升級跳落在哪些詞條，不看檔位。重塑變好 = 落在主要、次要詞條的升級跳比現在多 (次要算半個)。照一般重塑計算，排序有考慮啟聖之塵的消耗，詳細說明在「重塑規則」。</p>`;
   }
 
   $('scPlan').addEventListener('click', e => {

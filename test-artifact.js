@@ -135,30 +135,32 @@ eq('成功率 10%，八成要幾顆', E.trialsFor(0.1, 0.8), 16);
   check('重塑方案 暴傷平均顯示值 蒙地卡羅比對', sumCd / T / 1000, r.avg[1] / 1000, 0.0005);
 }
 
-// 13. 重塑划不划算 (reshapeValue)：有效詞條的期望收益 vs 蒙地卡羅
+// 13. 重塑划不划算 (reshapeValue)：只看升級跳的次數落在哪
 {
-  // 生之花：暴擊 3 次、攻擊% 1 次、充能 2 次、暴傷 3 次；主要詞條雙暴，次要攻擊%
-  const flower = E.parseRelic([501203, 501064, 501232, 501221, 501232, 501224, 501201, 501203, 501223], 21);
-  const W = { cr: 2, cd: 2, atkp: 1 };
-  const r = E.reshapeValue(flower, W, 2);
-  const w = flower.subs.map(s => W[s.stat] || 0);
-  const up0 = flower.subs.reduce((a, s, i) => a + w[i] * s.rolls.reduce((b, t) => b + E.RATIO[t], 0), 0);
-  let g = 0, u = 0;
-  for (let t = 0; t < T; t++) {
-    const c = E.simulateCounts({ init: 4, guarantee: 2, locked: r.lock });
-    let v = 0;
-    c.forEach((n, i) => { for (let k = 1; k < n; k++) v += w[i] * E.RATIO[Math.floor(Math.random() * 4)]; });
-    if (v > up0) { g += v - up0; u++; }
-  }
-  check('重塑划不划算 變好機率 蒙地卡羅比對', u / T, r.pUp, 0.004);
-  check('重塑划不划算 平均收益 蒙地卡羅比對', g / T / 200, r.gain, 0.003);
-  eq('重塑划不划算 選定雙暴', r.lock.map(i => flower.subs[i].stat).sort().join(','), 'cd,cr');
-  // 使用者的例子：主要詞條都滿的那件 (A) 不該比有次要詞條可以拿回來的那件 (B) 更值得重塑
+  // 使用者的魈 (UID 900211203)，主要詞條：暴擊、暴傷、充能、攻擊%
+  const W = { cr: 2, cd: 2, er: 2, atkp: 2 };
+  const P = ids => E.parseRelic(ids, 21);
+  const xiao = {
+    生之花: P([501203, 501064, 501232, 501221, 501232, 501224, 501201, 501203, 501223]),
+    死之羽: P([501224, 501202, 501234, 501061, 501222, 501202, 501203, 501221]),
+    時之沙: P([501231, 501204, 501222, 501023, 501223, 501224, 501224, 501222, 501231]),
+    空之杯: P([501202, 501222, 501234, 501053, 501221, 501204, 501224, 501054, 501203]),
+    理之冠: P([501063, 501201, 501032, 501232, 501202, 501063, 501062, 501061, 501203]),
+  };
+  for (const k of ['生之花', '死之羽', '時之沙', '理之冠']) eq(`魈 ${k} 升級跳都在主要詞條，重塑不會變好`, E.reshapeValue(xiao[k], W, 2).pUp, 0);
+  const cup = E.reshapeValue(xiao.空之杯, W, 2);
+  // 空之杯：攻擊 (固定值) 歪了一次，選定暴擊、暴傷；變好 = 5 次升級跳都不落在攻擊
+  let ok = 0;
+  for (let t = 0; t < T; t++) { const c = E.simulateCounts({ init: 4, guarantee: 2, locked: cup.lock }); if (c[3] === 1) ok++; }
+  check('魈 空之杯 重塑變好機率 蒙地卡羅比對', ok / T, cup.pUp, 0.004);
+  eq('魈 空之杯 有效詞條數', cup.total, 7);
+  // 使用者的例子：主要詞條雙暴，A (暴擊 1、暴傷 4，升級跳全在主要) 重塑不會變好，B (暴擊 2、暴傷 1、次要 1、沒用 1) 會
   const A = { ok: true, init: 4, level: 20, subs: [{ stat: 'cr', initTier: 3, rolls: [3] }, { stat: 'cd', initTier: 3, rolls: [3, 3, 3, 3] }, { stat: 'hp', initTier: 3, rolls: [] }, { stat: 'def', initTier: 3, rolls: [] }] };
   const B = { ok: true, init: 4, level: 20, subs: [{ stat: 'cr', initTier: 3, rolls: [3, 3] }, { stat: 'cd', initTier: 3, rolls: [3] }, { stat: 'atkp', initTier: 3, rolls: [3] }, { stat: 'hp', initTier: 3, rolls: [3] }] };
   const WA = { cr: 2, cd: 2, atkp: 1 };
-  eq('重塑划不划算 有次要詞條的 B 比主要詞條全滿的 A 划算', E.reshapeValue(B, WA, 2).gain > E.reshapeValue(A, WA, 2).gain, true);
-  eq('重塑划不划算 沒有主要或次要詞條', E.reshapeValue(flower, { em: 2 }, 2).reason, 'none');
+  eq('例子 A 重塑不會變好', E.reshapeValue(A, WA, 2).pUp, 0);
+  eq('例子 B 重塑有機會變好', E.reshapeValue(B, WA, 2).pUp > 0, true);
+  eq('沒有主要或次要詞條', E.reshapeValue(xiao.生之花, { em: 2 }, 2).reason, 'none');
 }
 
 console.log(fail ? `\n${fail} 項失敗` : '\n全部通過');
