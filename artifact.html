@@ -174,7 +174,8 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 @media (max-width: 380px) { .summary { grid-template-columns: minmax(0, 1fr); } }
 .stat { background: var(--surface); border: 1px solid var(--frame); border-radius: 4px; padding: 14px 16px; display: grid; gap: 2px; align-content: start; }
 .stat .k { font-size: .8rem; color: var(--muted); letter-spacing: .04em; }
-.stat .v { font-family: var(--f-num); font-weight: 600; font-size: 2.4rem; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stat .v { font-family: var(--f-num); font-weight: 600; font-size: 2.4rem; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+.stat { min-width: 0; }
 @media (max-width: 1040px) { .stat:not(.hero) .v { font-size: 1.85rem; } }
 .stat .s { font-size: .8rem; color: var(--muted); }
 .stat .v small { font-family: var(--f-body); font-size: .5em; font-weight: 500; margin-left: .25em; }
@@ -874,7 +875,42 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     })(0, 0, 1);
   }
 
-  const api = { STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix, reshapeOdds, reshapeValue, RATIO, MIN_GAIN, UNIT, pityStep, avgRoll };
+  /* 從「符合目標」的結果裡依機率抽一顆 (精確的條件抽樣，不用一直重試，機率再低也抽得到)
+   * o：exact 的 opts (init, guarantee, locked)；cntOk(c)：次數條件 (最多跳幾次、合計) 符不符合
+   * vals：四個 { stat, init (初始那一檔 0..3，null 隨機), target (數值目標，畫面單位，null 沒有) }
+   * 1. 每組最終次數的權重 = 發生機率 × 每個數值目標達成的機率，依權重抽一組次數
+   * 2. 每個詞條在這個次數下，從「達成數值目標」的檔位組合裡平均抽一組 (每組檔位組合的機率本來就一樣)
+   * 回傳 { counts, vals (乘 100 的整數) }，不可能達成時回傳 null */
+  function sampleSuccess(o, cntOk, vals, rand) {
+    rand = rand || Math.random;
+    const lk = o.locked && o.locked.length === 2 ? o.locked : [];
+    const paths = []; let tot = 0;
+    E_each({ init: o.init, guarantee: lk.length ? o.guarantee : 0, locked: lk }, (c, p) => {
+      if (!cntOk(c)) return;
+      let w = p;
+      for (let i = 0; i < 4 && w > 0; i++) { const v = vals[i]; if (v.target != null) w *= probAtLeast(v.stat, c[i] - 1, v.init, v.target); }
+      if (w > 0) { paths.push([c.slice(), w]); tot += w; }
+    });
+    if (!(tot > 0)) return null;
+    let r = rand() * tot, pick = paths[paths.length - 1][0];
+    for (const [c, w] of paths) { if ((r -= w) <= 0) { pick = c; break; } }
+    const out = pick.map((cnt, i) => {
+      const v = vals[i], t = byId[v.stat].tiers;
+      const free = v.init == null ? cnt : cnt - 1, base = v.init == null ? 0 : t[v.init];
+      if (v.target == null) { let h = base; for (let k = 0; k < free; k++) h += t[Math.floor(rand() * 4)]; return h; }
+      // 列舉這個詞條所有檔位組合 (最多 4^6 = 4096 種)，只留達成目標的
+      const ok = [];
+      for (let m = 0; m < Math.pow(4, free); m++) {
+        let h = base, x = m;
+        for (let k = 0; k < free; k++) { h += t[x % 4]; x = Math.floor(x / 4); }
+        if (toDisp(v.stat, h) >= v.target) ok.push(h);
+      }
+      return ok[Math.floor(rand() * ok.length)];
+    });
+    return { counts: pick, vals: out };
+  }
+
+  const api = { sampleSuccess, STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix, reshapeOdds, reshapeValue, RATIO, MIN_GAIN, UNIT, pityStep, avgRoll };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.ArtifactEngine = api;
 })(typeof window !== 'undefined' ? window : this);
@@ -1108,9 +1144,11 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   function versionTime(k80, act) {
     if (act !== '重塑') return { v: '-', s: '一般強化，不用啟聖之塵', t: '-' };
     if (!isFinite(k80)) return { v: '-', s: '不可能達成', t: '-' };
-    const ver = k80 * S.cost / PER_VER, txt = ver < 10 ? String(+ver.toFixed(1)) : String(Math.round(ver));
+    const ver = k80 * S.cost / PER_VER, txt = ver < 10 ? String(+ver.toFixed(1)) : Math.round(ver).toLocaleString();
     return { v: `<small class="pre">大約</small>${txt}<small>個版本</small>`, t: `大約 ${txt} 個版本`, pre: '大約', main: txt, unit: '個版本', s: `≈${Math.round(ver * VER_DAYS).toLocaleString()} 天` };
   }
+  // 大約每幾顆成功 1 顆：100 以下留一位小數，再大就取整數加千分位
+  const perOne = p => (1 / p < 100 ? (1 / p).toFixed(1) : Math.round(1 / p).toLocaleString());
   let lastP = 0, lastCalc = null;
   function renderCalc() {
     const { success, marginal } = E.exact(calcOpts()), n = N();
@@ -1119,7 +1157,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     lastCalc = { success, marginal, n, k80: k80_, act: S.g > 0 && locked().length === 2 ? '重塑' : '強化' };
     const act = S.g > 0 && locked().length === 2 ? '重塑' : '強化';
     $('pct').textContent = fmtP(success);
-    $('pctDesc').textContent = success > 0 && success < 1 ? `大約每${act} ${(1 / success).toFixed(1)} 顆成功 1 顆` : (success >= 1 ? '一定成功' : '不可能達成');
+    $('pctDesc').textContent = success > 0 && success < 1 ? `大約每${act} ${perOne(success)} 顆成功 1 顆` : (success >= 1 ? '一定成功' : '不可能達成');
     const k80 = E.trialsFor(success, 0.8);
     $('need80K').textContent = `八成機率成功，需要${act}`;
     $('need80').innerHTML = isFinite(k80) ? `${k80.toLocaleString()}<small>顆</small>` : '-';
@@ -1368,7 +1406,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     const d = lastCalc, H = SH.stats, gap = 14;
     const hw = Math.round(CW * 0.42), bw = (CW - hw - 2 * gap) / 2;
     const vt = versionTime(d.k80, d.act);
-    const desc = d.success > 0 && d.success < 1 ? `大約每${d.act} ${(1 / d.success).toFixed(1)} 顆成功 1 顆` : (d.success >= 1 ? '一定成功' : '不可能達成');
+    const desc = d.success > 0 && d.success < 1 ? `大約每${d.act} ${perOne(d.success)} 顆成功 1 顆` : (d.success >= 1 ? '一定成功' : '不可能達成');
     // 三格：[x, 寬, 標題, 數字前的小字, 數字, 小字, 是否第一格, 數字後的單位 (小字)]
     const fin = isFinite(d.k80);
     const cells = [
@@ -1448,12 +1486,11 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   // 隨機抽一顆符合目標的結果 (照計算頁的設定重塑，最多試 40 萬次)
   function sampleOk() {
     if (!(lastCalc.success > 0)) return null;
-    const o = calcOpts();
-    for (let t = 0; t < 400000; t++) {
-      const c = E.simulateCounts(o), vals = rollVals(c);
-      if (outcomeOk(c, vals)) return { counts: c, vals };
-    }
-    return null;
+    // 精確的條件抽樣 (E.sampleSuccess)：直接從符合目標的結果裡依機率抽，機率再低也抽得到，不用一直重試
+    const lk = locked();
+    const cntOk = c => !(S.comboOn && lk.length === 2 && c[lk[0]] + c[lk[1]] - 2 < S.cJumps) && S.rows.every((r, i) => r.mode !== 'cnt' || c[i] - 1 <= cap(r));
+    const vals = S.rows.map(r => ({ stat: r.stat, init: (r.mode === 'val' || fromRelic()) && r.init >= 0 ? r.init : null, target: r.mode === 'val' ? r.target : null }));
+    return E.sampleSuccess(calcOpts(), cntOk, vals);
   }
   // 聖遺物圖示：canvas 要能匯出，圖片必須允許跨網域，先試 Enka，不行再走自己的 Worker (/ui/)，都不行就不放圖
   function loadImg(url) {
