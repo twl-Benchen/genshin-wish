@@ -391,6 +391,26 @@ dialog#resultImgDlg { width: min(980px, calc(100vw - 24px)); }
 #plan tr.dragging .grip { cursor: grabbing; }
 body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: none; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* 抽卡流程圖 (規則頁)：SVG，由 scripts/flows.py 產生 */
+.flow { overflow-x: auto; margin: 6px -4px 0; padding: 0 4px; }
+.flow-svg { display: block; width: 100%; min-width: 760px; height: auto; margin: 0 auto; font-family: var(--f-body); }
+#flowWeap .flow-svg { width: 77.2%; min-width: 587px; }
+.flow-svg .t { font-size: 17px; font-weight: 700; fill: var(--ink); text-anchor: middle; }
+.flow-svg .ts { font-size: 14px; font-weight: 400; fill: var(--muted); text-anchor: middle; }
+.flow-svg .tw { font-size: 19px; font-weight: 800; fill: var(--hero-ink); text-anchor: middle; letter-spacing: .06em; }
+.flow-svg .tw.small { font-size: 13.5px; font-weight: 500; letter-spacing: 0; opacity: .9; }
+.flow-svg .n-start { fill: var(--hero-a); stroke: var(--hero-b); stroke-width: 3; }
+.flow-svg .n-q { fill: var(--gold-soft); stroke: var(--gold); stroke-width: 2.5; }
+.flow-svg .n-qg { fill: var(--violet-soft); stroke: var(--violet); stroke-width: 2.5; }
+.flow-svg .n-win { fill: color-mix(in srgb, var(--good) 18%, var(--surface)); stroke: var(--good); stroke-width: 2.5; }
+.flow-svg .n-glow { fill: var(--violet-soft); stroke: var(--violet); stroke-width: 2.5; }
+.flow-svg .n-lose { fill: color-mix(in srgb, var(--bad) 15%, var(--surface)); stroke: var(--bad); stroke-width: 2.5; stroke-dasharray: 7 5; }
+.flow-svg .n-neutral { fill: var(--sunken); stroke: var(--frame); stroke-width: 2.5; }
+.flow-svg .ar { fill: none; stroke: var(--ink); stroke-width: 2.8; stroke-linejoin: round; opacity: .75; }
+.flow-svg .ahd { fill: var(--ink); opacity: .85; }
+.flow-svg .lb { font-size: 15px; font-weight: 800; fill: var(--gold); paint-order: stroke; stroke: var(--surface); stroke-width: 5px; stroke-linejoin: round; }
+.flow-key { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; margin: 12px 0 0; font-size: .82rem; color: var(--muted); }
+.flow-key b { color: var(--ink); }
 </style>
 
 <div class="wrap">
@@ -416,7 +436,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       <button type="button" role="tab" id="tabBtnCalc" aria-controls="tabCalc" aria-selected="true">計算</button>
       <button type="button" role="tab" id="tabBtnRules" aria-controls="tabRules" aria-selected="false">抽卡規則</button>
     </nav>
-    <button type="button" class="gbtn result-img-btn" id="resultImgBtn"><span class="ic"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><circle cx="12" cy="3.5" r="2" fill="currentColor"/><circle cx="4" cy="8" r="2" fill="currentColor"/><circle cx="12" cy="12.5" r="2" fill="currentColor"/><path d="M10.3 4.5 5.7 7M5.7 9l4.6 2.5" stroke="currentColor" stroke-width="1.4" fill="none"/></svg></span>分享結果</button>
+    <button type="button" class="gbtn result-img-btn" id="resultImgBtn"><span class="ic"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><circle cx="12" cy="3.5" r="2" fill="currentColor"/><circle cx="4" cy="8" r="2" fill="currentColor"/><circle cx="12" cy="12.5" r="2" fill="currentColor"/><path d="M10.3 4.5 5.7 7M5.7 9l4.6 2.5" stroke="currentColor" stroke-width="1.4" fill="none"/></svg></span><span id="resultImgLabel">分享結果</span></button>
   </div>
 
   <div class="layout" id="tabCalc" role="tabpanel" aria-labelledby="tabBtnCalc">
@@ -663,6 +683,20 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
         <div class="tip" id="tip2" hidden></div>
       </div>
       <div class="wait-facts" id="waitFacts"></div>
+    </section>
+    <section class="card frame" id="flowChar">
+      <h2>角色池：這顆五星會不會歪？</h2>
+      <div class="flow" aria-label="角色活動祈願出五星時的判斷流程">
+        <svg class="flow-svg" viewBox="0 0 1154 345" role="img" aria-label="角色活動祈願：抽卡到出五星，判斷會不會歪的流程圖"><defs><marker id="ah" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ahd"/></marker></defs><rect x="8.0" y="133.0" width="112" height="84" rx="12" class="n-start"/><text x="64" y="161.2" class="tw">抽卡</text><text x="64" y="182.0" class="tw small">最多 90 抽</text><text x="64" y="200.4" class="tw small">一定出五星</text><polygon points="224,125.0 295.0,175 224,225.0 153.0,175" class="n-q"/><text x="224" y="169.2" class="t">出五星</text><text x="224" y="190.0" class="t">了嗎？</text><polygon points="396,125.0 467.0,175 396,225.0 325.0,175" class="n-q"/><text x="396" y="169.2" class="t">上一個</text><text x="396" y="190.0" class="t">有歪嗎？</text><polygon points="568,125.0 639.0,175 568,225.0 497.0,175" class="n-q"/><text x="568" y="169.2" class="t">明光計數</text><text x="568" y="190.0" class="t">是 3 嗎？</text><polygon points="740,125.0 811.0,175 740,225.0 669.0,175" class="n-q"/><text x="740" y="169.2" class="t">金光是</text><text x="740" y="190.0" class="t">常駐角色？</text><polygon points="912,125.0 983.0,175 912,225.0 841.0,175" class="n-qg"/><text x="912" y="169.2" class="t">觸發</text><text x="912" y="190.0" class="t">捕獲明光？</text><rect x="1030.0" y="133.0" width="116" height="84" rx="12" class="n-lose"/><text x="1088" y="160.0" class="t">歪了</text><text x="1088" y="180.8" class="t">拿到常駐</text><text x="1088" y="201.6" class="ts">下一個一定 UP</text><rect x="332.0" y="12.0" width="128" height="66" rx="12" class="n-win"/><text x="396" y="40.4" class="t">一定是 UP</text><text x="396" y="61.2" class="ts">大保底</text><rect x="504.0" y="12.0" width="128" height="66" rx="12" class="n-glow"/><text x="568" y="40.4" class="t">捕獲明光！</text><text x="568" y="61.2" class="ts">一定是 UP</text><rect x="676.0" y="272.0" width="128" height="66" rx="12" class="n-win"/><text x="740" y="309.6" class="t">UP 角色</text><rect x="848.0" y="272.0" width="128" height="66" rx="12" class="n-glow"/><text x="912" y="300.4" class="t">捕獲明光！</text><text x="912" y="321.2" class="ts">救回來變 UP</text><path d="M120,175 L147.0,175" class="ar" marker-end="url(#ah)"/><path d="M295.0,175 L319.0,175" class="ar" marker-end="url(#ah)"/><text x="310.0" y="165" class="lb" text-anchor="middle">是</text><path d="M224,125.0 L224,45 L64,45 L64,127" class="ar" marker-end="url(#ah)"/><text x="144.0" y="37" class="lb" text-anchor="middle">沒出：繼續抽</text><path d="M396,125.0 L396,83.0" class="ar" marker-end="url(#ah)"/><text x="406" y="113.0" class="lb" text-anchor="start">有</text><path d="M467.0,175 L491.0,175" class="ar" marker-end="url(#ah)"/><text x="482.0" y="165" class="lb" text-anchor="middle">沒有</text><path d="M568,125.0 L568,83.0" class="ar" marker-end="url(#ah)"/><text x="578" y="113.0" class="lb" text-anchor="start">是</text><path d="M639.0,175 L663.0,175" class="ar" marker-end="url(#ah)"/><text x="654.0" y="165" class="lb" text-anchor="middle">不是</text><path d="M740,225.0 L740,267.0" class="ar" marker-end="url(#ah)"/><text x="750" y="247.0" class="lb" text-anchor="start">不是</text><path d="M811.0,175 L835.0,175" class="ar" marker-end="url(#ah)"/><text x="826.0" y="165" class="lb" text-anchor="middle">是</text><path d="M912,225.0 L912,267.0" class="ar" marker-end="url(#ah)"/><text x="922" y="247.0" class="lb" text-anchor="start">觸發</text><path d="M983.0,175 L1024,175" class="ar" marker-end="url(#ah)"/><text x="1006.5" y="165" class="lb" text-anchor="middle">沒有</text></svg>
+      </div>
+      <p class="flow-key"><span><b>明光計數</b>：歪一次 +1，贏一次 −1，最多 3</span><span>觸發捕獲明光後回到 1</span></p>
+    </section>
+    <section class="card frame" id="flowWeap">
+      <h2>武器池：這把五星是不是定軌那把？</h2>
+      <div class="flow" aria-label="武器活動祈願出五星時的判斷流程">
+        <svg class="flow-svg" viewBox="0 0 880 345" role="img" aria-label="武器活動祈願：抽卡到出五星，判斷是不是定軌那把的流程圖"><defs><marker id="ah" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ahd"/></marker></defs><rect x="8.0" y="133.0" width="112" height="84" rx="12" class="n-start"/><text x="64" y="161.2" class="tw">抽卡</text><text x="64" y="182.0" class="tw small">最多 77 抽</text><text x="64" y="200.4" class="tw small">一定出五星</text><polygon points="224,125.0 295.0,175 224,225.0 153.0,175" class="n-q"/><text x="224" y="169.2" class="t">出五星</text><text x="224" y="190.0" class="t">了嗎？</text><polygon points="396,125.0 467.0,175 396,225.0 325.0,175" class="n-q"/><text x="396" y="169.2" class="t">命定值</text><text x="396" y="190.0" class="t">是 1 嗎？</text><polygon points="568,125.0 639.0,175 568,225.0 497.0,175" class="n-q"/><text x="568" y="169.2" class="t">上一把</text><text x="568" y="190.0" class="t">歪到常駐？</text><rect x="327.0" y="12.0" width="138" height="66" rx="12" class="n-win"/><text x="396" y="39.2" class="t">一定是</text><text x="396" y="60.0" class="t">定軌那把</text><rect x="482.0" y="12.0" width="172" height="66" rx="12" class="n-neutral"/><text x="568" y="40.4" class="t">兩把 UP 二選一</text><text x="568" y="61.2" class="ts">不是定軌的 → 命定值 1</text><rect x="715.0" y="49.0" width="150" height="62" rx="12" class="n-win"/><text x="790" y="75.4" class="t">定軌那把</text><text x="790" y="96.2" class="ts">37.5%</text><rect x="715.0" y="144.0" width="150" height="62" rx="12" class="n-neutral"/><text x="790" y="170.4" class="t">另一把 UP</text><text x="790" y="191.2" class="ts">37.5%，命定值變 1</text><rect x="715.0" y="239.0" width="150" height="62" rx="12" class="n-lose"/><text x="790" y="265.4" class="t">常駐武器</text><text x="790" y="286.2" class="ts">25%，命定值變 1</text><path d="M120,175 L147.0,175" class="ar" marker-end="url(#ah)"/><path d="M295.0,175 L319.0,175" class="ar" marker-end="url(#ah)"/><text x="310.0" y="165" class="lb" text-anchor="middle">是</text><path d="M224,125.0 L224,45 L64,45 L64,127" class="ar" marker-end="url(#ah)"/><text x="144.0" y="37" class="lb" text-anchor="middle">沒出：繼續抽</text><path d="M396,125.0 L396,83.0" class="ar" marker-end="url(#ah)"/><text x="406" y="113.0" class="lb" text-anchor="start">是</text><path d="M467.0,175 L491.0,175" class="ar" marker-end="url(#ah)"/><text x="482.0" y="165" class="lb" text-anchor="middle">不是</text><path d="M568,125.0 L568,83.0" class="ar" marker-end="url(#ah)"/><text x="578" y="113.0" class="lb" text-anchor="start">有</text><path d="M639.0,175 L709,175" class="ar" marker-end="url(#ah)"/><text x="677.0" y="165" class="lb" text-anchor="middle">沒有</text><path d="M680,175 L680,80 L709,80" class="ar" marker-end="url(#ah)"/><path d="M680,175 L680,270 L709,270" class="ar" marker-end="url(#ah)"/></svg>
+      </div>
+      <p class="flow-key"><span><b>命定值</b>：抽到不是定軌的那把就變 1</span><span>換期、換定軌或取消定軌會歸 0</span></p>
     </section>
     <section class="card frame">
       <h2>計算用的抽卡規則</h2>
@@ -1370,6 +1404,14 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   $('orderReset').addEventListener('click', () => commitOrder(defaultOrder(orderWant($('order').value))));
 
   // ---- 分頁：計算 / 抽卡規則 ----
+  // 在規則頁時，右上角的按鈕改成「分享流程圖」
+  var onRules = false;
+  function paintShareBtn() {
+    const has = !!(shareData && shareData.has);
+    $('resultImgLabel').textContent = onRules ? '分享流程圖' : '分享結果';
+    $('resultImgBtn').disabled = !onRules && !has;
+    $('resultImgBtn').title = onRules || has ? '' : '先在左側設定想抽的角色或武器';
+  }
   function showTab(name) {
     const rules = name === 'rules';
     $('tabCalc').hidden = rules;
@@ -1377,6 +1419,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     $('tabBtnCalc').setAttribute('aria-selected', rules ? 'false' : 'true');
     $('tabBtnRules').setAttribute('aria-selected', rules ? 'true' : 'false');
     try { history.replaceState(null, '', rules ? '#rules' : location.pathname + location.search); } catch (e) {}
+    onRules = rules; paintShareBtn();
     setTimeout(() => { if (rules) drawWait(); else drawChart(); }, 0);
   }
   $('tabBtnCalc').addEventListener('click', () => showTab('calc'));
@@ -1483,8 +1526,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     current = { st, budget: opt.budget, free: opt.free, has };
     paintNeed(opt, st, has);
     shareData = { opt, st, raw, useNet, off, has, rows: shareRows, items: manualItems(opt) };
-    $('resultImgBtn').disabled = !has;
-    $('resultImgBtn').title = has ? '' : '先在左側設定想抽的角色或武器';
+    paintShareBtn();
     drawChart();
   }
 
@@ -2290,10 +2332,12 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   function paintShareMode() {
     $('resultImgOrient').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === shareMode() ? 'true' : 'false'));
   }
-  const shareName = () => { const n = new Date(); return '原神期望抽數-' + n.getFullYear() + String(n.getMonth() + 1).padStart(2, '0') + String(n.getDate()).padStart(2, '0') + '.png'; };
+  let shareKind = 'result';
+  const shareName = () => { const n = new Date(); return (shareKind === 'flow' ? '原神抽卡流程圖-' : '原神期望抽數-') + n.getFullYear() + String(n.getMonth() + 1).padStart(2, '0') + String(n.getDate()).padStart(2, '0') + '.png'; };
   async function openShare() {
     if (!shareData || !shareData.has) return;
     const dlg = $('resultImgDlg');
+    shareKind = 'result'; $('resultImgTitle').lastChild.textContent = '分享結果'; $('resultImgOrient').parentElement.hidden = false;
     $('resultImgPic').hidden = true; $('resultImgWait').hidden = false; $('resultImgWait').textContent = '圖片產生中…';
     $('resultImgSave').disabled = true; $('resultImgSend').hidden = true; $('copyMsg').textContent = '';
     paintQrSmall();
@@ -2318,7 +2362,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       $('resultImgWait').textContent = '圖片產生失敗，請重新整理後再試一次。';
     }
   }
-  $('resultImgBtn').addEventListener('click', openShare);
+  $('resultImgBtn').addEventListener('click', () => (onRules ? openFlowShare() : openShare()));
   $('resultImgOrient').addEventListener('click', (e) => {
     const b = e.target.closest('button');
     if (!b || b.dataset.v === shareMode()) return;
@@ -2336,7 +2380,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   $('resultImgSend').addEventListener('click', async () => {
     try {
       const file = new File([shareBlob], shareName(), { type: 'image/png' });
-      await navigator.share({ files: [file], title: '原神期望抽數計算', text: SITE });
+      await navigator.share({ files: [file], title: shareKind === 'flow' ? '原神抽卡流程圖' : '原神期望抽數計算', text: SITE });
     } catch (e) {}
   });
   $('copyUrl').addEventListener('click', () => {
@@ -2347,6 +2391,143 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   });
   function selectUrl() {
     try { const r = document.createRange(); r.selectNodeContents($('siteUrl')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e) {}
+  }
+
+
+  // ---- 分享流程圖：把規則頁的兩張 SVG 流程圖畫進同一張羊皮紙視窗，附 QR code ----
+  const loadImg = (src) => new Promise((ok, bad) => { const im = new Image(); im.onload = () => ok(im); im.onerror = bad; im.src = src; });
+  // SVG 用的是網頁的 CSS 變數，單獨轉成圖片時讀不到，所以換成分享圖固定的亮色配色
+  function flowSvgSrc(svg) {
+    const c = svg.cloneNode(true);
+    const vb = svg.viewBox.baseVal;
+    c.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    c.setAttribute('width', vb.width); c.setAttribute('height', vb.height);
+    const mix = (a, b, t) => { const h = (x) => [1, 3, 5].map((i) => parseInt(x.slice(i, i + 2), 16)); const A = h(a), B = h(b); return 'rgb(' + A.map((v, i) => Math.round(v * t + B[i] * (1 - t))).join(',') + ')'; };
+    const css = `text{font-family:${FB}}
+      .t{font-size:17px;font-weight:700;fill:${K.ink};text-anchor:middle}
+      .ts{font-size:14px;font-weight:400;fill:${K.muted};text-anchor:middle}
+      .tw{font-size:19px;font-weight:800;fill:${K.heroInk};text-anchor:middle;letter-spacing:.06em}
+      .tw.small{font-size:13.5px;font-weight:500;letter-spacing:0}
+      .n-start{fill:${K.heroA};stroke:${K.heroB};stroke-width:3}
+      .n-q{fill:${K.goldSoft};stroke:${K.gold};stroke-width:2.5}
+      .n-qg,.n-glow{fill:${K.violetSoft};stroke:${K.violet};stroke-width:2.5}
+      .n-win{fill:${mix(K.good, K.surface, 0.18)};stroke:${K.good};stroke-width:2.5}
+      .n-lose{fill:${mix(K.bad, K.surface, 0.15)};stroke:${K.bad};stroke-width:2.5;stroke-dasharray:7 5}
+      .n-neutral{fill:${K.sunken};stroke:${K.frame};stroke-width:2.5}
+      .ar{fill:none;stroke:${K.ink};stroke-width:2.8;stroke-linejoin:round;opacity:.75}
+      .ahd{fill:${K.ink};opacity:.85}
+      .lb{font-size:15px;font-weight:800;fill:${K.gold};paint-order:stroke;stroke:${K.surface};stroke-width:5px;stroke-linejoin:round}`;
+    const st = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+    st.textContent = css;
+    c.insertBefore(st, c.firstChild);
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(c));
+  }
+  async function renderFlowShare() {
+    try {
+      await Promise.race([
+        Promise.all([`800 50px ${FD}`, `600 30px ${FD}`, `400 20px ${FB}`, `700 20px ${FB}`, `600 22px ${FN}`].map((f) => document.fonts.load(f, '原神抽卡流程圖角色池這顆五星會不會歪武器把是定軌那明光計數一次贏最多觸發捕獲後回到命定值抽到的就變換期或取消歸掃描前往網站 QRcode0123456789+−，：'))),
+        new Promise((r) => setTimeout(r, 3000)),
+      ]);
+    } catch (e) {}
+    const secs = [
+      { svg: document.querySelector('#flowChar .flow-svg'), title: '角色池：這顆五星會不會歪？', key: ['明光計數：歪一次 +1，贏一次 −1，最多 3', '觸發捕獲明光後回到 1'] },
+      { svg: document.querySelector('#flowWeap .flow-svg'), title: '武器池：這把五星是不是定軌那把？', key: ['命定值：抽到不是定軌的那把就變 1', '換期、換定軌或取消定軌會歸 0'] },
+    ];
+    const charts = await Promise.all(secs.map((s) => loadImg(flowSvgSrc(s.svg))));
+    SW = 1920;
+    const FX = SM + SP, FW = SW - 2 * (SM + SP);
+    setCol(FX, FW);
+    const k = 1.4; // SVG 放大倍率，兩張用同一個倍率，字才會一樣大
+    const dims = secs.map((s) => { const vb = s.svg.viewBox.baseVal; return [vb.width * k, vb.height * k]; });
+    const headH = 110, secHead = 70, keyH = 56, gap = 44, QR = 213;
+    const bodyH = secHead + dims[0][1] + keyH + gap + secHead + dims[1][1] + 24 + QR;
+    const winH = 64 + headH + bodyH + 52;
+    const H = winH + 2 * SM, scale = 2;
+    const cv = document.createElement('canvas');
+    cv.width = SW * scale; cv.height = H * scale;
+    const ctx = cv.getContext('2d');
+    ctx.scale(scale, scale);
+    // 背景與視窗 (跟分享結果同一套)
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, K.sky1); sky.addColorStop(Math.min(0.6, 700 / H), K.sky2); sky.addColorStop(1, '#e4ecf4');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, SW, H);
+    [[0.15, 90, 260], [0.83, 60, 220], [0.57, 140, 180]].forEach(([fx, y, r]) => {
+      const x = fx * SW, g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g; ctx.fillRect(x - r, y - r, 2 * r, 2 * r);
+    });
+    const wx = SM, wy = SM, ww = SW - 2 * SM, wh = winH;
+    ctx.save(); ctx.shadowColor = 'rgba(30,40,70,.22)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 8;
+    roundRect(ctx, wx, wy, ww, wh, 6); ctx.fillStyle = K.surface; ctx.fill(); ctx.restore();
+    roundRect(ctx, wx, wy, ww, wh, 6); ctx.strokeStyle = K.frame; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = K.frameSoft; ctx.lineWidth = 1.5; ctx.strokeRect(wx + 12, wy + 12, ww - 24, wh - 24);
+    ctx.fillStyle = K.frame;
+    [[wx + 8, wy + 8, 1, 1], [wx + ww - 8, wy + 8, -1, 1], [wx + 8, wy + wh - 8, 1, -1], [wx + ww - 8, wy + wh - 8, -1, -1]].forEach(([x, y, sx, sy]) => {
+      ctx.fillRect(sx > 0 ? x : x - 24, sy > 0 ? y : y - 3, 24, 3);
+      ctx.fillRect(sx > 0 ? x : x - 3, sy > 0 ? y : y - 24, 3, 24);
+    });
+    let y = wy + 64;
+    text(ctx, '✦', CX, y + 20, `800 44px ${FD}`, K.star);
+    text(ctx, '原神抽卡流程圖', CX + 56, y + 22, `800 50px ${FD}`, K.ink);
+    const now = new Date();
+    text(ctx, now.getFullYear() + '/' + String(now.getMonth() + 1).padStart(2, '0') + '/' + String(now.getDate()).padStart(2, '0'), CX + CW, y + 18, `400 20px ${FN}`, K.muted, 'right');
+    y += headH;
+    secs.forEach((s, i) => {
+      if (i) {
+        const dg = ctx.createLinearGradient(CX, 0, CX + CW, 0);
+        dg.addColorStop(0, 'rgba(211,188,142,0)'); dg.addColorStop(0.5, K.frame); dg.addColorStop(1, 'rgba(211,188,142,0)');
+        ctx.fillStyle = dg; ctx.fillRect(CX, y - gap / 2, CW, 1.5);
+      }
+      text(ctx, '✦', CX, y + 30, `600 26px ${FD}`, K.star);
+      text(ctx, s.title, CX + 36, y + 32, `600 30px ${FD}`, K.ink);
+      y += secHead;
+      const [w, h] = dims[i];
+      ctx.drawImage(charts[i], CX + (CW - w) / 2, y, w, h);
+      y += h;
+      if (i === 0) {
+        const kt = s.key[0] + '　　' + s.key[1];
+        text(ctx, kt, CX + CW / 2, y + 34, `400 20px ${FB}`, K.muted, 'center');
+        y += keyH + gap;
+      } else {
+        y += 24;
+        // 左下角 QR code，命定值的說明往右移
+        roundRect(ctx, CX - 4, y - 4, QR, QR, 8); ctx.fillStyle = '#fffaf0'; ctx.fill(); ctx.strokeStyle = K.frame; ctx.lineWidth = 1.5; ctx.stroke();
+        drawQR(ctx, CX, y, 5, '#2f3441', '#fffaf0');
+        const fx = CX + 240;
+        text(ctx, '掃描 QR code 自己算算看要幾抽', fx, y + 70, `600 30px ${FD}`, K.ink);
+        text(ctx, SITE.replace('https://', '').replace(/\/$/, ''), fx, y + 112, `600 22px ${FN}`, K.gold);
+        text(ctx, '流程圖只列出判斷順序，詳細機率請看網站的抽卡規則。與米哈遊官方無關。', fx, y + 150, `400 17px ${FB}`, K.muted);
+        text(ctx, s.key[0], CX + CW, y + 70, `700 22px ${FB}`, K.ink, 'right');
+        text(ctx, s.key[1], CX + CW, y + 106, `400 20px ${FB}`, K.muted, 'right');
+      }
+    });
+    return cv;
+  }
+  async function openFlowShare() {
+    const dlg = $('resultImgDlg');
+    shareKind = 'flow'; $('resultImgTitle').lastChild.textContent = '分享流程圖'; $('resultImgOrient').parentElement.hidden = true;
+    $('resultImgPic').hidden = true; $('resultImgWait').hidden = false; $('resultImgWait').textContent = '圖片產生中…';
+    $('resultImgSave').disabled = true; $('resultImgSend').hidden = true; $('copyMsg').textContent = '';
+    paintQrSmall();
+    if (!dlg.open) { if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', ''); }
+    const ticket = (openShare.ticket = (openShare.ticket || 0) + 1);
+    try {
+      const cv = await renderFlowShare();
+      if (ticket !== openShare.ticket) return;
+      $('resultImgPic').alt = '角色池與武器池的抽卡流程圖';
+      shareBlob = await new Promise((r) => cv.toBlob(r, 'image/png'));
+      if (shareUrl) URL.revokeObjectURL(shareUrl);
+      shareUrl = URL.createObjectURL(shareBlob);
+      $('resultImgPic').src = shareUrl;
+      $('resultImgPic').hidden = false; $('resultImgWait').hidden = true;
+      $('resultImgSave').disabled = false;
+      try {
+        const file = new File([shareBlob], shareName(), { type: 'image/png' });
+        $('resultImgSend').hidden = !(navigator.canShare && navigator.canShare({ files: [file] }));
+      } catch (e) {}
+    } catch (e) {
+      $('resultImgWait').textContent = '圖片產生失敗，請重新整理後再試一次。';
+    }
   }
 
   const redrawAll = () => { drawChart(); drawWait(); };
