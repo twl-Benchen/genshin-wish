@@ -689,7 +689,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       <div class="flow" aria-label="角色活動祈願出五星時的判斷流程">
         <svg class="flow-svg" viewBox="0 0 1154 345" role="img" aria-label="角色活動祈願：抽卡到出五星，判斷會不會歪的流程圖"><defs><marker id="ah" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ahd"/></marker></defs><rect x="8.0" y="133.0" width="112" height="84" rx="12" class="n-start"/><text x="64" y="161.2" class="tw">抽卡</text><text x="64" y="182.0" class="tw small">最多 90 抽</text><text x="64" y="200.4" class="tw small">一定出五星</text><polygon points="224,125.0 295.0,175 224,225.0 153.0,175" class="n-q"/><text x="224" y="169.2" class="t">出五星</text><text x="224" y="190.0" class="t">了嗎？</text><polygon points="396,125.0 467.0,175 396,225.0 325.0,175" class="n-q"/><text x="396" y="169.2" class="t">上一個</text><text x="396" y="190.0" class="t">有歪嗎？</text><polygon points="568,125.0 639.0,175 568,225.0 497.0,175" class="n-q"/><text x="568" y="169.2" class="t">明光計數</text><text x="568" y="190.0" class="t">是 3 嗎？</text><polygon points="740,125.0 811.0,175 740,225.0 669.0,175" class="n-q"/><text x="740" y="169.2" class="t">金光是</text><text x="740" y="190.0" class="t">常駐角色？</text><polygon points="912,125.0 983.0,175 912,225.0 841.0,175" class="n-qg"/><text x="912" y="169.2" class="t">觸發</text><text x="912" y="190.0" class="t">捕獲明光？</text><rect x="1030.0" y="133.0" width="116" height="84" rx="12" class="n-lose"/><text x="1088" y="160.0" class="t">歪了</text><text x="1088" y="180.8" class="t">拿到常駐</text><text x="1088" y="201.6" class="ts">下一個一定 UP</text><rect x="332.0" y="12.0" width="128" height="66" rx="12" class="n-win"/><text x="396" y="40.4" class="t">一定是 UP</text><text x="396" y="61.2" class="ts">大保底</text><rect x="504.0" y="12.0" width="128" height="66" rx="12" class="n-glow"/><text x="568" y="40.4" class="t">捕獲明光！</text><text x="568" y="61.2" class="ts">一定是 UP</text><rect x="676.0" y="272.0" width="128" height="66" rx="12" class="n-win"/><text x="740" y="309.6" class="t">UP 角色</text><rect x="848.0" y="272.0" width="128" height="66" rx="12" class="n-glow"/><text x="912" y="300.4" class="t">捕獲明光！</text><text x="912" y="321.2" class="ts">救回來變 UP</text><path d="M120,175 L147.0,175" class="ar" marker-end="url(#ah)"/><path d="M295.0,175 L319.0,175" class="ar" marker-end="url(#ah)"/><text x="310.0" y="165" class="lb" text-anchor="middle">是</text><path d="M224,125.0 L224,45 L64,45 L64,127" class="ar" marker-end="url(#ah)"/><text x="144.0" y="37" class="lb" text-anchor="middle">沒出：繼續抽</text><path d="M396,125.0 L396,83.0" class="ar" marker-end="url(#ah)"/><text x="406" y="113.0" class="lb" text-anchor="start">有</text><path d="M467.0,175 L491.0,175" class="ar" marker-end="url(#ah)"/><text x="482.0" y="165" class="lb" text-anchor="middle">沒有</text><path d="M568,125.0 L568,83.0" class="ar" marker-end="url(#ah)"/><text x="578" y="113.0" class="lb" text-anchor="start">是</text><path d="M639.0,175 L663.0,175" class="ar" marker-end="url(#ah)"/><text x="654.0" y="165" class="lb" text-anchor="middle">不是</text><path d="M740,225.0 L740,267.0" class="ar" marker-end="url(#ah)"/><text x="750" y="247.0" class="lb" text-anchor="start">不是</text><path d="M811.0,175 L835.0,175" class="ar" marker-end="url(#ah)"/><text x="826.0" y="165" class="lb" text-anchor="middle">是</text><path d="M912,225.0 L912,267.0" class="ar" marker-end="url(#ah)"/><text x="922" y="247.0" class="lb" text-anchor="start">觸發</text><path d="M983.0,175 L1024,175" class="ar" marker-end="url(#ah)"/><text x="1006.5" y="165" class="lb" text-anchor="middle">沒有</text></svg>
       </div>
-      <p class="flow-key"><span><b>明光計數</b>：歪一次 +1，贏一次 −1，最多 3</span><span>觸發捕獲明光後回到 1</span></p>
+      <p class="flow-key"><span><b>明光計數</b>：歪一次 +1，贏一次 −1，最多 3</span><span>觸發捕獲明光後回到 1，所以觸發過後最多再歪兩次</span><span>官方保證連續歪三次必定觸發，「回到 1」和「贏一次 −1」是社群模型的設定</span></p>
     </section>
     <section class="card frame" id="flowWeap">
       <h2>武器池：這把五星是不是定軌那把？</h2>
@@ -731,7 +731,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
         <div>
           <h3>捕獲明光模型 (網頁用官方對應模型)</h3>
           <ul>
-            <li>明光計數：小保底歪一次加 1，贏一次減 1，最多 3；觸發明光後回到 1。歪了之後一定是大保底，所以勾「大保底」時，計數會自動至少調成 1 (還是可以自己改)</li>
+            <li>明光計數：小保底歪一次加 1，贏一次減 1，最多 3；觸發明光後回到 1，所以觸發過後最多再歪兩次就會必定觸發。官方只保證「連續歪三次必定觸發」，觸發後回到 1、贏一次減 1 是社群計數器模型 (一棵平衡樹、M0onck) 的設定。歪了之後一定是大保底，所以勾「大保底」時，計數會自動至少調成 1 (還是可以自己改)</li>
             <li>計數 3：下一顆小保底五星必定觸發明光，計數回到 1。大保底不會改變計數</li>
             <li>計數 0、1：每顆小保底五星有官方的基礎機率 0.018% 觸發明光 (明光只救本來會歪的那一半，所以是本來會歪時的 0.036%)，其他照 50/50。官方沒寫 0.018% 的單位，「計數還沒提高時每顆小保底五星」是網頁的解讀</li>
             <li>計數 2：本來會歪的有約 8.86% 機率觸發明光，等於約 54.4% 不歪。這個數字不是官方公布的，是用 0.018%、計數 3 必定觸發和長期勝率 55% 三個官方數字反推出來的</li>
@@ -2430,7 +2430,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       ]);
     } catch (e) {}
     const secs = [
-      { svg: document.querySelector('#flowChar .flow-svg'), title: '角色池：這顆五星會不會歪？', key: ['明光計數：歪一次 +1，贏一次 −1，最多 3', '觸發捕獲明光後回到 1'] },
+      { svg: document.querySelector('#flowChar .flow-svg'), title: '角色池：這顆五星會不會歪？', key: ['明光計數：歪一次 +1，贏一次 −1，最多 3', '觸發後回到 1，所以觸發過後最多再歪兩次', '官方保證連續歪三次必定觸發，「回到 1」和「贏一次 −1」是社群模型的設定'] },
       { svg: document.querySelector('#flowWeap .flow-svg'), title: '武器池：這把五星是不是定軌那把？', key: ['命定值：抽到不是定軌的那把就變 1', '換期、換定軌或取消定軌會歸 0'] },
     ];
     const charts = await Promise.all(secs.map((s) => loadImg(flowSvgSrc(s.svg))));
@@ -2440,7 +2440,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     const k = 1.4; // SVG 放大倍率，兩張用同一個倍率，字才會一樣大
     const dims = secs.map((s) => { const vb = s.svg.viewBox.baseVal; return [vb.width * k, vb.height * k]; });
     const headH = 110, secHead = 70, keyH = 56, gap = 44, QR = 213;
-    const bodyH = secHead + dims[0][1] + keyH + gap + secHead + dims[1][1] + 24 + QR;
+    const bodyH = secHead + dims[0][1] + keyH + 30 + gap + secHead + dims[1][1] + 24 + QR;
     const winH = 64 + headH + bodyH + 52;
     const H = winH + 2 * SM, scale = 2;
     const cv = document.createElement('canvas');
@@ -2485,9 +2485,9 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       ctx.drawImage(charts[i], CX + (CW - w) / 2, y, w, h);
       y += h;
       if (i === 0) {
-        const kt = s.key[0] + '　　' + s.key[1];
-        text(ctx, kt, CX + CW / 2, y + 34, `400 20px ${FB}`, K.muted, 'center');
-        y += keyH + gap;
+        text(ctx, s.key[0] + '　　' + s.key[1], CX + CW / 2, y + 34, `400 20px ${FB}`, K.muted, 'center');
+        text(ctx, s.key[2], CX + CW / 2, y + 64, `400 18px ${FB}`, K.muted, 'center');
+        y += keyH + 30 + gap;
       } else {
         y += 24;
         // 左下角 QR code，命定值的說明往右移
