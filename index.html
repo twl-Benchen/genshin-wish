@@ -402,35 +402,26 @@ dialog#resultImgDlg { width: min(980px, calc(100vw - 24px)); }
 #plan tr.dragging .grip { cursor: grabbing; }
 body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: none; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
-/* 抽卡流程圖 (規則頁) */
-.flow { max-width: 620px; margin: 4px auto 0; display: flex; flex-direction: column; font-size: .95rem; line-height: 1.45; }
-.fr { display: grid; grid-template-columns: minmax(0, 1fr) 54px minmax(0, 1fr); align-items: center; }
-.fn { box-sizing: border-box; text-align: center; border-radius: 10px; padding: 9px 10px; color: var(--ink); background: var(--sunken); border: 2px solid var(--frame-soft); font-weight: 600; }
-.fn small { display: block; font-size: .78rem; font-weight: 400; color: var(--muted); }
-.fn.start { background: linear-gradient(135deg, var(--hero-a), var(--hero-b)); color: var(--hero-ink); border-color: transparent; font-weight: 800; letter-spacing: .04em; }
-.fn.start small { color: var(--hero-ink); opacity: .85; }
-.fn.q { background: var(--gold-soft); border-color: var(--gold); }
-.fn.glow { background: var(--violet-soft); border-color: var(--violet); }
-.fn.win { background: color-mix(in srgb, var(--good) 16%, var(--surface)); border-color: var(--good); }
-.fn.win::before { content: "✓ "; color: var(--good); font-weight: 800; }
-.fn.win.glow { background: var(--violet-soft); border-color: var(--violet); }
-.fn.win.glow::before { content: "✦ "; color: var(--violet); }
-.fn.lose { background: color-mix(in srgb, var(--bad) 14%, var(--surface)); border-color: var(--bad); border-style: dashed; }
-.fn.lose::before { content: "✗ "; color: var(--bad); font-weight: 800; }
-.fa { grid-column: 1; display: flex; flex-direction: column; align-items: center; color: var(--frame); min-height: 30px; }
-.fa::before { content: ""; width: 2px; flex: 1 0 8px; background: var(--frame); }
-.fa::after { content: "▼"; font-size: .62rem; line-height: 1; margin-top: -1px; }
-.fh { position: relative; height: 2px; background: var(--frame); margin-right: 7px; }
-.fh::after { content: "▶"; position: absolute; right: -7px; top: -6px; font-size: .62rem; line-height: 1; color: var(--frame); }
-.tag { display: inline-block; font-size: .74rem; font-weight: 700; line-height: 1; padding: 3px 7px; border-radius: 999px; background: var(--surface); border: 1px solid var(--frame-soft); color: var(--muted); }
-.fh .tag { position: absolute; left: 50%; bottom: 5px; transform: translateX(-50%); white-space: nowrap; }
-.fa .tag { margin: 2px 0; }
-.fends { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.fends > div { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.fends .fn { width: 100%; flex: 1; }
-.flow-key { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; margin: 14px 0 0; font-size: .8rem; color: var(--muted); }
+/* 抽卡流程圖 (規則頁)：SVG，由 scripts/flows.py 產生 */
+.flow { overflow-x: auto; margin: 6px -4px 0; padding: 0 4px; }
+.flow-svg { display: block; width: 100%; min-width: 620px; height: auto; margin: 0 auto; font-family: var(--f-body); }
+#flowChar .flow-svg { max-width: 900px; } #flowWeap .flow-svg { max-width: 1000px; }
+.flow-svg .t { font-size: 17px; font-weight: 700; fill: var(--ink); text-anchor: middle; }
+.flow-svg .ts { font-size: 14px; font-weight: 400; fill: var(--muted); text-anchor: middle; }
+.flow-svg .tw { font-size: 19px; font-weight: 800; fill: var(--hero-ink); text-anchor: middle; letter-spacing: .06em; }
+.flow-svg .tw.small { font-size: 13.5px; font-weight: 500; letter-spacing: 0; opacity: .9; }
+.flow-svg .n-start { fill: var(--hero-a); stroke: var(--hero-b); stroke-width: 3; }
+.flow-svg .n-q { fill: var(--gold-soft); stroke: var(--gold); stroke-width: 2.5; }
+.flow-svg .n-qg { fill: var(--violet-soft); stroke: var(--violet); stroke-width: 2.5; }
+.flow-svg .n-win { fill: color-mix(in srgb, var(--good) 18%, var(--surface)); stroke: var(--good); stroke-width: 2.5; }
+.flow-svg .n-glow { fill: var(--violet-soft); stroke: var(--violet); stroke-width: 2.5; }
+.flow-svg .n-lose { fill: color-mix(in srgb, var(--bad) 15%, var(--surface)); stroke: var(--bad); stroke-width: 2.5; stroke-dasharray: 7 5; }
+.flow-svg .n-neutral { fill: var(--sunken); stroke: var(--frame); stroke-width: 2.5; }
+.flow-svg .ar { fill: none; stroke: var(--ink); stroke-width: 2.8; stroke-linejoin: round; opacity: .75; }
+.flow-svg .ahd { fill: var(--ink); opacity: .85; }
+.flow-svg .lb { font-size: 15px; font-weight: 800; fill: var(--gold); paint-order: stroke; stroke: var(--surface); stroke-width: 5px; stroke-linejoin: round; }
+.flow-key { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; margin: 12px 0 0; font-size: .82rem; color: var(--muted); }
 .flow-key b { color: var(--ink); }
-@media (max-width: 420px) { .flow { font-size: .86rem; } .fr { grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr); } .fn { padding: 7px 6px; } }
 </style>
 </head>
 <body>
@@ -708,34 +699,14 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     <section class="card frame" id="flowChar">
       <h2>角色池：這顆五星會不會歪？</h2>
       <div class="flow" aria-label="角色活動祈願出五星時的判斷流程">
-        <div class="fr"><div class="fn start">出五星了！</div></div>
-        <div class="fr"><div class="fa"></div></div>
-        <div class="fr"><div class="fn q">上一顆有歪嗎？</div><div class="fh"><span class="tag">有</span></div><div class="fn win">一定是 UP<small>大保底</small></div></div>
-        <div class="fr"><div class="fa"><span class=tag>沒有</span></div></div>
-        <div class="fr"><div class="fn q">明光計數到 3 了嗎？</div><div class="fh"><span class="tag">到了</span></div><div class="fn win glow">捕獲明光！<small>一定是 UP</small></div></div>
-        <div class="fr"><div class="fa"><span class=tag>還沒</span></div></div>
-        <div class="fr"><div class="fn q">50 / 50<small>擲硬幣</small></div><div class="fh"><span class="tag">贏</span></div><div class="fn win">UP 角色</div></div>
-        <div class="fr"><div class="fa"><span class=tag>輸</span></div></div>
-        <div class="fr"><div class="fn glow q">有機會觸發捕獲明光？</div><div class="fh"><span class="tag">觸發</span></div><div class="fn win glow">捕獲明光！<small>救回來，變成 UP</small></div></div>
-        <div class="fr"><div class="fa"><span class=tag>沒觸發</span></div></div>
-        <div class="fr"><div class="fn lose">歪了，拿到常駐角色<small>下一顆一定是 UP</small></div></div>
+        <svg class="flow-svg" viewBox="0 0 900 680" role="img" aria-label="角色活動祈願：抽卡到出五星，判斷會不會歪的流程圖"><defs><marker id="ah" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ahd"/></marker></defs><rect x="25.0" y="188.0" width="130" height="84" rx="12" class="n-start"/><text x="90" y="216.2" class="tw">抽卡</text><text x="90" y="237.0" class="tw small">最多 90 抽</text><text x="90" y="255.4" class="tw small">一定出五星</text><polygon points="300,170.0 385.0,230 300,290.0 215.0,230" class="n-q"/><text x="300" y="224.2" class="t">出五星</text><text x="300" y="245.0" class="t">了嗎？</text><polygon points="540,170.0 625.0,230 540,290.0 455.0,230" class="n-q"/><text x="540" y="224.2" class="t">上一顆</text><text x="540" y="245.0" class="t">有歪嗎？</text><polygon points="790,170.0 875.0,230 790,290.0 705.0,230" class="n-q"/><text x="790" y="224.2" class="t">明光計數</text><text x="790" y="245.0" class="t">是 3 嗎？</text><rect x="465.0" y="32.0" width="150" height="76" rx="12" class="n-win"/><text x="540" y="65.4" class="t">一定是 UP</text><text x="540" y="86.2" class="ts">大保底</text><rect x="715.0" y="32.0" width="150" height="76" rx="12" class="n-glow"/><text x="790" y="65.4" class="t">捕獲明光！</text><text x="790" y="86.2" class="ts">一定是 UP</text><polygon points="790,410.0 875.0,470 790,530.0 705.0,470" class="n-q"/><text x="790" y="464.2" class="t">50 / 50</text><text x="790" y="485.0" class="t">贏了嗎？</text><polygon points="540,410.0 625.0,470 540,530.0 455.0,470" class="n-qg"/><text x="540" y="464.2" class="t">觸發</text><text x="540" y="485.0" class="t">捕獲明光？</text><rect x="215.0" y="428.0" width="150" height="84" rx="12" class="n-lose"/><text x="290" y="455.0" class="t">歪了</text><text x="290" y="475.8" class="t">拿到常駐</text><text x="290" y="496.6" class="ts">下一顆一定 UP</text><rect x="715.0" y="595.0" width="150" height="70" rx="12" class="n-win"/><text x="790" y="634.6" class="t">UP 角色</text><rect x="465.0" y="592.0" width="150" height="76" rx="12" class="n-glow"/><text x="540" y="625.4" class="t">捕獲明光！</text><text x="540" y="646.2" class="ts">救回來變 UP</text><path d="M155,230 L213,230" class="ar" marker-end="url(#ah)"/><path d="M385,230 L453,230" class="ar" marker-end="url(#ah)"/><text x="419" y="220" class="lb" text-anchor="middle">是</text><path d="M300,170 L300,130 L90,130 L90,186" class="ar" marker-end="url(#ah)"/><text x="195" y="122" class="lb" text-anchor="middle">沒出：繼續抽</text><path d="M540,170 L540,110" class="ar" marker-end="url(#ah)"/><text x="552" y="150" class="lb" text-anchor="start">有</text><path d="M625,230 L703,230" class="ar" marker-end="url(#ah)"/><text x="664" y="220" class="lb" text-anchor="middle">沒有</text><path d="M790,170 L790,110" class="ar" marker-end="url(#ah)"/><text x="802" y="150" class="lb" text-anchor="start">是</text><path d="M790,290 L790,408" class="ar" marker-end="url(#ah)"/><text x="802" y="330" class="lb" text-anchor="start">不是</text><path d="M790,530 L790,593" class="ar" marker-end="url(#ah)"/><text x="802" y="562" class="lb" text-anchor="start">贏</text><path d="M705,470 L627,470" class="ar" marker-end="url(#ah)"/><text x="666" y="460" class="lb" text-anchor="middle">輸</text><path d="M540,530 L540,590" class="ar" marker-end="url(#ah)"/><text x="552" y="562" class="lb" text-anchor="start">觸發</text><path d="M455,470 L367,470" class="ar" marker-end="url(#ah)"/><text x="411" y="460" class="lb" text-anchor="middle">沒觸發</text></svg>
       </div>
       <p class="flow-key"><span><b>明光計數</b>：歪一次 +1，贏一次 −1，最多 3</span><span>觸發捕獲明光後回到 1</span></p>
     </section>
     <section class="card frame" id="flowWeap">
       <h2>武器池：這把五星是不是定軌那把？</h2>
       <div class="flow" aria-label="武器活動祈願出五星時的判斷流程">
-        <div class="fr"><div class="fn start">出五星了！<small>記得先定軌想要的那把</small></div></div>
-        <div class="fr"><div class="fa"></div></div>
-        <div class="fr"><div class="fn q">命定值是 1 嗎？</div><div class="fh"><span class="tag">是</span></div><div class="fn win">一定是定軌那把</div></div>
-        <div class="fr"><div class="fa"><span class=tag>不是</span></div></div>
-        <div class="fr"><div class="fn q">上一把有歪到常駐嗎？</div><div class="fh"><span class="tag">有</span></div><div class="fn ">兩把 UP 二選一<small>定軌那把 ✓，另一把 → 命定值變 1</small></div></div>
-        <div class="fr"><div class="fa"><span class=tag>沒有</span></div></div>
-        <div class="fends">
-          <div><span class="tag">37.5%</span><div class="fn win">定軌那把</div></div>
-          <div><span class="tag">37.5%</span><div class="fn">另一把 UP<small>命定值變 1</small></div></div>
-          <div><span class="tag">25%</span><div class="fn lose">常駐武器<small>命定值變 1</small></div></div>
-        </div>
+        <svg class="flow-svg" viewBox="0 0 1100 560" role="img" aria-label="武器活動祈願：抽卡到出五星，判斷是不是定軌那把的流程圖"><defs><marker id="ah" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ahd"/></marker></defs><rect x="25.0" y="188.0" width="130" height="84" rx="12" class="n-start"/><text x="90" y="216.2" class="tw">抽卡</text><text x="90" y="237.0" class="tw small">最多 77 抽</text><text x="90" y="255.4" class="tw small">一定出五星</text><polygon points="300,170.0 385.0,230 300,290.0 215.0,230" class="n-q"/><text x="300" y="224.2" class="t">出五星</text><text x="300" y="245.0" class="t">了嗎？</text><polygon points="540,170.0 625.0,230 540,290.0 455.0,230" class="n-q"/><text x="540" y="224.2" class="t">命定值</text><text x="540" y="245.0" class="t">是 1 嗎？</text><polygon points="790,170.0 875.0,230 790,290.0 705.0,230" class="n-q"/><text x="790" y="224.2" class="t">上一把</text><text x="790" y="245.0" class="t">歪到常駐？</text><rect x="460.0" y="32.0" width="160" height="76" rx="12" class="n-win"/><text x="540" y="64.2" class="t">一定是</text><text x="540" y="85.0" class="t">定軌那把</text><rect x="705.0" y="28.0" width="170" height="84" rx="12" class="n-neutral"/><text x="790" y="55.0" class="t">兩把 UP</text><text x="790" y="75.8" class="t">二選一</text><text x="790" y="96.6" class="ts">不是定軌的 → 命定值 1</text><rect x="485.0" y="468.0" width="150" height="84" rx="12" class="n-win"/><text x="560" y="505.4" class="t">定軌那把</text><text x="560" y="526.2" class="ts">37.5%</text><rect x="715.0" y="468.0" width="150" height="84" rx="12" class="n-neutral"/><text x="790" y="496.2" class="t">另一把 UP</text><text x="790" y="517.0" class="ts">37.5%</text><text x="790" y="535.4" class="ts">命定值變 1</text><rect x="935.0" y="468.0" width="150" height="84" rx="12" class="n-lose"/><text x="1010" y="496.2" class="t">常駐武器</text><text x="1010" y="517.0" class="ts">25%</text><text x="1010" y="535.4" class="ts">命定值變 1</text><path d="M155,230 L213,230" class="ar" marker-end="url(#ah)"/><path d="M385,230 L453,230" class="ar" marker-end="url(#ah)"/><text x="419" y="220" class="lb" text-anchor="middle">是</text><path d="M300,170 L300,130 L90,130 L90,186" class="ar" marker-end="url(#ah)"/><text x="195" y="122" class="lb" text-anchor="middle">沒出：繼續抽</text><path d="M540,170 L540,110" class="ar" marker-end="url(#ah)"/><text x="552" y="150" class="lb" text-anchor="start">是</text><path d="M625,230 L703,230" class="ar" marker-end="url(#ah)"/><text x="664" y="220" class="lb" text-anchor="middle">不是</text><path d="M790,170 L790,114" class="ar" marker-end="url(#ah)"/><text x="802" y="150" class="lb" text-anchor="start">有</text><path d="M790,290 L790,466" class="ar" marker-end="url(#ah)"/><text x="802" y="330" class="lb" text-anchor="start">沒有</text><path d="M790,440 L560,440 L560,466" class="ar" marker-end="url(#ah)"/><path d="M790,440 L1010,440 L1010,466" class="ar" marker-end="url(#ah)"/></svg>
       </div>
       <p class="flow-key"><span><b>命定值</b>：抽到不是定軌的那把就變 1</span><span>換期、換定軌或取消定軌會歸 0</span></p>
     </section>
