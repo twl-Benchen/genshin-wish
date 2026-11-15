@@ -707,13 +707,13 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
           </ul>
         </div>
         <div>
-          <h3>捕獲明光模型 (網頁用 55% 校準模型)</h3>
+          <h3>捕獲明光模型 (網頁用官方對應模型)</h3>
           <ul>
             <li>明光計數：小保底歪一次加 1，贏一次減 1，最多 3；觸發明光後回到 1。歪了之後一定是大保底，所以勾「大保底」時，計數會自動至少調成 1 (還是可以自己改)</li>
             <li>計數 3：下一顆小保底五星必定觸發明光，計數回到 1。大保底不會改變計數</li>
-            <li>計數 0、1：照 50/50。計數 2：本來會歪的有 1/11 (約 9.09%) 機率觸發明光，等於約 54.5% 不歪</li>
-            <li>計數 2 的 1/11 不是官方數字，是讓長期小保底勝率剛好等於官方 55% 推算出來的。如果計數 0~2 都沒有額外機率，長期勝率只有 54.5%，所以中間某個階段一定有額外機率</li>
-            <li>0.018% 沒有另外放進模型：不管怎麼解讀，它對長期勝率的影響都不到 0.01 個百分點</li>
+            <li>計數 0、1：每顆小保底五星有官方的基礎機率 0.018% 觸發明光 (明光只救本來會歪的那一半，所以是本來會歪時的 0.036%)，其他照 50/50。官方沒寫 0.018% 的單位，「計數還沒提高時每顆小保底五星」是網頁的解讀</li>
+            <li>計數 2：本來會歪的有約 8.86% 機率觸發明光，等於約 54.4% 不歪。這個數字不是官方公布的，是用 0.018%、計數 3 必定觸發和長期勝率 55% 三個官方數字反推出來的</li>
+            <li>三個官方數字一起套進去，長期小保底勝率剛好是 55.000%。如果計數 0~2 都沒有額外機率，長期勝率只有 54.5%，所以計數提高之後一定有額外機率</li>
             <li>社群推測的「計數 2 時 75% 不歪」會讓長期勝率變成 57.1%，比官方高，所以不採用</li>
             <li>不確定自己的明光計數時，小保底選 0，大保底選 1</li>
           </ul>
@@ -943,9 +943,25 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
 
   // 捕獲明光：cr[c] = 計數為 c (0~2) 時「本來會歪」轉為命中的機率。
   // 計數 3 一律必定觸發明光並回到 1 (官方：下一顆五星必定觸發)，cr[3] 只在 none 模型 (5.0 前舊規則) 為 0 時不觸發。
-  // 長期小保底勝率：calibrated 55.000%，conservative 54.545%，community 57.143%。
+  // 長期小保底勝率：official 55.000%，conservative 54.545%，community 57.143%。
+  //
+  // official：同時符合官方公布的三件事
+  //   1. 基礎觸發機率 0.018%：解讀成計數 0、1 (計數還沒提高) 時，每顆小保底五星觸發明光的機率。
+  //      明光只救本來會歪的那一半，所以 cr[0] = cr[1] = 0.018% / 50% = 0.036%。(官方沒寫單位，這是網頁的解讀)
+  //   2. 計數 3 必定觸發。
+  //   3. 長期小保底綜合 UP 機率 55%：由前兩項反推計數 2 的 cr[2] (約 8.855%，推算值)。
+  // 推導：令 q = cr[0] = cr[1]、x = cr[2]。長期分布 π0 = π1 = 1、π2 = a = (1 − q) / 2、π3 = a(1 − x) / 2，
+  // 勝率 = (1 + q + a) / (2 + a + a(1 − x) / 2)，設成 target 解出 x。
+  const CR_BASE = 0.00018;
+  const CR_TARGET = 0.55;
+  function officialCr(base, target) {
+    const q = base / 0.5;
+    const a = (1 - q) / 2;
+    const x = 1 - (2 * ((1 + q + a) / target - 2 - a)) / a;
+    return [q, q, x, 1];
+  }
   const CR_PRESETS = {
-    calibrated: { cr: [0, 0, 1 / 11, 1], label: '55% 校準：計數 2 有 1/11 機率 (推算值)，計數 3 必定觸發' },
+    official: { cr: officialCr(CR_BASE, CR_TARGET), label: '官方對應：計數 0、1 為 0.018%，計數 2 依 55% 反推，計數 3 必定觸發' },
     conservative: { cr: [0, 0, 0, 1], label: '下限：只有計數 3 必定觸發' },
     community: { cr: [0, 0, 0.5, 1], label: '社群推測：計數 2 有 50% (長期 57.1%，比官方高)' },
     none: { cr: [0, 0, 0, 0], label: '關閉 (5.0 前舊規則 50/50)' },
@@ -959,7 +975,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   }
 
   function characterMilestonesByMiss(opt, trackMiss) {
-    const cr = opt.cr || CR_PRESETS.calibrated.cr;
+    const cr = opt.cr || CR_PRESETS.official.cr;
     const init = { got: 0, g: !!opt.guaranteed, c: Math.max(0, Math.min(3, opt.radiance | 0)) };
     const [t1, t2] = characterTargets(opt);
     return chain(
@@ -1281,7 +1297,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
 
   const api = {
     charHazard, weaponHazard, WEAPON_HARD, nextFiveStar, conv, characterMilestones, weaponMilestones, characterMilestonesByMiss, weaponMilestonesByMiss,
-    stats, plan, normalizeOrder, CR_PRESETS, STANDARD_5, FOUR_RATE, fourStarGlitterPerPull, lossGlitter, copyGlitter5,
+    stats, plan, normalizeOrder, CR_PRESETS, officialCr, STANDARD_5, FOUR_RATE, fourStarGlitterPerPull, lossGlitter, copyGlitter5,
     weaponOutcomes, weaponAfter, weaponDecide, weaponValue, weaponExpected, weaponAdvice, WEAPON_STRATEGIES,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
@@ -1525,7 +1541,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     return {
       character: {
         targets: [C1, C2], pity: clampInt(v.chPity, 0, 89), guaranteed: v.chG,
-        radiance: clampInt(v.chC, 0, 3), cr: E.CR_PRESETS.calibrated.cr, // 一律用 55% 校準模型，說明在規則頁
+        radiance: clampInt(v.chC, 0, 3), cr: E.CR_PRESETS.official.cr, // 一律用官方對應模型，說明在規則頁
       },
       weapon: {
         targets: [W1, W2], pity: clampInt(v.wpPity, 0, 76), fate: clampInt(v.wpF, 0, 1), guaranteed: v.wpG,
@@ -2133,13 +2149,13 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     if (waitState.view === 'up') {
       // 首個 UP：用引擎算「目標 1 隻/1 把」的里程碑分布，index = 再抽幾抽，換成含墊抽的第幾抽
       const ms = isChar
-        ? E.characterMilestones({ targets: [1, 0], pity, guaranteed: $('chG').checked, radiance: clampInt($('chC').value, 0, 3), cr: E.CR_PRESETS.calibrated.cr })
+        ? E.characterMilestones({ targets: [1, 0], pity, guaranteed: $('chG').checked, radiance: clampInt($('chC').value, 0, 3), cr: E.CR_PRESETS.official.cr })
         : E.weaponMilestones({ targets: [1, 0], pity, fate: clampInt($('wpF').value, 0, 1), guaranteed: $('wpG').checked, strategy: 'optimal' });
       const dd = ms[0];
       // 第一顆五星就是 UP 的機率
       let first;
       if (isChar) {
-        const cr = E.CR_PRESETS.calibrated.cr, c0 = clampInt($('chC').value, 0, 3);
+        const cr = E.CR_PRESETS.official.cr, c0 = clampInt($('chC').value, 0, 3);
         first = $('chG').checked ? 1 : 0.5 + 0.5 * (cr[c0] || 0);
       } else {
         first = clampInt($('wpF').value, 0, 1) ? 1 : $('wpG').checked ? 0.5 : 0.375;

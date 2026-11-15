@@ -89,9 +89,25 @@
 
   // 捕獲明光：cr[c] = 計數為 c (0~2) 時「本來會歪」轉為命中的機率。
   // 計數 3 一律必定觸發明光並回到 1 (官方：下一顆五星必定觸發)，cr[3] 只在 none 模型 (5.0 前舊規則) 為 0 時不觸發。
-  // 長期小保底勝率：calibrated 55.000%，conservative 54.545%，community 57.143%。
+  // 長期小保底勝率：official 55.000%，conservative 54.545%，community 57.143%。
+  //
+  // official：同時符合官方公布的三件事
+  //   1. 基礎觸發機率 0.018%：解讀成計數 0、1 (計數還沒提高) 時，每顆小保底五星觸發明光的機率。
+  //      明光只救本來會歪的那一半，所以 cr[0] = cr[1] = 0.018% / 50% = 0.036%。(官方沒寫單位，這是網頁的解讀)
+  //   2. 計數 3 必定觸發。
+  //   3. 長期小保底綜合 UP 機率 55%：由前兩項反推計數 2 的 cr[2] (約 8.855%，推算值)。
+  // 推導：令 q = cr[0] = cr[1]、x = cr[2]。長期分布 π0 = π1 = 1、π2 = a = (1 − q) / 2、π3 = a(1 − x) / 2，
+  // 勝率 = (1 + q + a) / (2 + a + a(1 − x) / 2)，設成 target 解出 x。
+  const CR_BASE = 0.00018;
+  const CR_TARGET = 0.55;
+  function officialCr(base, target) {
+    const q = base / 0.5;
+    const a = (1 - q) / 2;
+    const x = 1 - (2 * ((1 + q + a) / target - 2 - a)) / a;
+    return [q, q, x, 1];
+  }
   const CR_PRESETS = {
-    calibrated: { cr: [0, 0, 1 / 11, 1], label: '55% 校準：計數 2 有 1/11 機率 (推算值)，計數 3 必定觸發' },
+    official: { cr: officialCr(CR_BASE, CR_TARGET), label: '官方對應：計數 0、1 為 0.018%，計數 2 依 55% 反推，計數 3 必定觸發' },
     conservative: { cr: [0, 0, 0, 1], label: '下限：只有計數 3 必定觸發' },
     community: { cr: [0, 0, 0.5, 1], label: '社群推測：計數 2 有 50% (長期 57.1%，比官方高)' },
     none: { cr: [0, 0, 0, 0], label: '關閉 (5.0 前舊規則 50/50)' },
@@ -105,7 +121,7 @@
   }
 
   function characterMilestonesByMiss(opt, trackMiss) {
-    const cr = opt.cr || CR_PRESETS.calibrated.cr;
+    const cr = opt.cr || CR_PRESETS.official.cr;
     const init = { got: 0, g: !!opt.guaranteed, c: Math.max(0, Math.min(3, opt.radiance | 0)) };
     const [t1, t2] = characterTargets(opt);
     return chain(
@@ -427,7 +443,7 @@
 
   const api = {
     charHazard, weaponHazard, WEAPON_HARD, nextFiveStar, conv, characterMilestones, weaponMilestones, characterMilestonesByMiss, weaponMilestonesByMiss,
-    stats, plan, normalizeOrder, CR_PRESETS, STANDARD_5, FOUR_RATE, fourStarGlitterPerPull, lossGlitter, copyGlitter5,
+    stats, plan, normalizeOrder, CR_PRESETS, officialCr, STANDARD_5, FOUR_RATE, fourStarGlitterPerPull, lossGlitter, copyGlitter5,
     weaponOutcomes, weaponAfter, weaponDecide, weaponValue, weaponExpected, weaponAdvice, WEAPON_STRATEGIES,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

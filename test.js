@@ -48,6 +48,30 @@ function mcWeap(o, N) {
 const mean = (a) => a.reduce((x, y) => x + y, 0) / a.length;
 const pct = (a, q) => { const s = [...a].sort((x, y) => x - y); return s[Math.ceil(q * s.length) - 1]; };
 
+// 捕獲明光的長期小保底勝率 (只看小保底，大保底不改計數)
+function longRunWin(cr) {
+  const step = (c) => {
+    if (c >= 3 && cr[3] >= 1) return [[1, 1, 1]];
+    const p = cr[c] || 0;
+    return [[0.5, 1, Math.max(0, c - 1)], [0.5 * p, 1, 1], [0.5 * (1 - p), 0, Math.min(3, c + 1)]];
+  };
+  let pi = [1, 0, 0, 0];
+  for (let it = 0; it < 5000; it++) {
+    const nx = [0, 0, 0, 0];
+    pi.forEach((w, c) => step(c).forEach(([p, , n]) => { nx[n] += w * p; }));
+    pi = nx;
+  }
+  return pi.reduce((s, w, c) => s + w * step(c).reduce((t, [p, up]) => t + p * up, 0), 0);
+}
+for (const key of ['official', 'conservative', 'community', 'none']) {
+  const cr = E.CR_PRESETS[key].cr;
+  console.log('明光', key, 'cr', cr.map((x) => +x.toFixed(6)).join(', '), '長期小保底勝率', (longRunWin(cr) * 100).toFixed(4) + '%');
+}
+{
+  const cr = E.CR_PRESETS.official.cr;
+  console.log('official 計數 0 每顆小保底明光機率', (0.5 * cr[0] * 100).toFixed(4) + '% (官方 0.018%)');
+}
+
 const N = 300000;
 const cases = [
   { name: '角色 1 隻 全新', t: 1, pity: 0, g: false, c: 0 },
@@ -55,7 +79,7 @@ const cases = [
   { name: '角色 2 隻 墊50 大保底 明光2', t: 2, pity: 50, g: true, c: 2 },
 ];
 for (const cs of cases) {
-  for (const key of ['calibrated', 'conservative', 'community']) {
+  for (const key of ['official', 'conservative', 'community']) {
     const cr = E.CR_PRESETS[key].cr;
     const ms = E.characterMilestones({ target: cs.t, pity: cs.pity, guaranteed: cs.g, radiance: cs.c, cr });
     const st = E.stats(ms[ms.length - 1]);
@@ -111,7 +135,7 @@ function four(pool, n) {
   return n <= 7 ? 0.06 : n === 8 ? 0.66 : n === 9 ? 0.96 : 1;
 }
 function mcRefund(o, N) {
-  const cr = E.CR_PRESETS.calibrated.cr;
+  const cr = E.CR_PRESETS.official.cr;
   const res = [], raw = [];
   let fours = 0, allPulls = 0;
   for (let t = 0; t < N; t++) {
