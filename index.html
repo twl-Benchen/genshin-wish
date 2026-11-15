@@ -403,30 +403,34 @@ dialog#resultImgDlg { width: min(980px, calc(100vw - 24px)); }
 body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: none; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 /* 抽卡流程圖 (規則頁) */
-.flows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; align-items: start; }
-.flow { display: flex; flex-direction: column; font-size: .86rem; line-height: 1.5; }
-.flow > h3 { font-size: .95rem; margin: 0 0 10px; font-weight: 700; }
-.fr { display: grid; grid-template-columns: minmax(0, 1.3fr) 46px minmax(0, 1fr); align-items: center; }
-.fn { box-sizing: border-box; text-align: center; background: var(--sunken); border: 1.5px solid var(--frame-soft); border-radius: 8px; padding: 7px 8px; color: var(--ink); }
-.fn small { display: block; color: var(--muted); font-size: .76rem; font-weight: 400; }
-.fn.q { background: var(--gold-soft); border-color: var(--gold); font-weight: 700; }
-.fn.up { border-color: var(--star-on); border-width: 2px; }
-.fn.miss { border-style: dashed; border-color: var(--frame); }
-.fn.start { font-weight: 700; border-color: var(--frame); }
-.fa { grid-column: 1; display: flex; flex-direction: column; align-items: center; color: var(--frame); min-height: 26px; font-size: .74rem; }
+.flow { max-width: 620px; margin: 4px auto 0; display: flex; flex-direction: column; font-size: .95rem; line-height: 1.45; }
+.fr { display: grid; grid-template-columns: minmax(0, 1fr) 54px minmax(0, 1fr); align-items: center; }
+.fn { box-sizing: border-box; text-align: center; border-radius: 10px; padding: 9px 10px; color: var(--ink); background: var(--sunken); border: 2px solid var(--frame-soft); font-weight: 600; }
+.fn small { display: block; font-size: .78rem; font-weight: 400; color: var(--muted); }
+.fn.start { background: linear-gradient(135deg, var(--hero-a), var(--hero-b)); color: var(--hero-ink); border-color: transparent; font-weight: 800; letter-spacing: .04em; }
+.fn.start small { color: var(--hero-ink); opacity: .85; }
+.fn.q { background: var(--gold-soft); border-color: var(--gold); }
+.fn.glow { background: var(--violet-soft); border-color: var(--violet); }
+.fn.win { background: color-mix(in srgb, var(--good) 16%, var(--surface)); border-color: var(--good); }
+.fn.win::before { content: "✓ "; color: var(--good); font-weight: 800; }
+.fn.win.glow { background: var(--violet-soft); border-color: var(--violet); }
+.fn.win.glow::before { content: "✦ "; color: var(--violet); }
+.fn.lose { background: color-mix(in srgb, var(--bad) 14%, var(--surface)); border-color: var(--bad); border-style: dashed; }
+.fn.lose::before { content: "✗ "; color: var(--bad); font-weight: 800; }
+.fa { grid-column: 1; display: flex; flex-direction: column; align-items: center; color: var(--frame); min-height: 30px; }
 .fa::before { content: ""; width: 2px; flex: 1 0 8px; background: var(--frame); }
-.fa::after { content: "▼"; font-size: .6rem; line-height: 1; margin-top: -1px; }
-.fa span { color: var(--muted); padding: 1px 0; }
-.fh { position: relative; height: 2px; background: var(--frame); margin-right: 6px; }
-.fh::after { content: "▶"; position: absolute; right: -7px; top: -6px; font-size: .6rem; line-height: 1; color: var(--frame); }
-.fh span { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; font-size: .72rem; color: var(--muted); line-height: 1.2; }
-.fends { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-.fends > div { display: flex; flex-direction: column; }
-.fends .lab2 { text-align: center; font-size: .74rem; color: var(--muted); }
-.fends .fn { flex: 1; }
-.flow .fnote { margin: 12px 0 0; }
-@media (max-width: 760px) { .flows { grid-template-columns: 1fr; } }
-@media (max-width: 420px) { .flow { font-size: .8rem; } .fr { grid-template-columns: minmax(0, 1.25fr) 40px minmax(0, 1fr); } .fn { padding: 6px 5px; } }
+.fa::after { content: "▼"; font-size: .62rem; line-height: 1; margin-top: -1px; }
+.fh { position: relative; height: 2px; background: var(--frame); margin-right: 7px; }
+.fh::after { content: "▶"; position: absolute; right: -7px; top: -6px; font-size: .62rem; line-height: 1; color: var(--frame); }
+.tag { display: inline-block; font-size: .74rem; font-weight: 700; line-height: 1; padding: 3px 7px; border-radius: 999px; background: var(--surface); border: 1px solid var(--frame-soft); color: var(--muted); }
+.fh .tag { position: absolute; left: 50%; bottom: 5px; transform: translateX(-50%); white-space: nowrap; }
+.fa .tag { margin: 2px 0; }
+.fends { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.fends > div { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.fends .fn { width: 100%; flex: 1; }
+.flow-key { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; margin: 14px 0 0; font-size: .8rem; color: var(--muted); }
+.flow-key b { color: var(--ink); }
+@media (max-width: 420px) { .flow { font-size: .86rem; } .fr { grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr); } .fn { padding: 7px 6px; } }
 </style>
 </head>
 <body>
@@ -701,45 +705,39 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       </div>
       <div class="wait-facts" id="waitFacts"></div>
     </section>
-    <section class="card frame" id="flowCard">
-      <h2>抽卡流程圖</h2>
-      <p class="note">每出一顆五星，就從上往下照著箭頭走一次。橘框是要判斷的地方，金框是拿到想要的，虛線框是歪了。</p>
-      <div class="flows">
-        <div class="flow" aria-label="角色活動祈願與捕獲明光的流程">
-          <h3>角色活動祈願 + 捕獲明光</h3>
-          <div class="fr"><div class="fn start">抽一次</div></div>
-          <div class="fr"><div class="fa"></div></div>
-          <div class="fr"><div class="fn q">這一抽出五星嗎？<small>前 73 抽每抽 0.6%，第 74 抽起每抽加 6%，第 90 抽必出</small></div><div class="fh"><span>沒出</span></div><div class="fn ">墊抽 +1<small>回到「抽一次」</small></div></div>
-          <div class="fr"><div class="fa"><span>出五星，墊抽歸 0</span></div></div>
-          <div class="fr"><div class="fn q">有大保底嗎？<small>上一顆五星是常駐角色</small></div><div class="fh"><span>有</span></div><div class="fn up">當期 UP<small>大保底用掉，明光計數不變</small></div></div>
-          <div class="fr"><div class="fa"><span>沒有 (小保底)</span></div></div>
-          <div class="fr"><div class="fn q">明光計數是 3 嗎？</div><div class="fh"><span>是</span></div><div class="fn up">必定觸發明光<br>當期 UP<small>計數回到 1</small></div></div>
-          <div class="fr"><div class="fa"><span>計數 0~2</span></div></div>
-          <div class="fr"><div class="fn q">50 / 50<small>這顆是 UP 嗎？</small></div><div class="fh"><span>是</span></div><div class="fn up">當期 UP<small>計數 −1 (最低 0)</small></div></div>
-          <div class="fr"><div class="fa"><span>50% 本來會歪</span></div></div>
-          <div class="fr"><div class="fn q">觸發捕獲明光嗎？<small>計數 0、1：0.036%<br>計數 2：約 8.86%</small></div><div class="fh"><span>觸發</span></div><div class="fn up">當期 UP<small>計數回到 1</small></div></div>
-          <div class="fr"><div class="fa"><span>沒觸發</span></div></div>
-          <div class="fr"><div class="fn miss">常駐角色 (歪了)<small>明光計數 +1，下一顆五星是大保底</small></div></div>
-          <p class="note fnote">「角色活動祈願」和「角色活動祈願-2」共用墊抽、大保底和明光計數，換期也會保留。計數 0、1 的 0.036% 是把官方 0.018% 解讀成每顆小保底五星的機率 (明光只救本來會歪的一半)，計數 2 的約 8.86% 是用官方 55% 反推的，都不是官方直接公布的數字。</p>
-        </div>
-        <div class="flow" aria-label="武器活動祈願與神鑄定軌的流程">
-          <h3>武器活動祈願 + 神鑄定軌</h3>
-          <div class="fr"><div class="fn start">先定軌想要的那把，再抽一次</div></div>
-          <div class="fr"><div class="fa"></div></div>
-          <div class="fr"><div class="fn q">這一抽出五星嗎？<small>前 62 抽每抽 0.7%，第 63 抽起每抽加 7%，第 77 抽必出</small></div><div class="fh"><span>沒出</span></div><div class="fn ">墊抽 +1<small>回到「抽一次」</small></div></div>
-          <div class="fr"><div class="fa"><span>出五星，墊抽歸 0</span></div></div>
-          <div class="fr"><div class="fn q">命定值是 1 嗎？<small>同一期、沒換定軌，上一把五星不是定軌那把</small></div><div class="fh"><span>是</span></div><div class="fn up">定軌的武器<small>命定值歸 0，大保底也用掉</small></div></div>
-          <div class="fr"><div class="fa"><span>不是 (命定值 0)</span></div></div>
-          <div class="fr"><div class="fn q">有大保底嗎？<small>上一把五星是常駐武器</small></div><div class="fh"><span>有</span></div><div class="fn ">兩把 UP 各 50%<small>定軌那把：命定值 0<br>另一把：命定值變 1</small></div></div>
-          <div class="fr"><div class="fa"><span>沒有</span></div></div>
-          <div class="fends">
-            <div><span class="lab2">37.5%</span><div class="fn up">定軌的武器<small>命定值 0</small></div></div>
-            <div><span class="lab2">37.5%</span><div class="fn">另一把 UP<small>命定值變 1</small></div></div>
-            <div><span class="lab2">25%</span><div class="fn miss">常駐武器 (歪了)<small>命定值變 1，也有大保底</small></div></div>
-          </div>
-          <p class="note fnote">命定值在這期結束、換定軌或取消定軌時歸 0，大保底會跨期保留。兩把 UP 都要時，歪到常駐後可以先取消定軌再重新定軌：命定值歸 0 但大保底還在，下一把一定是兩把 UP 之一。</p>
+    <section class="card frame" id="flowChar">
+      <h2>角色池：這顆五星會不會歪？</h2>
+      <div class="flow" aria-label="角色活動祈願出五星時的判斷流程">
+        <div class="fr"><div class="fn start">出五星了！</div></div>
+        <div class="fr"><div class="fa"></div></div>
+        <div class="fr"><div class="fn q">上一顆有歪嗎？</div><div class="fh"><span class="tag">有</span></div><div class="fn win">一定是 UP<small>大保底</small></div></div>
+        <div class="fr"><div class="fa"><span class=tag>沒有</span></div></div>
+        <div class="fr"><div class="fn q">明光計數到 3 了嗎？</div><div class="fh"><span class="tag">到了</span></div><div class="fn win glow">捕獲明光！<small>一定是 UP</small></div></div>
+        <div class="fr"><div class="fa"><span class=tag>還沒</span></div></div>
+        <div class="fr"><div class="fn q">50 / 50<small>擲硬幣</small></div><div class="fh"><span class="tag">贏</span></div><div class="fn win">UP 角色</div></div>
+        <div class="fr"><div class="fa"><span class=tag>輸</span></div></div>
+        <div class="fr"><div class="fn glow q">有機會觸發捕獲明光？</div><div class="fh"><span class="tag">觸發</span></div><div class="fn win glow">捕獲明光！<small>救回來，變成 UP</small></div></div>
+        <div class="fr"><div class="fa"><span class=tag>沒觸發</span></div></div>
+        <div class="fr"><div class="fn lose">歪了，拿到常駐角色<small>下一顆一定是 UP</small></div></div>
+      </div>
+      <p class="flow-key"><span><b>明光計數</b>：歪一次 +1，贏一次 −1，最多 3</span><span>觸發捕獲明光後回到 1</span></p>
+    </section>
+    <section class="card frame" id="flowWeap">
+      <h2>武器池：這把五星是不是定軌那把？</h2>
+      <div class="flow" aria-label="武器活動祈願出五星時的判斷流程">
+        <div class="fr"><div class="fn start">出五星了！<small>記得先定軌想要的那把</small></div></div>
+        <div class="fr"><div class="fa"></div></div>
+        <div class="fr"><div class="fn q">命定值是 1 嗎？</div><div class="fh"><span class="tag">是</span></div><div class="fn win">一定是定軌那把</div></div>
+        <div class="fr"><div class="fa"><span class=tag>不是</span></div></div>
+        <div class="fr"><div class="fn q">上一把有歪到常駐嗎？</div><div class="fh"><span class="tag">有</span></div><div class="fn ">兩把 UP 二選一<small>定軌那把 ✓，另一把 → 命定值變 1</small></div></div>
+        <div class="fr"><div class="fa"><span class=tag>沒有</span></div></div>
+        <div class="fends">
+          <div><span class="tag">37.5%</span><div class="fn win">定軌那把</div></div>
+          <div><span class="tag">37.5%</span><div class="fn">另一把 UP<small>命定值變 1</small></div></div>
+          <div><span class="tag">25%</span><div class="fn lose">常駐武器<small>命定值變 1</small></div></div>
         </div>
       </div>
+      <p class="flow-key"><span><b>命定值</b>：抽到不是定軌的那把就變 1</span><span>換期、換定軌或取消定軌會歸 0</span></p>
     </section>
     <section class="card frame">
       <h2>計算用的抽卡規則</h2>
