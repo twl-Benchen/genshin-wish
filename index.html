@@ -474,7 +474,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
             </div>
           </div>
           <div class="field">
-            <span class="lab-row"><label for="chC">明光計數</label><span class="info-wrap"><button type="button" class="info" aria-label="明光計數說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">捕獲明光：小保底歪一次加 1，沒歪一次減 1，最多 3。官方只確認連續三輪「先歪，再靠大保底拿到 UP」之後，下一顆五星必定觸發捕獲明光。</span></span></span>
+            <span class="lab-row"><label for="chC">明光計數</label><span class="info-wrap"><button type="button" class="info" aria-label="明光計數說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">捕獲明光：小保底歪一次加 1，沒歪一次減 1，最多 3，觸發明光後回到 1。官方只確認連續三輪「先歪，再靠大保底拿到 UP」之後，下一顆五星必定觸發捕獲明光。</span></span></span>
             <div class="seg num-seg" data-for="chC" role="group" aria-label="明光計數"><button type="button" data-v="0">0</button><button type="button" data-v="1">1</button><button type="button" data-v="2">2</button><button type="button" data-v="3">3</button></div>
             <input type="hidden" id="chC" value="1">
           </div>
@@ -700,19 +700,21 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
           <h3>是不是當期 UP</h3>
           <ul>
             <li>小保底 50% 是 UP，歪了下一顆五星必定是 UP (大保底)</li>
-            <li>捕獲明光 (5.0 起)：只在小保底時參與判定，每次祈願基礎觸發機率 0.018%，小保底 UP 綜合機率 55%</li>
-            <li>連續三輪「先歪，再靠大保底拿到 UP」(共 6 顆五星) 後，下一顆五星必定觸發</li>
+            <li>捕獲明光 (5.0 起)：只在小保底時參與判定，觸發的話這顆五星直接是當期 UP。官方公布基礎觸發機率 0.018%，但沒有說明是每抽還是每顆五星；包含明光的小保底 UP 綜合機率 55%</li>
+            <li>連續三輪「先歪，再靠大保底拿到 UP」(共 6 顆五星) 後，下一顆五星必定觸發捕獲明光</li>
             <li>中間各階段的機率官方沒有公開，網頁的明光計數是推測模型</li>
             <li>「角色活動祈願」和「角色活動祈願-2」共享墊抽、大保底和明光計數，每顆五星前都能自己選在哪個池子抽，所以總抽數只看總共要幾隻 UP。兩隻角色的先後順序可以在里程碑表拖動調整</li>
           </ul>
         </div>
         <div>
-          <h3>捕獲明光模型 (網頁用保守模型)</h3>
+          <h3>捕獲明光模型 (網頁用 55% 校準模型)</h3>
           <ul>
-            <li>明光計數：小保底歪一次加 1，贏一次減 1，最多 3。歪了之後一定是大保底，所以勾「大保底」時，計數會自動至少調成 1 (還是可以自己改)</li>
-            <li>保守模型：計數到 3 才必定觸發明光，其他時候照 50/50。長期小保底勝率約 55.6%，最接近官方的 55%</li>
-            <li>社群推測模型：計數 2 時本來會歪的有一半觸發明光 (等於 75% 不歪)，長期勝率約 57.9%，比官方高，所以不採用</li>
-            <li>網頁一律用保守模型計算，規劃時寧可多估一點抽數</li>
+            <li>明光計數：小保底歪一次加 1，贏一次減 1，最多 3；觸發明光後回到 1。歪了之後一定是大保底，所以勾「大保底」時，計數會自動至少調成 1 (還是可以自己改)</li>
+            <li>計數 3：下一顆小保底五星必定觸發明光，計數回到 1。大保底不會改變計數</li>
+            <li>計數 0、1：照 50/50。計數 2：本來會歪的有 1/11 (約 9.09%) 機率觸發明光，等於約 54.5% 不歪</li>
+            <li>計數 2 的 1/11 不是官方數字，是讓長期小保底勝率剛好等於官方 55% 推算出來的。如果計數 0~2 都沒有額外機率，長期勝率只有 54.5%，所以中間某個階段一定有額外機率</li>
+            <li>0.018% 沒有另外放進模型：不管怎麼解讀，它對長期勝率的影響都不到 0.01 個百分點</li>
+            <li>社群推測的「計數 2 時 75% 不歪」會讓長期勝率變成 57.1%，比官方高，所以不採用</li>
             <li>不確定自己的明光計數時，小保底選 0，大保底選 1</li>
           </ul>
         </div>
@@ -939,10 +941,13 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     return milestones.map((row) => row.reduce((acc, d) => (d ? addInto(acc, d, 1) : acc), new Float64Array(0)));
   }
 
-  // 捕獲明光：cr[c] = 計數為 c 時「本來會歪」轉為命中的機率
+  // 捕獲明光：cr[c] = 計數為 c (0~2) 時「本來會歪」轉為命中的機率。
+  // 計數 3 一律必定觸發明光並回到 1 (官方：下一顆五星必定觸發)，cr[3] 只在 none 模型 (5.0 前舊規則) 為 0 時不觸發。
+  // 長期小保底勝率：calibrated 55.000%，conservative 54.545%，community 57.143%。
   const CR_PRESETS = {
-    conservative: { cr: [0, 0, 0, 1], label: '保守：連歪 3 次後必中' },
-    community: { cr: [0, 0, 0.5, 1], label: '社群推測：連歪 2 次後 75% 不歪' },
+    calibrated: { cr: [0, 0, 1 / 11, 1], label: '55% 校準：計數 2 有 1/11 機率 (推算值)，計數 3 必定觸發' },
+    conservative: { cr: [0, 0, 0, 1], label: '下限：只有計數 3 必定觸發' },
+    community: { cr: [0, 0, 0.5, 1], label: '社群推測：計數 2 有 50% (長期 57.1%，比官方高)' },
     none: { cr: [0, 0, 0, 0], label: '關閉 (5.0 前舊規則 50/50)' },
   };
 
@@ -954,7 +959,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   }
 
   function characterMilestonesByMiss(opt, trackMiss) {
-    const cr = opt.cr || CR_PRESETS.conservative.cr;
+    const cr = opt.cr || CR_PRESETS.calibrated.cr;
     const init = { got: 0, g: !!opt.guaranteed, c: Math.max(0, Math.min(3, opt.radiance | 0)) };
     const [t1, t2] = characterTargets(opt);
     return chain(
@@ -964,6 +969,8 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       init,
       (s) => {
         if (s.g) return [{ p: 1, hit: true, next: { g: false, c: s.c } }];
+        // 計數 3：這顆小保底五星必定觸發明光，計數回到 1
+        if (s.c >= 3 && cr[3] >= 1) return [{ p: 1, hit: true, next: { g: false, c: 1 } }];
         const pc = cr[s.c] || 0;
         return [
           { p: 0.5, hit: true, next: { g: false, c: Math.max(0, s.c - 1) } },
@@ -1518,7 +1525,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     return {
       character: {
         targets: [C1, C2], pity: clampInt(v.chPity, 0, 89), guaranteed: v.chG,
-        radiance: clampInt(v.chC, 0, 3), cr: E.CR_PRESETS.conservative.cr, // 一律用保守模型，說明在規則頁
+        radiance: clampInt(v.chC, 0, 3), cr: E.CR_PRESETS.calibrated.cr, // 一律用 55% 校準模型，說明在規則頁
       },
       weapon: {
         targets: [W1, W2], pity: clampInt(v.wpPity, 0, 76), fate: clampInt(v.wpF, 0, 1), guaranteed: v.wpG,
@@ -2126,13 +2133,13 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     if (waitState.view === 'up') {
       // 首個 UP：用引擎算「目標 1 隻/1 把」的里程碑分布，index = 再抽幾抽，換成含墊抽的第幾抽
       const ms = isChar
-        ? E.characterMilestones({ targets: [1, 0], pity, guaranteed: $('chG').checked, radiance: clampInt($('chC').value, 0, 3), cr: E.CR_PRESETS.conservative.cr })
+        ? E.characterMilestones({ targets: [1, 0], pity, guaranteed: $('chG').checked, radiance: clampInt($('chC').value, 0, 3), cr: E.CR_PRESETS.calibrated.cr })
         : E.weaponMilestones({ targets: [1, 0], pity, fate: clampInt($('wpF').value, 0, 1), guaranteed: $('wpG').checked, strategy: 'optimal' });
       const dd = ms[0];
       // 第一顆五星就是 UP 的機率
       let first;
       if (isChar) {
-        const cr = E.CR_PRESETS.conservative.cr, c0 = clampInt($('chC').value, 0, 3);
+        const cr = E.CR_PRESETS.calibrated.cr, c0 = clampInt($('chC').value, 0, 3);
         first = $('chG').checked ? 1 : 0.5 + 0.5 * (cr[c0] || 0);
       } else {
         first = clampInt($('wpF').value, 0, 1) ? 1 : $('wpG').checked ? 0.5 : 0.375;

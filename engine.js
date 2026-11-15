@@ -87,10 +87,13 @@
     return milestones.map((row) => row.reduce((acc, d) => (d ? addInto(acc, d, 1) : acc), new Float64Array(0)));
   }
 
-  // 捕獲明光：cr[c] = 計數為 c 時「本來會歪」轉為命中的機率
+  // 捕獲明光：cr[c] = 計數為 c (0~2) 時「本來會歪」轉為命中的機率。
+  // 計數 3 一律必定觸發明光並回到 1 (官方：下一顆五星必定觸發)，cr[3] 只在 none 模型 (5.0 前舊規則) 為 0 時不觸發。
+  // 長期小保底勝率：calibrated 55.000%，conservative 54.545%，community 57.143%。
   const CR_PRESETS = {
-    conservative: { cr: [0, 0, 0, 1], label: '保守：連歪 3 次後必中' },
-    community: { cr: [0, 0, 0.5, 1], label: '社群推測：連歪 2 次後 75% 不歪' },
+    calibrated: { cr: [0, 0, 1 / 11, 1], label: '55% 校準：計數 2 有 1/11 機率 (推算值)，計數 3 必定觸發' },
+    conservative: { cr: [0, 0, 0, 1], label: '下限：只有計數 3 必定觸發' },
+    community: { cr: [0, 0, 0.5, 1], label: '社群推測：計數 2 有 50% (長期 57.1%，比官方高)' },
     none: { cr: [0, 0, 0, 0], label: '關閉 (5.0 前舊規則 50/50)' },
   };
 
@@ -102,7 +105,7 @@
   }
 
   function characterMilestonesByMiss(opt, trackMiss) {
-    const cr = opt.cr || CR_PRESETS.conservative.cr;
+    const cr = opt.cr || CR_PRESETS.calibrated.cr;
     const init = { got: 0, g: !!opt.guaranteed, c: Math.max(0, Math.min(3, opt.radiance | 0)) };
     const [t1, t2] = characterTargets(opt);
     return chain(
@@ -112,6 +115,8 @@
       init,
       (s) => {
         if (s.g) return [{ p: 1, hit: true, next: { g: false, c: s.c } }];
+        // 計數 3：這顆小保底五星必定觸發明光，計數回到 1
+        if (s.c >= 3 && cr[3] >= 1) return [{ p: 1, hit: true, next: { g: false, c: 1 } }];
         const pc = cr[s.c] || 0;
         return [
           { p: 0.5, hit: true, next: { g: false, c: Math.max(0, s.c - 1) } },

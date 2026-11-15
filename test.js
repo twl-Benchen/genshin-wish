@@ -9,6 +9,7 @@ function mcChar(target, pity, g, c, cr, N) {
       if (Math.random() < E.charHazard(p)) {
         p = 0;
         if (gg) { got++; gg = false; }
+        else if (cc >= 3 && cr[3] >= 1) { got++; cc = 1; }
         else if (Math.random() < 0.5) { got++; cc = Math.max(0, cc - 1); }
         else if (Math.random() < cr[cc]) { got++; cc = 1; }
         else { gg = true; cc = Math.min(3, cc + 1); }
@@ -54,7 +55,7 @@ const cases = [
   { name: '角色 2 隻 墊50 大保底 明光2', t: 2, pity: 50, g: true, c: 2 },
 ];
 for (const cs of cases) {
-  for (const key of ['conservative', 'community']) {
+  for (const key of ['calibrated', 'conservative', 'community']) {
     const cr = E.CR_PRESETS[key].cr;
     const ms = E.characterMilestones({ target: cs.t, pity: cs.pity, guaranteed: cs.g, radiance: cs.c, cr });
     const st = E.stats(ms[ms.length - 1]);
@@ -110,7 +111,7 @@ function four(pool, n) {
   return n <= 7 ? 0.06 : n === 8 ? 0.66 : n === 9 ? 0.96 : 1;
 }
 function mcRefund(o, N) {
-  const cr = E.CR_PRESETS.conservative.cr;
+  const cr = E.CR_PRESETS.calibrated.cr;
   const res = [], raw = [];
   let fours = 0, allPulls = 0;
   for (let t = 0; t < N; t++) {
@@ -135,6 +136,7 @@ function mcRefund(o, N) {
         p = 0;
         let hit;
         if (g) { hit = true; g = false; }
+        else if (c >= 3) { hit = true; c = 1; }
         else if (Math.random() < 0.5) { hit = true; c = Math.max(0, c - 1); }
         else if (Math.random() < cr[c]) { hit = true; c = 1; }
         else { hit = false; g = true; c = Math.min(3, c + 1); }
