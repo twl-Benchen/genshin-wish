@@ -336,7 +336,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .sc-art .splash-box { position: absolute; top: 0; bottom: 0; left: 0; width: 135%; overflow: hidden;
   -webkit-mask-image: linear-gradient(90deg, #000 50%, rgba(0, 0, 0, .55) 62%, transparent 76%); mask-image: linear-gradient(90deg, #000 50%, rgba(0, 0, 0, .55) 62%, transparent 76%); }
 /* 立繪往上移、稍微縮小，左下角留給武器 */
-.sc-art .splash { position: absolute; top: 0; left: 0; width: 74%; height: 100%; object-fit: cover; object-position: 50% 20%; transform: translateY(-7%) scale(1.22); transform-origin: 50% 25%; }
+.sc-art .splash { position: absolute; top: 0; left: 0; width: 74%; height: 100%; object-fit: cover; object-position: 50% 20%; transform: translateY(-11%) scale(1.135); transform-origin: 50% 25%; }
 .sc-name, .sc-lv { position: absolute; z-index: 1; text-shadow: 0 1px 4px rgba(0, 0, 0, .6); }
 .sc-name { left: 18px; top: 14px; display: flex; align-items: baseline; gap: 10px; }
 .sc-name b { font-family: var(--f-display); font-size: 1.7rem; }
@@ -346,8 +346,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .sc-mid { position: relative; z-index: 1; padding: 22px 16px; display: flex; flex-direction: column; gap: 14px; }
 .sc-mid .sc-stats { flex: 1; align-content: space-evenly; }
 .sc-weapon { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; align-items: center; }
-/* 武器在立繪左下角，加半透明底，淺色立繪上也看得清楚 */
-.sc-art .sc-weapon { position: absolute; z-index: 1; left: 14px; bottom: 14px; max-width: calc(100% - 28px); padding: 8px 12px 8px 6px; border-radius: 8px; background: rgba(0, 0, 0, .38); box-shadow: 0 2px 10px rgba(0, 0, 0, .25); }
+/* 武器在立繪左下角，半透明底加毛玻璃模糊，淺色立繪上也看得清楚 */
+.sc-art .sc-weapon { position: absolute; z-index: 1; left: 14px; bottom: 14px; max-width: calc(100% - 28px); padding: 8px 12px 8px 6px; border-radius: 8px; background: rgba(0, 0, 0, .28); -webkit-backdrop-filter: blur(10px) saturate(1.2); backdrop-filter: blur(10px) saturate(1.2); box-shadow: 0 2px 10px rgba(0, 0, 0, .25); }
 /* 中間欄最上面：有效詞條數 (重塑方案選的主要、次要詞條，只算副詞條) */
 .sc-rolls { display: grid; gap: 8px; align-content: center; min-height: 76px; }
 .sc-rolls .rc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -454,7 +454,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   .sc-card { grid-template-columns: minmax(0, 1fr); }
   .sc-art { grid-row: auto; min-height: 380px; }
   .sc-art .splash-box { width: 100%; -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent); mask-image: linear-gradient(180deg, #000 70%, transparent); }
-  .sc-art .splash { width: 100%; transform: translateY(-6%) scale(1.1); }
+  .sc-art .splash { width: 100%; transform: translateY(-9%) scale(1.023); }
   .sc-relics { grid-template-columns: minmax(0, 1fr); padding: 0 10px 12px; }
   .sc-relic { grid-template-columns: 96px minmax(0, 1fr); }
 }
