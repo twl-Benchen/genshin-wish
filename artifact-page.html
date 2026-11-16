@@ -223,7 +223,9 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 /* 角色卡：三欄 (立繪與武器、詞條數與屬性、聖遺物)，底色跟著元素 */
 .sc-card { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .9fr) minmax(0, 1.25fr); gap: 0; min-height: 540px; border-radius: 10px; overflow: hidden; color: #fff;
   background: radial-gradient(120% 90% at 20% 30%, var(--el2), var(--el1) 70%); box-shadow: 0 8px 28px rgba(20, 28, 50, .3); }
-.sc-card::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(115deg, rgba(255, 255, 255, .025) 0 2px, transparent 2px 22px); }
+.sc-card::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(115deg, rgba(255, 255, 255, .025) 0 2px, transparent 2px 22px);
+  /* 斜線在立繪和屬性兩塊的中間淡掉 (以中心為圓心的漸層)，邊緣保留 */
+  -webkit-mask-image: radial-gradient(ellipse 22% 46% at 16% 50%, transparent 35%, #000 100%), radial-gradient(ellipse 18% 44% at 46% 60%, transparent 35%, #000 100%); -webkit-mask-composite: source-in; mask-image: radial-gradient(ellipse 22% 46% at 16% 50%, transparent 35%, #000 100%), radial-gradient(ellipse 18% 44% at 46% 60%, transparent 35%, #000 100%); mask-composite: intersect; }
 .sc-art { position: relative; min-height: 540px; }
 /* 立繪的框比左欄寬，延伸到中間欄底下，從大約左欄 70% 的地方開始往右淡出 (中間欄的字蓋在上面) */
 .sc-art .splash-box { position: absolute; top: 0; bottom: 0; left: 0; width: 135%; overflow: hidden;
@@ -259,6 +261,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .sc-rolls .rc-total { grid-column: 1 / -1; justify-self: center; }
 .sc-rolls .rc-total span { display: inline-block; font-size: 1.1rem; padding: 3px 12px; background: rgba(0, 0, 0, .36); }
 .sc-rolls .rc-total b { font-size: 1.4rem; }
+.sc-rolls .rc-chips .rc-long { display: inline; background: none; padding: 0; margin: 0; font-size: inherit; }
 .sc-rolls .rc-none { margin: 0; font-size: .8rem; opacity: .75; }
 .sc-weapon img { width: 76px; height: 76px; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .4)); }
 .sc-weapon .wn { font-family: var(--f-display); font-size: 1.05rem; margin-bottom: 4px; }
@@ -349,6 +352,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .sc-tbl td small { color: var(--muted); font-size: .72rem; }
 .sc-tbl .muted { color: var(--muted); }
 @media (max-width: 1040px) {
+  .sc-card::after { -webkit-mask-image: radial-gradient(ellipse 34% 30% at 25% 32%, transparent 35%, #000 100%), radial-gradient(ellipse 30% 26% at 75% 30%, transparent 35%, #000 100%); -webkit-mask-composite: source-in; mask-image: radial-gradient(ellipse 34% 30% at 25% 32%, transparent 35%, #000 100%), radial-gradient(ellipse 30% 26% at 75% 30%, transparent 35%, #000 100%); mask-composite: intersect; }
   .sc-card { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .sc-art { grid-row: span 2; }
   .sc-relics { padding: 0 14px 14px; grid-column: 1 / -1; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
@@ -358,7 +362,9 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   .sc-art { grid-row: auto; min-height: 380px; }
   .sc-art .splash-box { width: 100%; -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent); mask-image: linear-gradient(180deg, #000 70%, transparent); }
   .sc-art .splash { width: 100%; transform: scale(1.15); }
+  .sc-card::after { -webkit-mask-image: radial-gradient(ellipse 70% 190px at 50% 190px, transparent 35%, #000 100%), radial-gradient(ellipse 75% 320px at 50% 660px, transparent 35%, #000 100%); -webkit-mask-composite: source-in; mask-image: radial-gradient(ellipse 70% 190px at 50% 190px, transparent 35%, #000 100%), radial-gradient(ellipse 75% 320px at 50% 660px, transparent 35%, #000 100%); mask-composite: intersect; }
   .sc-weapon.w-art { display: none; }
+  .sc-rolls .rc-chips .rc-long { display: none; }
   .sc-weapon.w-mid { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 6px; }
   .sc-weapon.w-mid img { width: 52px; height: 52px; }
   .sc-weapon.w-mid .wn { font-size: .95rem; }
@@ -371,8 +377,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   .sc-rolls .rc-chips { grid-template-columns: auto; gap: 4px; justify-items: stretch; }
   .sc-rolls .rc-total { justify-self: stretch; }
   .sc-rolls .rc-total span, .sc-rolls .rc-chips span { display: block; text-align: center; }
-  .sc-rolls .rc-total span { font-size: .72rem; padding: 2px 6px; white-space: nowrap; }
-  .sc-rolls .rc-total b { font-size: .98rem; }
+  .sc-rolls .rc-total span { font-size: .9rem; padding: 2px 6px; white-space: nowrap; }
+  .sc-rolls .rc-total b { font-size: 1.2rem; }
   .sc-rolls .rc-chips span { font-size: .7rem; padding: 1px 4px; }
   .sc-rolls .rc-chips b { font-size: .86rem; }
   .sc-relics { grid-template-columns: minmax(0, 1fr); padding: 0 10px 12px; }
@@ -1573,7 +1579,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     if (crit) items.push(chip('雙暴', (n.cr || 0) + (n.cd || 0)));
     sel.filter(id => !(crit && (id === 'cr' || id === 'cd'))).forEach(id => items.push(chip(ROLL_NAME[id], n[id])));
     const total = sel.reduce((a, id) => a + (n[id] || 0), 0);
-    return `<div class="rc-chips"><div class="rc-total"><span>聖遺物總共：<b>${f(total)}</b>詞條</span></div>${items.join('')}</div>`;
+    return `<div class="rc-chips"><div class="rc-total"><span><span class="rc-long">聖遺物</span>總共：<b>${f(total)}</b>詞條</span></div>${items.join('')}</div>`;
   }
   function updateRolls() {
     const el = $('scRolls'), av = SC.list[SC.sel];
