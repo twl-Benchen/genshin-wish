@@ -406,6 +406,14 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .linkbtn { font: inherit; font-size: .82rem; color: var(--gold); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; justify-self: start; }
 .plan-tbl td, .plan-tbl th { font-size: .82rem; }
 .plan-tbl td small { display: block; color: var(--muted); font-size: .7rem; font-weight: 400; }
+/* 重塑方案的表格：窄的時候 (手機，或兩欄並排但還不夠寬) 把「大約需要幾次」收到變好機率下面的小字，表頭分兩行，不用左右滑 */
+.plan-tbl td small.pt-narrow { display: none; }
+@media (max-width: 520px) { .plan-tbl td, .plan-tbl th { font-size: .76rem; } }
+@media (max-width: 520px), (min-width: 901px) and (max-width: 1080px) {
+  .plan-tbl th { white-space: normal; word-break: keep-all; line-height: 1.25; }
+  .plan-tbl .pt-wide { display: none; }
+  .plan-tbl td small.pt-narrow { display: block; }
+}
 .plan-tbl .muted { color: var(--muted); font-weight: 400; }
 .plan-auto { margin: 0; }
 .apply-box { display: grid; justify-items: center; gap: 6px; margin-top: 4px; }
@@ -574,9 +582,10 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
           <li>批量模擬十萬顆是照順序連續重塑，一般重塑時會套用進度保底：每用 6 個啟聖之塵觸發一次保底 3 次，第 18 個觸發保底 4 次。上面的精確值只算單次一般重塑，所以批量模擬的成功率會高一點。</li>
           <li>角色聖遺物的主要詞條會自動選：武器副詞條、沙杯冠的主詞條、五件聖遺物的副詞條，各自換成詞條數加總，取前三高；前兩高沒有暴擊率也沒有暴擊傷害 (多半是輔助) 就只取前兩高。</li>
           <li>重塑方案的有效詞條數：主要詞條的詞條數加上次要詞條詞條數的一半，攻擊、生命、防禦固定值不算。都照一般重塑 (保底 2 次) 計算，選定詞條是最重要的兩個，結果比原本差可以不換。</li>
-          <li>「減少歪」：升級跳落在主要、次要詞條的次數比現在多才算變好 (只看次數，不看檔位)，升級跳都沒歪的就是「已經最好」。</li>
-          <li>「追提升」：有效詞條數比現在至少多 0.7 個才算變好，例如把歪掉的一跳拿回來，或是跳出夠多更高的檔位，只多零點幾個的檔位運氣不算。</li>
-          <li>大約需要幾次 = 1 ÷ 重塑變好機率。排序時有考慮啟聖之塵的消耗，比的是「大約需要幾次 × 每次用幾個」誰最少。</li>
+          <li>「減少歪」：升級跳落在主要、次要詞條的次數比現在多，而且數值也比現在高才算變好。次數沒變多、只是檔位運氣比較好的不算，升級跳都沒歪的就是「沒有歪」。</li>
+          <li>「追提升」：數值比現在高就算變好，沒歪但檔位偏低的也算。升級跳都在主要詞條而且都是最高檔才是「已經最好」。</li>
+          <li>「變好時平均多」就是提升空間：重塑變好的時候，有效詞條數平均比現在多幾個，照實際檔位算。同樣歪 1 次，其他升級跳檔位偏低的那件多得比較多。</li>
+          <li>大約需要幾次 = 1 ÷ 重塑變好機率。排序比的是每個啟聖之塵平均能多幾個詞條 (重塑變好機率 × 變好時平均多 ÷ 每次用幾個)，最多的標「最划算」。</li>
         </ul>
       </section>
   </div>
@@ -801,18 +810,23 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
    * weight：詞條 → 2 (主要詞條)、1 (次要詞條)、0 (其他，包含攻擊、生命、防禦固定值)
    * 有效詞條數 = Σ 權重/2 × 數值 ÷ 平均一跳 (四個檔位的平均，約最高檔的 0.85；例如暴傷 7.77% ≈ 1.18 詞條)，含初始
    *   檔位比例第七到第十檔是 0.7、0.8、0.9、1.0 倍最高檔，所以每次是 RATIO / 85 個詞條
-   * 重塑只重新分配升級跳、初始保留。重塑「變好」= 升級跳的有效詞條數比原本至少多 0.7 個 (MIN_GAIN，以平均一跳為單位)，
-   * 包含把歪掉的升級跳拿回來，也包含升級跳都在有用詞條、但這次跳出夠多更高的檔位 (結果不好可以不換)。
-   * 門檻 0.7 是使用者決定的：只多零點幾個的檔位運氣不算，一次拿回最低檔 (0.82 個) 的升級跳就算
-   * 大約需要幾次 = 1 / 變好機率 (幾何分布的期望值)
+   * 重塑只重新分配升級跳、初始保留，結果比原本差可以不換，所以只算變好的部分。
+   * mode：'count' 減少歪：有用詞條的升級跳 (主要算 1 次、次要算半次) 比原本多，而且升級跳的有效詞條數比原本高才算變好。
+   *               次數沒有變多、只是檔位運氣比較好的不算，所以升級跳全在主要詞條時不可能變好，畫面顯示「沒有歪」
+   *       'tier' 追提升 (沒指定時也是這個)：升級跳的有效詞條數比原本高就算變好，不設門檻，純檔位運氣也算。
+   *               升級跳全在主要詞條而且都是最高檔時才不可能變好，畫面顯示「已經最好」
+   * 兩個模式的提升幅度都照數值 (檔位) 算：同樣歪 1 次，其他升級跳檔位低的那件拿回來之後多得比較多。
+   * 排序用「每次重塑平均多幾個」(exp = 變好機率 × 變好時平均多幾個) 除以每次用的啟聖之塵，也就是提升空間有多大又有多容易拿到。
+   * 2026-11-16 以前追提升有 0.7 個有效詞條的門檻 (MIN_GAIN)、減少歪只看次數、排序用 1 ÷ 變好機率；
+   * 門檻是手動訂的數字，最划算的那件會跟著門檻變，而且只看機率分不出歪 5 次和歪 4 次，所以改成現在這樣
    * 選定詞條是權重最高的兩個 (同權重照順序)，保底用一般重塑 (2 次)
-   * 回傳 { ok, total (目前有效詞條數), pUp (每次重塑變好的機率), tries (平均要重塑幾次，不可能變好時 Infinity), lock } */
+   * 回傳 { ok, total (目前有效詞條數), pUp (每次重塑變好的機率), gain (變好時平均多幾個有效詞條，不可能變好時 0),
+   *        exp (每次重塑平均多幾個有效詞條 = pUp × gain), tries (平均要重塑幾次，不可能變好時 Infinity), lock } */
   const RATIO = [70, 80, 90, 100];
   // 內部用整數：主要詞條每次 2 × RATIO，次要 1 × RATIO，有效詞條數 = 整數 ÷ UNIT
   const UNIT = 170; // 2 (主要詞條權重) × 85 (平均一跳的檔位比例)
-  const MIN_GAIN = 0.7 * UNIT; // 0.7 個有效詞條
   const upCache = new Map();
-  // 主要詞條升級跳 jm 次、次要詞條 js 次時，升級跳有效詞條數 (×200 的整數) 的分布
+  // 主要詞條升級跳 jm 次、次要詞條 js 次時，升級跳有效詞條數 (× UNIT 的整數) 的分布
   function upDist(jm, js) {
     const key = jm + '|' + js;
     if (upCache.has(key)) return upCache.get(key);
@@ -823,36 +837,26 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     upCache.set(key, d);
     return d;
   }
-  /* mode：'tier' 追高檔 (上面說的，看檔位，至少多 0.7 個才算變好)
-   *       'count' 不歪 (只看升級跳的次數落在哪，不看檔位；有用詞條的升級跳比原本多就算變好，
-   *               升級跳全在主要詞條時不可能變好，畫面顯示「已經最好」)。有效詞條數兩個模式一樣，都照數值算 */
   function reshapeValue(parsed, weight, guarantee, mode) {
     if (!parsed || !parsed.ok || parsed.subs.length !== 4) return { ok: false };
     const w = parsed.subs.map(s => weight[s.stat] || 0);
     if (!w.some(x => x > 0)) return { ok: false, reason: 'none' };
-    if (mode === 'count') return reshapeCount(parsed, w, guarantee);
+    const byCount = mode === 'count';
+    // 現在升級跳的有效詞條數 (× UNIT)、初始那幾次的有效詞條數、有用詞條的升級跳次數 (主要 2、次要 1)
     const up = parsed.subs.reduce((a, s, i) => a + w[i] * s.rolls.reduce((b, t) => b + RATIO[t], 0), 0);
     const init = parsed.subs.reduce((a, s, i) => a + w[i] * RATIO[s.initTier], 0);
+    const now = parsed.subs.reduce((a, s, i) => a + w[i] * s.rolls.length, 0);
     const lock = [0, 1, 2, 3].sort((a, b) => w[b] - w[a] || a - b).slice(0, 2).sort((a, b) => a - b);
-    let pUp = 0;
+    let pUp = 0, sum = 0;
     E_each({ init: parsed.init, guarantee: guarantee == null ? 2 : guarantee, locked: lock }, (c, p) => {
       let jm = 0, js = 0;
       c.forEach((n, i) => { if (w[i] === 2) jm += n - 1; else if (w[i] === 1) js += n - 1; });
-      upDist(jm, js).forEach((q, v) => { if (v - up >= MIN_GAIN) pUp += p * q; });
+      if (byCount && 2 * jm + js <= now) return;
+      upDist(jm, js).forEach((q, v) => { if (v > up) { pUp += p * q; sum += p * q * (v - up); } });
     });
     pUp = Math.min(1, pUp);
-    return { ok: true, total: (init + up) / UNIT, pUp, tries: pUp > 1e-12 ? 1 / pUp : Infinity, lock };
-  }
-  function reshapeCount(parsed, w, guarantee) {
-    const now = parsed.subs.reduce((a, s, i) => a + w[i] * s.rolls.length, 0);
-    const total = parsed.subs.reduce((a, s, i) => a + w[i] * (RATIO[s.initTier] + s.rolls.reduce((b, t) => b + RATIO[t], 0)), 0) / UNIT;
-    const lock = [0, 1, 2, 3].sort((a, b) => w[b] - w[a] || a - b).slice(0, 2).sort((a, b) => a - b);
-    let pUp = 0;
-    E_each({ init: parsed.init, guarantee: guarantee == null ? 2 : guarantee, locked: lock }, (c, p) => {
-      if (c.reduce((a, n, i) => a + w[i] * (n - 1), 0) > now) pUp += p;
-    });
-    pUp = Math.min(1, pUp);
-    return { ok: true, total, pUp, tries: pUp > 1e-12 ? 1 / pUp : Infinity, lock };
+    const can = pUp > 1e-12;
+    return { ok: true, total: (init + up) / UNIT, pUp: can ? pUp : 0, gain: can ? sum / pUp / UNIT : 0, exp: can ? sum / UNIT : 0, tries: can ? 1 / pUp : Infinity, lock };
   }
 
   /* 重塑進度保底 (批量模擬用)：每用 1 個啟聖之塵累積 1 點，這次重塑讓進度滿 6 點時變成高階重塑 (保底 3 次)，
@@ -912,7 +916,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     return { counts: pick, vals: out };
   }
 
-  const api = { sampleSuccess, STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix, reshapeOdds, reshapeValue, RATIO, MIN_GAIN, UNIT, pityStep, avgRoll };
+  const api = { sampleSuccess, STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix, reshapeOdds, reshapeValue, RATIO, UNIT, pityStep, avgRoll };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.ArtifactEngine = api;
 })(typeof window !== 'undefined' ? window : this);
@@ -1894,7 +1898,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   // 重塑方案裡最划算的那件 (沒有就是生之花)
   function bestRelic(av) {
     const best = planRows(relicsOf(av))[0];
-    return best && isFinite(best.dust) ? best.i : 0;
+    return best && best.score > 0 ? best.i : 0;
   }
   // 使用者沒有自己點聖遺物時，詞條明細一直跟著重塑方案裡最划算的那件 (改主要詞條、模式時也跟著變)
   function followBest() {
@@ -1946,6 +1950,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   /* ---------- 重塑方案：選主要、次要詞條，比較這個角色的聖遺物哪件重塑最划算 ----------
    * 用「有效詞條」衡量 (E.reshapeValue)：主要詞條每次最高檔算 1，次要算 0.5，其他不算。
    * 重塑只重新分配升級跳，結果比原本差可以不換，所以只算變好的部分。保底照一般重塑 (2 次)。
+   * 最划算 = 每個啟聖之塵平均能多幾個有效詞條最多的那件 (變好機率 × 變好時平均多幾個 ÷ 每次用幾個)
    * 啟聖之塵：花、羽每次 1 個，沙、杯、冠每次 2 個 */
   const DUST = { 生之花: 1, 死之羽: 1, 時之沙: 2, 空之杯: 2, 理之冠: 2 };
   const PLAN_STATS = ['cr', 'cd', 'em', 'er', 'atkp', 'hpp', 'defp'];
@@ -1959,7 +1964,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   let planBy = {};
   try { const v = JSON.parse(localStorage.getItem(PKEY)); if (v && typeof v === 'object') planBy = v; } catch (e) {}
   const avKey = av => `${av.avatarId}-${av.skillDepotId || 0}`;
-  // 怎樣算變好：count 減少歪 (只看升級跳落在哪，預設)、tier 追提升 (看檔位，至少多 0.7 個有效詞條)
+  // 怎樣算變好：count 減少歪 (有用詞條的升級跳變多，而且數值比現在高，預設)、tier 追提升 (數值比現在高就算，純檔位運氣也算)
   SC.planMode = 'count';
   try { if (localStorage.getItem('artcalc-planmode') === 'tier') SC.planMode = 'tier'; } catch (e) {}
   SC.plan = { main: ['cr', 'cd'], sec: [], auto: true };
@@ -2002,7 +2007,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     renderPlanResult();
   }
 
-  // 重塑方案每一列 (依「大約需要幾次 × 每次用幾個啟聖之塵」排序)
+  // 重塑方案每一列 (依「每個啟聖之塵平均能多幾個有效詞條」由多到少排序，不可能變好的排最後)
   function planRows(relics) {
     const W = {};
     SC.plan.sec.forEach(id => { W[id] = 1; });
@@ -2013,8 +2018,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       const v = E.reshapeValue(r.parsed, W, 2, SC.planMode);
       if (!v.ok) return null;
       const cost = DUST[r.slot] || 2;
-      return { i, r, v, dust: v.tries * cost };
-    }).filter(Boolean).sort((a, b) => a.dust - b.dust || b.v.pUp - a.v.pUp);
+      return { i, r, v, score: v.exp / cost };
+    }).filter(Boolean).sort((a, b) => b.score - a.score || b.v.pUp - a.v.pUp);
   }
 
   function renderPlanResult() {
@@ -2023,20 +2028,24 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     if (!SC.plan.main.length) { out.innerHTML = '<p class="hint">先選至少一個主要詞條。</p>'; return; }
     const rows = planRows(av ? relicsOf(av) : []);
     if (!rows.length) { out.innerHTML = '<p class="hint">這個角色的 +20 五星聖遺物都沒有選的詞條。</p>'; return; }
-    const best = isFinite(rows[0].dust) ? rows[0] : null;
+    const best = rows[0].score > 0 ? rows[0] : null;
     const num = x => (x.toFixed(1).endsWith('.0') ? x.toFixed(0) : x.toFixed(1));
-    const tries = t => (!isFinite(t) ? '<span class="muted">已經最好</span>' : t < 1.05 ? '1 次' : `約 ${t < 10 ? num(t) : Math.round(t)} 次`);
+    const none = `<span class="muted">${SC.planMode === 'count' ? '沒有歪' : '已經最好'}</span>`;
+    const tries = t => (!isFinite(t) ? none : t < 1.05 ? '1 次' : `約 ${t < 10 ? num(t) : Math.round(t).toLocaleString('en-US')} 次`);
+    // 變好時平均多幾個有效詞條 (提升空間)，不到 0.05 個的寫「不到 0.1」
+    const gain = v => (!(v.pUp > 0) ? '<span class="muted">-</span>' : v.gain < 0.05 ? '不到 0.1 個' : `${v.gain.toFixed(1)} 個`);
     out.innerHTML = `<div class="tbl-wrap"><table class="gtable plan-tbl">
-      <tr><th>部位</th><th>有效詞條數</th><th>重塑變好機率</th><th>大約需要幾次</th></tr>
+      <tr><th>部位</th><th>有效<wbr>詞條數</th><th>重塑變好<wbr>機率</th><th>變好時<wbr>平均多</th><th class="pt-wide">大約需要幾次</th></tr>
       ${rows.map(x => `<tr data-r="${x.i}" class="${x === best ? 'best' : ''}${SC.relic === x.i ? ' sel' : ''}" title="點一下看這件的詞條明細">
         <td class="name">${x.r.slot}${x === best ? ' <span class="tag best-tag">最划算</span>' : ''}</td>
         <td class="num">${num(x.v.total)}</td>
-        <td class="num">${x.v.pUp > 0 ? fmtP(x.v.pUp) : '<span class="muted">0%</span>'}</td>
-        <td class="num"><b>${tries(x.v.tries)}</b></td></tr>`).join('')}
+        <td class="num">${x.v.pUp > 0 ? fmtP(x.v.pUp) : '<span class="muted">0%</span>'}<small class="pt-narrow">${tries(x.v.tries)}</small></td>
+        <td class="num"><b>${gain(x.v)}</b></td>
+        <td class="num pt-wide">${tries(x.v.tries)}</td></tr>`).join('')}
     </table></div>
     <p class="hint">${SC.planMode === 'count'
-      ? '減少歪：升級跳落在主要、次要詞條的次數變多才算變好，沒歪過的就是「已經最好」。'
-      : '追提升：有效詞條數比現在至少多 0.7 個才算變好，跳出更高的檔位也算。'}</p>`;
+      ? '減少歪：升級跳落在主要、次要詞條的次數變多，數值也比現在高才算變好，沒歪過的就是「沒有歪」。'
+      : '追提升：數值比現在高就算變好，沒歪但檔位偏低的也算。'}最划算是每個啟聖之塵平均能多最多詞條的那件。</p>`;
   }
 
   $('scPlan').addEventListener('click', e => {

@@ -189,18 +189,23 @@
    * weight：詞條 → 2 (主要詞條)、1 (次要詞條)、0 (其他，包含攻擊、生命、防禦固定值)
    * 有效詞條數 = Σ 權重/2 × 數值 ÷ 平均一跳 (四個檔位的平均，約最高檔的 0.85；例如暴傷 7.77% ≈ 1.18 詞條)，含初始
    *   檔位比例第七到第十檔是 0.7、0.8、0.9、1.0 倍最高檔，所以每次是 RATIO / 85 個詞條
-   * 重塑只重新分配升級跳、初始保留。重塑「變好」= 升級跳的有效詞條數比原本至少多 0.7 個 (MIN_GAIN，以平均一跳為單位)，
-   * 包含把歪掉的升級跳拿回來，也包含升級跳都在有用詞條、但這次跳出夠多更高的檔位 (結果不好可以不換)。
-   * 門檻 0.7 是使用者決定的：只多零點幾個的檔位運氣不算，一次拿回最低檔 (0.82 個) 的升級跳就算
-   * 大約需要幾次 = 1 / 變好機率 (幾何分布的期望值)
+   * 重塑只重新分配升級跳、初始保留，結果比原本差可以不換，所以只算變好的部分。
+   * mode：'count' 減少歪：有用詞條的升級跳 (主要算 1 次、次要算半次) 比原本多，而且升級跳的有效詞條數比原本高才算變好。
+   *               次數沒有變多、只是檔位運氣比較好的不算，所以升級跳全在主要詞條時不可能變好，畫面顯示「沒有歪」
+   *       'tier' 追提升 (沒指定時也是這個)：升級跳的有效詞條數比原本高就算變好，不設門檻，純檔位運氣也算。
+   *               升級跳全在主要詞條而且都是最高檔時才不可能變好，畫面顯示「已經最好」
+   * 兩個模式的提升幅度都照數值 (檔位) 算：同樣歪 1 次，其他升級跳檔位低的那件拿回來之後多得比較多。
+   * 排序用「每次重塑平均多幾個」(exp = 變好機率 × 變好時平均多幾個) 除以每次用的啟聖之塵，也就是提升空間有多大又有多容易拿到。
+   * 2026-11-16 以前追提升有 0.7 個有效詞條的門檻 (MIN_GAIN)、減少歪只看次數、排序用 1 ÷ 變好機率；
+   * 門檻是手動訂的數字，最划算的那件會跟著門檻變，而且只看機率分不出歪 5 次和歪 4 次，所以改成現在這樣
    * 選定詞條是權重最高的兩個 (同權重照順序)，保底用一般重塑 (2 次)
-   * 回傳 { ok, total (目前有效詞條數), pUp (每次重塑變好的機率), tries (平均要重塑幾次，不可能變好時 Infinity), lock } */
+   * 回傳 { ok, total (目前有效詞條數), pUp (每次重塑變好的機率), gain (變好時平均多幾個有效詞條，不可能變好時 0),
+   *        exp (每次重塑平均多幾個有效詞條 = pUp × gain), tries (平均要重塑幾次，不可能變好時 Infinity), lock } */
   const RATIO = [70, 80, 90, 100];
   // 內部用整數：主要詞條每次 2 × RATIO，次要 1 × RATIO，有效詞條數 = 整數 ÷ UNIT
   const UNIT = 170; // 2 (主要詞條權重) × 85 (平均一跳的檔位比例)
-  const MIN_GAIN = 0.7 * UNIT; // 0.7 個有效詞條
   const upCache = new Map();
-  // 主要詞條升級跳 jm 次、次要詞條 js 次時，升級跳有效詞條數 (×200 的整數) 的分布
+  // 主要詞條升級跳 jm 次、次要詞條 js 次時，升級跳有效詞條數 (× UNIT 的整數) 的分布
   function upDist(jm, js) {
     const key = jm + '|' + js;
     if (upCache.has(key)) return upCache.get(key);
@@ -211,36 +216,26 @@
     upCache.set(key, d);
     return d;
   }
-  /* mode：'tier' 追高檔 (上面說的，看檔位，至少多 0.7 個才算變好)
-   *       'count' 不歪 (只看升級跳的次數落在哪，不看檔位；有用詞條的升級跳比原本多就算變好，
-   *               升級跳全在主要詞條時不可能變好，畫面顯示「已經最好」)。有效詞條數兩個模式一樣，都照數值算 */
   function reshapeValue(parsed, weight, guarantee, mode) {
     if (!parsed || !parsed.ok || parsed.subs.length !== 4) return { ok: false };
     const w = parsed.subs.map(s => weight[s.stat] || 0);
     if (!w.some(x => x > 0)) return { ok: false, reason: 'none' };
-    if (mode === 'count') return reshapeCount(parsed, w, guarantee);
+    const byCount = mode === 'count';
+    // 現在升級跳的有效詞條數 (× UNIT)、初始那幾次的有效詞條數、有用詞條的升級跳次數 (主要 2、次要 1)
     const up = parsed.subs.reduce((a, s, i) => a + w[i] * s.rolls.reduce((b, t) => b + RATIO[t], 0), 0);
     const init = parsed.subs.reduce((a, s, i) => a + w[i] * RATIO[s.initTier], 0);
+    const now = parsed.subs.reduce((a, s, i) => a + w[i] * s.rolls.length, 0);
     const lock = [0, 1, 2, 3].sort((a, b) => w[b] - w[a] || a - b).slice(0, 2).sort((a, b) => a - b);
-    let pUp = 0;
+    let pUp = 0, sum = 0;
     E_each({ init: parsed.init, guarantee: guarantee == null ? 2 : guarantee, locked: lock }, (c, p) => {
       let jm = 0, js = 0;
       c.forEach((n, i) => { if (w[i] === 2) jm += n - 1; else if (w[i] === 1) js += n - 1; });
-      upDist(jm, js).forEach((q, v) => { if (v - up >= MIN_GAIN) pUp += p * q; });
+      if (byCount && 2 * jm + js <= now) return;
+      upDist(jm, js).forEach((q, v) => { if (v > up) { pUp += p * q; sum += p * q * (v - up); } });
     });
     pUp = Math.min(1, pUp);
-    return { ok: true, total: (init + up) / UNIT, pUp, tries: pUp > 1e-12 ? 1 / pUp : Infinity, lock };
-  }
-  function reshapeCount(parsed, w, guarantee) {
-    const now = parsed.subs.reduce((a, s, i) => a + w[i] * s.rolls.length, 0);
-    const total = parsed.subs.reduce((a, s, i) => a + w[i] * (RATIO[s.initTier] + s.rolls.reduce((b, t) => b + RATIO[t], 0)), 0) / UNIT;
-    const lock = [0, 1, 2, 3].sort((a, b) => w[b] - w[a] || a - b).slice(0, 2).sort((a, b) => a - b);
-    let pUp = 0;
-    E_each({ init: parsed.init, guarantee: guarantee == null ? 2 : guarantee, locked: lock }, (c, p) => {
-      if (c.reduce((a, n, i) => a + w[i] * (n - 1), 0) > now) pUp += p;
-    });
-    pUp = Math.min(1, pUp);
-    return { ok: true, total, pUp, tries: pUp > 1e-12 ? 1 / pUp : Infinity, lock };
+    const can = pUp > 1e-12;
+    return { ok: true, total: (init + up) / UNIT, pUp: can ? pUp : 0, gain: can ? sum / pUp / UNIT : 0, exp: can ? sum / UNIT : 0, tries: can ? 1 / pUp : Infinity, lock };
   }
 
   /* 重塑進度保底 (批量模擬用)：每用 1 個啟聖之塵累積 1 點，這次重塑讓進度滿 6 點時變成高階重塑 (保底 3 次)，
@@ -300,7 +295,7 @@
     return { counts: pick, vals: out };
   }
 
-  const api = { sampleSuccess, STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix, reshapeOdds, reshapeValue, RATIO, MIN_GAIN, UNIT, pityStep, avgRoll };
+  const api = { sampleSuccess, STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix, reshapeOdds, reshapeValue, RATIO, UNIT, pityStep, avgRoll };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.ArtifactEngine = api;
 })(typeof window !== 'undefined' ? window : this);
