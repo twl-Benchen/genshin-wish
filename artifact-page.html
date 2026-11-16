@@ -242,19 +242,17 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 /* 武器在立繪左下角，底色用卡片的元素深色 (半透明) 加輕微模糊，跟整張卡融在一起 */
 .sc-art .sc-weapon { position: absolute; z-index: 1; left: 40px; bottom: 14px; max-width: calc(100% - 54px); padding: 8px 12px 8px 6px; }
 /* 底色和模糊放在 ::before，四周 (左、右、上) 用 mask 漸層淡出，跟立繪之間沒有硬邊；字和圖示不受影響 */
-.sc-art .sc-weapon::before { content: ""; position: absolute; z-index: -1; inset: -26px -28px -14px -40px; pointer-events: none;
+.sc-art .sc-weapon::before { content: ""; position: absolute; z-index: -1; inset: -30px -34px -14px -44px; pointer-events: none; border-radius: 28px 28px 0 0;
   background: color-mix(in srgb, var(--el1) 68%, transparent); -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 34px), transparent), linear-gradient(180deg, transparent, #000 34px);
-  -webkit-mask-composite: source-in; mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 34px), transparent), linear-gradient(180deg, transparent, #000 34px);
-  mask-composite: intersect; }
+  -webkit-mask-image: radial-gradient(ellipse 66% 125% at 50% 100%, #000 64%, transparent 100%); mask-image: radial-gradient(ellipse 66% 125% at 50% 100%, #000 64%, transparent 100%); }
 /* 中間欄最上面：有效詞條數 (重塑方案選的主要、次要詞條，只算副詞條) */
 .sc-rolls { display: grid; gap: 8px; align-content: center; min-height: 76px; }
-.sc-rolls .rc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.sc-rolls .rc-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
 .sc-rolls .rc-chips span { background: rgba(0, 0, 0, .28); border-radius: 4px; padding: 2px 9px; font-size: .84rem; white-space: nowrap; }
 .sc-rolls .rc-chips b { font: 600 .98rem var(--f-num); margin: 0 .25em 0 1px; }
-.sc-rolls .rc-total { flex-basis: 100%; }
-.sc-rolls .rc-total span { font-size: .95rem; background: rgba(0, 0, 0, .36); }
-.sc-rolls .rc-total b { font-size: 1.15rem; }
+.sc-rolls .rc-total { flex-basis: 100%; text-align: center; }
+.sc-rolls .rc-total span { display: inline-block; font-size: 1.1rem; padding: 3px 12px; background: rgba(0, 0, 0, .36); }
+.sc-rolls .rc-total b { font-size: 1.4rem; }
 .sc-rolls .rc-none { margin: 0; font-size: .8rem; opacity: .75; }
 .sc-weapon img { width: 76px; height: 76px; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .4)); }
 .sc-weapon .wn { font-family: var(--f-display); font-size: 1.05rem; margin-bottom: 4px; }
@@ -1544,7 +1542,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     const n = E.rollCount(subs, { hp: +fp[1] || 0, atk: +fp[4] || 0, def: +fp[7] || 0 });
     const sel = PLAN_STATS.filter(id => SC.plan.main.includes(id) || SC.plan.sec.includes(id));
     if (!sel.length) return '<p class="rc-none">在下方重塑方案選主要詞條，這裡會算出有效詞條數。</p>';
-    const f = x => (Math.round((x || 0) * 10) / 10).toFixed(1);
+    // 個位數前面補一個空格 (數字字型等寬，空格跟數字一樣寬)，標籤寬度才會一致
+    const f = x => { const t = (Math.round((x || 0) * 10) / 10).toFixed(1); return t.length < 4 ? '&nbsp;' + t : t; };
     const chip = (name, x) => `<span>${name}：<b>${f(x)}</b>詞條</span>`;
     const items = [];
     const crit = sel.includes('cr') && sel.includes('cd');
