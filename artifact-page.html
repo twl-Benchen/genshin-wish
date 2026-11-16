@@ -229,7 +229,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .sc-art .splash-box { position: absolute; top: 0; bottom: 0; left: 0; width: 135%; overflow: hidden;
   -webkit-mask-image: linear-gradient(90deg, #000 50%, rgba(0, 0, 0, .55) 62%, transparent 76%); mask-image: linear-gradient(90deg, #000 50%, rgba(0, 0, 0, .55) 62%, transparent 76%); }
 /* 立繪往上移、稍微縮小，左下角留給武器 */
-.sc-art .splash { position: absolute; top: 0; left: 0; width: 74%; height: 100%; object-fit: cover; object-position: 50% 20%; transform: translateY(-11%) scale(1.135); transform-origin: 50% 25%; }
+.sc-art .splash { position: absolute; top: 0; left: 0; width: 74%; height: 100%; object-fit: cover; object-position: 50% 20%; transform: translateY(calc(-11% + 46px)) scale(1.02); transform-origin: 50% 25%; }
 .sc-name, .sc-lv { position: absolute; z-index: 1; text-shadow: 0 1px 4px rgba(0, 0, 0, .6); }
 .sc-name { left: 18px; top: 14px; display: flex; align-items: baseline; gap: 10px; }
 .sc-name b { font-family: var(--f-display); font-size: 1.7rem; }
@@ -243,7 +243,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .sc-art .sc-weapon { position: absolute; z-index: 1; left: 40px; bottom: 14px; max-width: calc(100% - 54px); padding: 8px 12px 8px 6px; }
 /* 底色和模糊放在 ::before，四周 (左、右、上) 用 mask 漸層淡出，跟立繪之間沒有硬邊；字和圖示不受影響 */
 .sc-art .sc-weapon::before { content: ""; position: absolute; z-index: -1; inset: -26px -28px -14px -40px; pointer-events: none;
-  background: color-mix(in srgb, var(--el1) 62%, transparent); -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
+  background: color-mix(in srgb, var(--el1) 68%, transparent); -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 34px), transparent), linear-gradient(180deg, transparent, #000 34px);
   -webkit-mask-composite: source-in; mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 34px), transparent), linear-gradient(180deg, transparent, #000 34px);
   mask-composite: intersect; }
@@ -353,7 +353,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   .sc-card { grid-template-columns: minmax(0, 1fr); }
   .sc-art { grid-row: auto; min-height: 380px; }
   .sc-art .splash-box { width: 100%; -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent); mask-image: linear-gradient(180deg, #000 70%, transparent); }
-  .sc-art .splash { width: 100%; transform: translateY(-9%) scale(1.023); }
+  .sc-art .splash { width: 100%; transform: translateY(calc(-9% + 46px)) scale(.92); }
   .sc-relics { grid-template-columns: minmax(0, 1fr); padding: 0 10px 12px; }
   .sc-relic { grid-template-columns: 96px minmax(0, 1fr); }
 }
