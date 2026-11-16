@@ -354,6 +354,9 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   -webkit-mask-image: radial-gradient(ellipse 66% 125% at 50% 100%, #000 64%, transparent 100%); mask-image: radial-gradient(ellipse 66% 125% at 50% 100%, #000 64%, transparent 100%); }
 /* 武器有兩份：電腦版用立繪左下角那份 (w-art)，手機版 (640px 以下) 用中間欄最上面那份 (w-mid)，有效詞條數放在它右邊 */
 .sc-weapon.w-mid { display: none; }
+/* 武器星星：電腦版接在等級後面，手機版移到武器圖片下方 */
+.sc-weapon .wimg { display: grid; justify-items: center; }
+.sc-weapon .wstars { display: none; color: #ffd86b; font-size: .62rem; letter-spacing: 0; line-height: 1; margin-top: 2px; }
 /* 中間欄最上面：有效詞條數 (重塑方案選的主要、次要詞條，只算副詞條) */
 .sc-rolls { display: grid; gap: 8px; align-content: center; min-height: 76px; }
 /* 兩欄排列、整塊置中，單數個時最後一個靠左 (落在左欄) */
@@ -467,14 +470,16 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   .sc-weapon.w-mid img { width: 52px; height: 52px; }
   .sc-weapon.w-mid .wn { font-size: .95rem; }
   .sc-weapon.w-mid .wst { font-size: .72rem; gap: 4px; }
+  .sc-weapon.w-mid .wstars { display: block; }
+  .sc-weapon.w-mid .wst .stars { display: none; }
   .sc-head { display: flex; align-items: center; gap: 8px; }
   .sc-head .sc-weapon { flex: 1 1 0; min-width: 0; }
-  .sc-head .sc-rolls { flex: none; width: 118px; min-height: 0; }
+  .sc-head .sc-rolls { flex: none; min-height: 0; }
   .sc-rolls .rc-chips { grid-template-columns: auto; gap: 4px; justify-items: stretch; }
   .sc-rolls .rc-total { justify-self: stretch; }
   .sc-rolls .rc-total span, .sc-rolls .rc-chips span { display: block; text-align: center; }
-  .sc-rolls .rc-total span { font-size: .78rem; padding: 2px 6px; white-space: normal; line-height: 1.35; }
-  .sc-rolls .rc-total b { font-size: 1.05rem; }
+  .sc-rolls .rc-total span { font-size: .72rem; padding: 2px 6px; white-space: nowrap; }
+  .sc-rolls .rc-total b { font-size: .98rem; }
   .sc-rolls .rc-chips span { font-size: .7rem; padding: 1px 4px; }
   .sc-rolls .rc-chips b { font-size: .86rem; }
   .sc-relics { grid-template-columns: minmax(0, 1fr); padding: 0 10px 12px; }
@@ -1927,7 +1932,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       const ref = w.weapon.affixMap ? Object.values(w.weapon.affixMap)[0] + 1 : 1;
       const val = s => fmtProp(s.appendPropId, s.statValue != null ? s.statValue : s.propValue);
       weaponHtml = `<div class="sc-weapon __W__">
-        <img src="${UI(f.icon || '')}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+        <div class="wimg"><img src="${UI(f.icon || '')}" alt="" loading="lazy" onerror="this.style.visibility='hidden'"><span class="wstars">${'★'.repeat(f.rankLevel || 0)}</span></div>
         <div><div class="wn">${esc(loc(f.nameTextMapHash) || loc(f.nameTextHashMap) || '武器')}</div>
           <div class="wst">${st.map(s => `<span title="${esc(propName(s.appendPropId))}">${esc(s.appendPropId === 'FIGHT_PROP_BASE_ATTACK' ? '攻擊' : propName(s.appendPropId))} ${val(s)}</span>`).join('')}</div>
           <div class="wst"><span class="r">R${ref}</span><span>Lv. ${w.weapon.level || '-'}</span><span class="stars">${'★'.repeat(f.rankLevel || 0)}</span></div></div>
