@@ -247,10 +247,11 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   -webkit-mask-image: radial-gradient(ellipse 66% 125% at 50% 100%, #000 64%, transparent 100%); mask-image: radial-gradient(ellipse 66% 125% at 50% 100%, #000 64%, transparent 100%); }
 /* 中間欄最上面：有效詞條數 (重塑方案選的主要、次要詞條，只算副詞條) */
 .sc-rolls { display: grid; gap: 8px; align-content: center; min-height: 76px; }
-.sc-rolls .rc-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+/* 兩欄排列、整塊置中，單數個時最後一個靠左 (落在左欄) */
+.sc-rolls .rc-chips { display: grid; grid-template-columns: repeat(2, auto); gap: 6px; justify-content: center; justify-items: start; }
 .sc-rolls .rc-chips span { background: rgba(0, 0, 0, .28); border-radius: 4px; padding: 2px 9px; font-size: .84rem; white-space: nowrap; }
 .sc-rolls .rc-chips b { font: 600 .98rem var(--f-num); margin: 0 .25em 0 1px; }
-.sc-rolls .rc-total { flex-basis: 100%; text-align: center; }
+.sc-rolls .rc-total { grid-column: 1 / -1; justify-self: center; }
 .sc-rolls .rc-total span { display: inline-block; font-size: 1.1rem; padding: 3px 12px; background: rgba(0, 0, 0, .36); }
 .sc-rolls .rc-total b { font-size: 1.4rem; }
 .sc-rolls .rc-none { margin: 0; font-size: .8rem; opacity: .75; }
@@ -1475,7 +1476,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
         <img src="${UI(f.icon || '')}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
         <div><div class="wn">${esc(loc(f.nameTextMapHash) || loc(f.nameTextHashMap) || '武器')}</div>
           <div class="wst">${st.map(s => `<span title="${esc(propName(s.appendPropId))}">${esc(s.appendPropId === 'FIGHT_PROP_BASE_ATTACK' ? '攻擊' : propName(s.appendPropId))} ${val(s)}</span>`).join('')}</div>
-          <div class="wst"><span class="r">R${ref}</span><span>Lv. ${w.weapon.level || '-'}/90</span><span class="stars">${'★'.repeat(f.rankLevel || 0)}</span></div></div>
+          <div class="wst"><span class="r">R${ref}</span><span>Lv. ${w.weapon.level || '-'}</span><span class="stars">${'★'.repeat(f.rankLevel || 0)}</span></div></div>
       </div>`;
     }
 
