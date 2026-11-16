@@ -215,8 +215,12 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .sc-av img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
 .sc-av .lv { position: absolute; right: -4px; bottom: -2px; font: 600 .7rem var(--f-num); background: #2b3142; color: #ece5d8; border-radius: 6px; padding: 0 5px; }
 .sc-av[aria-selected="true"] { border-color: var(--good); }
+/* 目前不在展示櫃、存在這台裝置的角色 */
+.sc-av.old { border-style: dashed; }
+.sc-av.old img { opacity: .7; }
+.sc-old { margin: 0; font-size: .82rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
 
-/* 角色卡：仿 Enka 的三欄 (立繪、武器與屬性、聖遺物)，底色跟著元素 */
+/* 角色卡：三欄 (立繪與武器、詞條數與屬性、聖遺物)，底色跟著元素 */
 .sc-card { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .9fr) minmax(0, 1.25fr); gap: 0; min-height: 540px; border-radius: 10px; overflow: hidden; color: #fff;
   background: radial-gradient(120% 90% at 20% 30%, var(--el2), var(--el1) 70%); box-shadow: 0 8px 28px rgba(20, 28, 50, .3); }
 .sc-card::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(115deg, rgba(255, 255, 255, .025) 0 2px, transparent 2px 22px); }
@@ -224,18 +228,28 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 /* 立繪的框比左欄寬，延伸到中間欄底下，從大約左欄 70% 的地方開始往右淡出 (中間欄的字蓋在上面) */
 .sc-art .splash-box { position: absolute; top: 0; bottom: 0; left: 0; width: 135%; overflow: hidden;
   -webkit-mask-image: linear-gradient(90deg, #000 50%, rgba(0, 0, 0, .55) 62%, transparent 76%); mask-image: linear-gradient(90deg, #000 50%, rgba(0, 0, 0, .55) 62%, transparent 76%); }
-.sc-art .splash { position: absolute; top: 0; left: 0; width: 74%; height: 100%; object-fit: cover; object-position: 50% 20%; transform: scale(1.35); transform-origin: 50% 30%; }
+/* 立繪往上移、稍微縮小，左下角留給武器 */
+.sc-art .splash { position: absolute; top: 0; left: 0; width: 74%; height: 100%; object-fit: cover; object-position: 50% 20%; transform: translateY(-7%) scale(1.22); transform-origin: 50% 25%; }
 .sc-name, .sc-lv { position: absolute; z-index: 1; text-shadow: 0 1px 4px rgba(0, 0, 0, .6); }
 .sc-name { left: 18px; top: 14px; display: flex; align-items: baseline; gap: 10px; }
 .sc-name b { font-family: var(--f-display); font-size: 1.7rem; }
 .sc-name span { font-size: .8rem; opacity: .85; }
 .sc-lv { left: 18px; top: 58px; font: 600 1rem var(--f-num); display: grid; gap: 4px; }
-.sc-style { position: absolute; z-index: 1; left: 18px; bottom: 12px; font-size: .72rem; color: #fff; opacity: .6; text-decoration: none; text-shadow: 0 1px 3px rgba(0, 0, 0, .6); }
-.sc-style:hover { opacity: .95; }
 .sc-lv .cons { font: 500 .8rem var(--f-body); background: rgba(0, 0, 0, .35); border-radius: 999px; padding: 1px 10px; justify-self: start; }
 .sc-mid { position: relative; z-index: 1; padding: 22px 16px; display: flex; flex-direction: column; gap: 14px; }
 .sc-mid .sc-stats { flex: 1; align-content: space-evenly; }
 .sc-weapon { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; align-items: center; }
+/* 武器在立繪左下角，加半透明底，淺色立繪上也看得清楚 */
+.sc-art .sc-weapon { position: absolute; z-index: 1; left: 14px; bottom: 14px; max-width: calc(100% - 28px); padding: 8px 12px 8px 6px; border-radius: 8px; background: rgba(0, 0, 0, .38); box-shadow: 0 2px 10px rgba(0, 0, 0, .25); }
+/* 中間欄最上面：有效詞條數 (重塑方案選的主要、次要詞條，只算副詞條) */
+.sc-rolls { display: grid; gap: 8px; align-content: center; min-height: 76px; }
+.sc-rolls .rc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.sc-rolls .rc-chips span { background: rgba(0, 0, 0, .28); border-radius: 4px; padding: 2px 9px; font-size: .84rem; white-space: nowrap; }
+.sc-rolls .rc-chips b { font: 600 .98rem var(--f-num); margin: 0 .25em 0 1px; }
+.sc-rolls .rc-total { flex-basis: 100%; }
+.sc-rolls .rc-total span { font-size: .95rem; background: rgba(0, 0, 0, .36); }
+.sc-rolls .rc-total b { font-size: 1.15rem; }
+.sc-rolls .rc-none { margin: 0; font-size: .8rem; opacity: .75; }
 .sc-weapon img { width: 76px; height: 76px; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .4)); }
 .sc-weapon .wn { font-family: var(--f-display); font-size: 1.05rem; margin-bottom: 4px; }
 .wst { display: flex; flex-wrap: wrap; gap: 4px 6px; font-size: .78rem; margin-top: 3px; }
@@ -333,7 +347,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   .sc-card { grid-template-columns: minmax(0, 1fr); }
   .sc-art { grid-row: auto; min-height: 380px; }
   .sc-art .splash-box { width: 100%; -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent); mask-image: linear-gradient(180deg, #000 70%, transparent); }
-  .sc-art .splash { width: 100%; transform: scale(1.15); }
+  .sc-art .splash { width: 100%; transform: translateY(-6%) scale(1.1); }
   .sc-relics { grid-template-columns: minmax(0, 1fr); padding: 0 10px 12px; }
   .sc-relic { grid-template-columns: 96px minmax(0, 1fr); }
 }
@@ -446,6 +460,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     </div>
     <p class="sc-msg" id="scMsg" role="status">輸入 UID 查詢遊戲裡「角色展示」的角色和聖遺物。資料來自 Enka.Network，遊戲裡要先打開「顯示角色詳情」。</p>
     <div class="sc-avatars" id="scAvatars" role="tablist" aria-label="角色"></div>
+    <p class="sc-old" id="scOld" hidden></p>
     <div id="scCard"></div>
     <div class="sc-bottom" id="scBottom" hidden>
       <section class="card frame sc-plan" id="scPlan"></section>
@@ -1274,7 +1289,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   const UI = n => `https://enka.network/ui/${n}.png`;
   const D = window.EnkaData;
   const UIDKEY = 'artcalc-uid';
-  const SC = { uid: '', data: null, sel: 0, relic: -1, cache: new Map(), busy: false };
+  const SC = { uid: '', data: null, list: [], sel: 0, relic: -1, cache: new Map(), busy: false };
   // 查詢結果照 Enka 回傳的 ttl 存進 localStorage，ttl 內重新整理頁面不會再查一次 (Enka 的要求)，只留最近 3 個 UID
   const CACHEKEY = 'artcalc-uidcache';
   function cacheGet(uid) {
@@ -1295,6 +1310,42 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       const keep = Object.entries(all).filter(([, v]) => v && v.until > now).sort((a, b) => b[1].until - a[1].until).slice(0, 2);
       localStorage.setItem(CACHEKEY, JSON.stringify(Object.fromEntries([[uid, item], ...keep])));
     } catch (e) { try { localStorage.removeItem(CACHEKEY); } catch (e2) {} }
+  }
+  /* 角色累積在這台裝置：每次查詢把展示櫃的角色存進 localStorage artcalc-roster ({ UID: { t, chars: { avatarId-skillDepotId: { av, t } } } })，
+   * 展示櫃換掉的角色之後還看得到 (排在目前展示櫃後面，標示資料日期，可以移除)。
+   * 跟 artcalc-uidcache (照 Enka 的 ttl 快取，只留 3 個 UID) 分開存。只留畫面用到的欄位，一個角色約 3 KB。
+   * localStorage 跟同網域 (twl-benchen.github.io) 的其他網站共用約 5 MB，存不下時先刪最久沒查的 UID 再試 */
+  const ROSTERKEY = 'artcalc-roster';
+  const FP_KEEP = [1, 4, 7, 20, 22, 23, 26, 28, 30, 40, 41, 42, 43, 44, 45, 46, 2000, 2001, 2002];
+  const slimAv = av => ({
+    avatarId: av.avatarId, skillDepotId: av.skillDepotId, costumeId: av.costumeId, talentIdList: av.talentIdList,
+    propMap: av.propMap && av.propMap['4001'] ? { 4001: av.propMap['4001'] } : undefined,
+    fightPropMap: Object.fromEntries(FP_KEEP.filter(k => (av.fightPropMap || {})[k] != null).map(k => [k, av.fightPropMap[k]])),
+    equipList: av.equipList,
+  });
+  function rosterRead() { try { const v = JSON.parse(localStorage.getItem(ROSTERKEY)); return v && typeof v === 'object' ? v : {}; } catch (e) { return {}; } }
+  function rosterWrite(all, uid) {
+    for (;;) {
+      try { localStorage.setItem(ROSTERKEY, JSON.stringify(all)); return; } catch (e) {
+        const old = Object.keys(all).filter(k => k !== uid).sort((a, b) => (all[a].t || 0) - (all[b].t || 0))[0];
+        if (!old) return;
+        delete all[old];
+      }
+    }
+  }
+  // 合併後的角色列表：目前展示櫃照原本順序，後面接存在這台裝置的其他角色 (資料新的在前，帶 _old 日期)
+  function rosterMerge(uid, list, fresh) {
+    const all = rosterRead(), now = Date.now(), r = all[uid] || { chars: {} };
+    list.forEach(av => { const k = avKey(av); if (fresh || !r.chars[k]) r.chars[k] = { av: slimAv(av), t: now }; });
+    r.t = now; all[uid] = r;
+    rosterWrite(all, uid);
+    const cur = new Set(list.map(avKey));
+    return list.concat(Object.entries(r.chars).filter(([k]) => !cur.has(k)).sort((a, b) => b[1].t - a[1].t)
+      .map(([, v]) => Object.assign({}, v.av, { _old: v.t })));
+  }
+  function rosterRemove(uid, key) {
+    const all = rosterRead();
+    if (all[uid] && all[uid].chars) { delete all[uid].chars[key]; rosterWrite(all, uid); }
   }
   const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const loc = h => (h == null ? '' : D.loc[String(h)] || '');
@@ -1334,8 +1385,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     try { localStorage.setItem(UIDKEY, uid); } catch (e) {}
     try { history.replaceState(null, '', '#uid-' + uid); } catch (e) {}
     const hit = cacheGet(uid);
-    if (hit) { SC.data = hit; renderShow(); return; }
-    SC.busy = true; SC.data = null; renderShow(); scMsg(''); renderSkeleton();
+    if (hit) { SC.data = hit; SC.list = rosterMerge(uid, hit.avatarInfoList || [], false); renderShow(); return; }
+    SC.busy = true; SC.data = null; SC.list = []; renderShow(); scMsg(''); renderSkeleton();
     try {
       const res = await fetch(`${PROXY}/uid/${uid}`);
       if (!res.ok) {
@@ -1344,9 +1395,10 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       }
       const data = await res.json();
       SC.data = data;
+      SC.list = rosterMerge(uid, data.avatarInfoList || [], true);
       cachePut(uid, data);
     } catch (e) {
-      SC.data = null;
+      SC.data = null; SC.list = [];
       scMsg(e && e.message && !/fetch/i.test(e.message) ? e.message : '連不上資料來源，請檢查網路後再試一次。', true);
     } finally { SC.busy = false; }
     renderShow();
@@ -1355,6 +1407,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   function renderSkeleton() {
     $('scPlayer').innerHTML = '<span class="sk sk-line" style="width:120px"></span><span class="sk sk-line" style="width:200px"></span>';
     $('scAvatars').innerHTML = Array.from({ length: 8 }, () => '<span class="sk sk-av"></span>').join('');
+    $('scOld').hidden = true;
     $('scCard').innerHTML = `<div class="sk sk-card" aria-label="讀取中"><div class="sk-col"></div><div class="sk-col">${'<span class="sk-bar"></span>'.repeat(8)}</div><div class="sk-col">${'<span class="sk-box"></span>'.repeat(5)}</div></div>`;
     $('scBottom').hidden = true;
   }
@@ -1362,22 +1415,24 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 
   function renderShow() {
     const d = SC.data;
-    if (!d) { $('scPlayer').innerHTML = ''; $('scAvatars').innerHTML = ''; $('scCard').innerHTML = ''; $('scBottom').hidden = true; return; }
+    if (!d) { $('scPlayer').innerHTML = ''; $('scAvatars').innerHTML = ''; $('scOld').hidden = true; $('scCard').innerHTML = ''; $('scBottom').hidden = true; return; }
     const p = d.playerInfo || {};
     $('scPlayer').innerHTML = `<b>${esc(p.nickname || '旅行者')}</b>
       <span>冒險等級 ${p.level || '-'}</span><span>世界等級 ${p.worldLevel != null ? p.worldLevel : '-'}</span>
       ${p.signature ? `<span class="sig">${esc(p.signature)}</span>` : ''}
       <a class="enka-link" href="https://enka.network/u/${SC.uid}/" target="_blank" rel="noopener">在 Enka 開啟 ↗</a>`;
-    const list = d.avatarInfoList || [];
+    const list = SC.list;
+    const closed = '這個帳號的角色展示沒有公開角色詳情。遊戲裡打開「角色展示」並開啟「顯示角色詳情」，大約幾分鐘後再查一次。';
     if (!list.length) {
-      scMsg('這個帳號的角色展示沒有公開角色詳情。遊戲裡打開「角色展示」並開啟「顯示角色詳情」，大約幾分鐘後再查一次。', true);
-      $('scAvatars').innerHTML = ''; $('scCard').innerHTML = ''; $('scBottom').hidden = true; return;
+      scMsg(closed, true);
+      $('scAvatars').innerHTML = ''; $('scOld').hidden = true; $('scCard').innerHTML = ''; $('scBottom').hidden = true; return;
     }
-    scMsg('');
+    // 展示櫃沒公開但這台裝置存過角色：照樣顯示存過的
+    if (!(d.avatarInfoList || []).length) scMsg(closed + '下面是之前存在這台裝置的資料。', true); else scMsg('');
     SC.sel = Math.min(SC.sel, list.length - 1);
     $('scAvatars').innerHTML = list.map((av, i) => {
       const c = charInfo(av), lv = av.propMap && av.propMap['4001'] ? av.propMap['4001'].val : '';
-      return `<button type="button" role="tab" class="sc-av q${c.q}" data-i="${i}" aria-selected="${i === SC.sel}" title="${esc(c.n)}">
+      return `<button type="button" role="tab" class="sc-av q${c.q}${av._old ? ' old' : ''}" data-i="${i}" aria-selected="${i === SC.sel}" title="${esc(c.n)}${av._old ? ' (不在目前展示櫃)' : ''}">
         <img src="${UI('UI_AvatarIcon_' + iconOf(c, av))}" alt="${esc(c.n)}" loading="lazy" onerror="this.style.visibility='hidden'"><span class="lv">${lv}</span></button>`;
     }).join('');
     renderCard();
@@ -1391,7 +1446,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   }
 
   function renderCard() {
-    const av = (SC.data.avatarInfoList || [])[SC.sel];
+    const av = SC.list[SC.sel];
     if (!av) return;
     // 換角色或剛查詢時：載入重塑方案，詞條明細預設選重塑方案裡最划算的那件 (沒有就選生之花)
     if (SC.pickBest) {
@@ -1450,17 +1505,51 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
         <div class="splash-box"><img class="splash" src="${art}" alt="" onerror="this.style.display='none'"></div>
         <div class="sc-name"><b>${esc(c.n)}</b></div>
         <div class="sc-lv">Lv. ${lv}<span class="cons" title="命之座">命座 ${cons}</span></div>
-        <a class="sc-style" href="https://enka.network/" target="_blank" rel="noopener">排版風格來自 Enka.Network</a>
+        ${weaponHtml}
       </div>
       <div class="sc-mid">
-        ${weaponHtml}
+        <div class="sc-rolls" id="scRolls">${rollsHtml(av)}</div>
         <div class="sc-stats">${rows.map(r => `<div class="st"><span>${r[0]}</span><b>${r[1]}</b>${r[2] ? `<small>${r[2]}</small>` : ''}</div>`).join('')}</div>
         ${setHtml}
       </div>
       <div class="sc-relics">${relics.map((r, i) => relicHtml(r, i)).join('') || '<p class="muted">沒有裝備聖遺物</p>'}</div>
     </div>`;
+    const ob = $('scOld');
+    ob.hidden = !av._old;
+    if (av._old) {
+      const t = new Date(av._old);
+      ob.innerHTML = `<span>${esc(c.n)}目前不在展示櫃，下面是 ${t.getFullYear()}/${t.getMonth() + 1}/${t.getDate()} 存在這台裝置的資料。</span><button type="button" class="linkbtn" id="scOldDel">從這台裝置移除</button>`;
+    }
     renderDetail(relics);
     if (!$('scBottom').hidden) renderPlan();
+  }
+
+  /* 有效詞條數：重塑方案選的主要、次要詞條都算，只算副詞條。固定值用白字換成等效百分比，併進攻擊、生命、防禦 (E.rollCount)。
+   * 暴擊和暴傷都選時合併成雙暴。四捨五入到小數點後一位 */
+  const SUB_PROP = { FIGHT_PROP_HP: 'hp', FIGHT_PROP_ATTACK: 'atk', FIGHT_PROP_DEFENSE: 'def', FIGHT_PROP_HP_PERCENT: 'hpp', FIGHT_PROP_ATTACK_PERCENT: 'atkp',
+    FIGHT_PROP_DEFENSE_PERCENT: 'defp', FIGHT_PROP_ELEMENT_MASTERY: 'em', FIGHT_PROP_CHARGE_EFFICIENCY: 'er', FIGHT_PROP_CRITICAL: 'cr', FIGHT_PROP_CRITICAL_HURT: 'cd' };
+  const ROLL_NAME = { cr: '暴擊', cd: '暴傷', em: '精通', er: '充能', atkp: '攻擊', hpp: '生命', defp: '防禦' };
+  function rollsHtml(av) {
+    const fp = av.fightPropMap || {}, subs = [];
+    relicsOf(av).forEach(r => {
+      if (r.parsed.ok) r.parsed.subs.forEach(x => subs.push({ stat: x.stat, h: x.total }));
+      else (r.f.reliquarySubstats || []).forEach(st => { const id = SUB_PROP[st.appendPropId]; if (id) subs.push({ stat: id, h: +(st.statValue != null ? st.statValue : st.propValue) * 100 }); });
+    });
+    const n = E.rollCount(subs, { hp: +fp[1] || 0, atk: +fp[4] || 0, def: +fp[7] || 0 });
+    const sel = PLAN_STATS.filter(id => SC.plan.main.includes(id) || SC.plan.sec.includes(id));
+    if (!sel.length) return '<p class="rc-none">在下方重塑方案選主要詞條，這裡會算出有效詞條數。</p>';
+    const f = x => (Math.round((x || 0) * 10) / 10).toFixed(1);
+    const chip = (name, x) => `<span>${name}：<b>${f(x)}</b>詞條</span>`;
+    const items = [];
+    const crit = sel.includes('cr') && sel.includes('cd');
+    if (crit) items.push(chip('雙暴', (n.cr || 0) + (n.cd || 0)));
+    sel.filter(id => !(crit && (id === 'cr' || id === 'cd'))).forEach(id => items.push(chip(ROLL_NAME[id], n[id])));
+    const total = sel.reduce((a, id) => a + (n[id] || 0), 0);
+    return `<div class="rc-chips"><div class="rc-total"><span>聖遺物總共：<b>${f(total)}</b>詞條</span></div>${items.join('')}</div>`;
+  }
+  function updateRolls() {
+    const el = $('scRolls'), av = SC.list[SC.sel];
+    if (el && av) el.innerHTML = rollsHtml(av);
   }
 
   function relicHtml(r, i) {
@@ -1487,7 +1576,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   }
   // 使用者沒有自己點聖遺物時，詞條明細一直跟著重塑方案裡最划算的那件 (改主要詞條、模式時也跟著變)
   function followBest() {
-    const av = (SC.data.avatarInfoList || [])[SC.sel];
+    const av = SC.list[SC.sel];
     if (!av || SC.userPicked) return;
     const i = bestRelic(av);
     if (i !== SC.relic) selectRelic(i);
@@ -1497,7 +1586,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   function selectRelic(i) {
     SC.relic = i;
     document.querySelectorAll('.sc-relic').forEach(b => { const on = +b.dataset.r === i; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
-    const av = (SC.data.avatarInfoList || [])[SC.sel];
+    const av = SC.list[SC.sel];
     if (av) renderDetail(relicsOf(av));
     renderPlanResult();
   }
@@ -1508,7 +1597,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     $('scBottom').hidden = false;
     if (!relics[SC.relic]) SC.relic = 0;
     const r = relics[SC.relic];
-    const c = charInfo(SC.data.avatarInfoList[SC.sel]), p = r.parsed;
+    const c = charInfo(SC.list[SC.sel]), p = r.parsed;
     const title = `<h2>${r.slot}的詞條明細</h2>`;
     if (!p.ok) { box.innerHTML = title + '<p class="hint">只有五星聖遺物可以拆出初始數值和每次升級跳的數值。</p>'; return; }
     const pctRank = ['七', '八', '九', '十'];
@@ -1574,7 +1663,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       : { main: autoMain(av), sec: [], auto: true };
   }
   const savePlan = () => {
-    const av = (SC.data.avatarInfoList || [])[SC.sel]; if (!av) return;
+    const av = SC.list[SC.sel]; if (!av) return;
     if (SC.plan.auto) delete planBy[avKey(av)]; else planBy[avKey(av)] = { main: SC.plan.main, sec: SC.plan.sec };
     try { localStorage.setItem(PKEY, JSON.stringify(planBy)); } catch (e) {}
   };
@@ -1590,6 +1679,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
       <div class="pill-row"><span class="pill-lab">次要詞條</span><div class="pills">${pills('sec', PLAN_STATS.filter(id => !P.main.includes(id)))}</div></div>
       <div id="planOut"></div>`;
     renderPlanResult();
+    updateRolls();
   }
 
   // 重塑方案每一列 (依「每個啟聖之塵平均能多幾個有效詞條」由多到少排序，不可能變好的排最後)
@@ -1609,7 +1699,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 
   function renderPlanResult() {
     const out = $('planOut'); if (!out) return;
-    const av = (SC.data.avatarInfoList || [])[SC.sel];
+    const av = SC.list[SC.sel];
     if (!SC.plan.main.length) { out.innerHTML = '<p class="hint">先選至少一個主要詞條。</p>'; return; }
     const rows = planRows(av ? relicsOf(av) : []);
     if (!rows.length) { out.innerHTML = '<p class="hint">這個角色的 +20 五星聖遺物都沒有選的詞條。</p>'; return; }
@@ -1637,7 +1727,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     const P = SC.plan, b = e.target.closest('.pill');
     const mb = e.target.closest('#planMode button');
     if (mb) { SC.planMode = mb.dataset.mode; try { localStorage.setItem('artcalc-planmode', SC.planMode); } catch (err) {} renderPlan(); followBest(); return; }
-    if (e.target.id === 'planReset') { SC.plan.auto = true; savePlan(); loadPlan(SC.data.avatarInfoList[SC.sel]); renderPlan(); followBest(); return; }
+    if (e.target.id === 'planReset') { SC.plan.auto = true; savePlan(); loadPlan(SC.list[SC.sel]); renderPlan(); followBest(); return; }
     if (!b) { const tr = e.target.closest('tr[data-r]'); if (tr) { SC.userPicked = true; selectRelic(+tr.dataset.r); } return; }
     P.auto = false;
     const kind = b.dataset.kind, id = b.dataset.v, list = P[kind];
@@ -1677,6 +1767,14 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   $('uidGo').addEventListener('click', () => loadUid($('uidInput').value));
   $('uidGo2').addEventListener('click', () => loadUid($('uidInput2').value));
   ['uidInput', 'uidInput2'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); loadUid(e.target.value); } }));
+  $('scOld').addEventListener('click', e => {
+    if (e.target.id !== 'scOldDel') return;
+    const av = SC.list[SC.sel]; if (!av || !av._old) return;
+    rosterRemove(SC.uid, avKey(av));
+    SC.list = SC.list.filter(x => x !== av);
+    SC.sel = 0; SC.relic = 0; SC.pickBest = true;
+    renderShow();
+  });
   $('scAvatars').addEventListener('click', e => {
     const b = e.target.closest('.sc-av'); if (!b) return;
     SC.sel = +b.dataset.i; SC.relic = 0; SC.pickBest = true;
@@ -1691,7 +1789,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   $('scCard').addEventListener('mouseover', e => {
     if (!canHover) return;
     const b = e.target.closest('.sc-relic'); if (!b || b === tip.owner) return;
-    const av = (SC.data.avatarInfoList || [])[SC.sel], r = av && relicsOf(av)[+b.dataset.r];
+    const av = SC.list[SC.sel], r = av && relicsOf(av)[+b.dataset.r];
     if (!r || !r.parsed.ok) { tip.hidden = true; tip.owner = null; return; }
     const p = r.parsed;
     tip.innerHTML = `<div class="tip-head"><b>${r.slot}的升級過程</b><span class="tip-pill">初始 ${p.init} 詞條</span></div>` + p.subs.map((x, k) => {
