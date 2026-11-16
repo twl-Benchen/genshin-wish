@@ -185,6 +185,28 @@
   // 平均一跳 (四個檔位的平均，內部單位同 tiers)，「幾個詞條」都用這個當單位
   const avgRoll = stat => byId[stat].tiers.reduce((a, b) => a + b, 0) / 4;
 
+  /* 角色卡上方的詞條數：每個副詞條的數值 ÷ 平均一跳，換成幾個詞條 (只算副詞條，主詞條不算)
+   * subs：[{ stat, h }]，h 是內部單位 (百分之一，同 tiers)
+   * base：{ hp, atk, def } 角色白字 (攻擊含武器基礎攻擊)。固定值先換成等效的百分比再算，併進對應的百分比詞條：
+   *   攻擊 37 ÷ (白字 1063 × 攻擊% 平均一跳 4.955%) ≈ 0.70 詞條，算在攻擊 (atkp)；生命、防禦同理
+   * 回傳 { 詞條 id: 詞條數 } */
+  const FLAT_TO = { hp: 'hpp', atk: 'atkp', def: 'defp' };
+  function rollCount(subs, base) {
+    const out = {};
+    (subs || []).forEach(({ stat, h }) => {
+      if (!byId[stat] || !isFinite(h)) return;
+      let id = stat, n;
+      if (FLAT_TO[stat]) {
+        id = FLAT_TO[stat];
+        const b = base && +base[stat];
+        if (!(b > 0)) return;
+        n = (h / b) * 100 / avgRoll(id); // h / 100 是固定值，÷ 白字 × 100 是百分比，再 × 100 換成內部單位
+      } else n = h / avgRoll(stat);
+      out[id] = (out[id] || 0) + n;
+    });
+    return out;
+  }
+
   /* 重塑划不划算 (角色聖遺物的重塑方案)
    * weight：詞條 → 2 (主要詞條)、1 (次要詞條)、0 (其他，包含攻擊、生命、防禦固定值)
    * 有效詞條數 = Σ 權重/2 × 數值 ÷ 平均一跳 (四個檔位的平均，約最高檔的 0.85；例如暴傷 7.77% ≈ 1.18 詞條)，含初始
@@ -295,7 +317,7 @@
     return { counts: pick, vals: out };
   }
 
-  const api = { sampleSuccess, STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix, reshapeOdds, reshapeValue, RATIO, UNIT, pityStep, avgRoll };
+  const api = { sampleSuccess, STATS, byId, upgrades, toDisp, dispText, fmtValue, valueDist, probAtLeast, isForced, exact, pickRoll, simulateCounts, rollValue, trialsFor, parseRelic, decodeAffix, reshapeOdds, reshapeValue, RATIO, UNIT, pityStep, avgRoll, rollCount };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.ArtifactEngine = api;
 })(typeof window !== 'undefined' ? window : this);
