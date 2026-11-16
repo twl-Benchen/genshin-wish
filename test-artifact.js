@@ -135,7 +135,7 @@ eq('成功率 10%，八成要幾顆', E.trialsFor(0.1, 0.8), 16);
   check('重塑方案 暴傷平均顯示值 蒙地卡羅比對', sumCd / T / 1000, r.avg[1] / 1000, 0.0005);
 }
 
-// 13. 重塑划不划算 (reshapeValue)：只看升級跳的次數落在哪
+// 13. 重塑划不划算 (reshapeValue)：追提升 (數值比原本高就算) 與減少歪 (有用詞條的升級跳變多，而且數值比原本高)
 {
   // 使用者的魈 (UID 900211203)，主要詞條：暴擊、暴傷、充能、攻擊%
   const W = { cr: 2, cd: 2, er: 2, atkp: 2 };
@@ -147,38 +147,82 @@ eq('成功率 10%，八成要幾顆', E.trialsFor(0.1, 0.8), 16);
     空之杯: P([501202, 501222, 501234, 501053, 501221, 501204, 501224, 501054, 501203]),
     理之冠: P([501063, 501201, 501032, 501232, 501202, 501063, 501062, 501061, 501203]),
   };
-  // 每件都跟蒙地卡羅比對：變好 = 升級跳的有效詞條數 (含檔位) 比原本至少多 0.7 個
-  for (const k of Object.keys(xiao)) {
-    const pr = xiao[k], r = E.reshapeValue(pr, W, 2);
-    const w = pr.subs.map(s => W[s.stat] || 0);
+  // 蒙地卡羅：重塑 T 次，回傳 { p 變好機率, exp 每次平均多幾個有效詞條 }
+  const mc = (pr, WW, lock, mode, T) => {
+    const w = pr.subs.map(s => WW[s.stat] || 0);
     const up0 = pr.subs.reduce((a, s, i) => a + w[i] * s.rolls.reduce((b, t) => b + E.RATIO[t], 0), 0);
-    let ok = 0;
-    for (let t = 0; t < 100000; t++) {
-      const c = E.simulateCounts({ init: pr.init, guarantee: 2, locked: r.lock });
-      let v = 0;
-      c.forEach((n, i) => { for (let j = 1; j < n; j++) v += w[i] * E.RATIO[Math.floor(Math.random() * 4)]; });
-      if (v - up0 >= E.MIN_GAIN) ok++;
+    const now = pr.subs.reduce((a, s, i) => a + w[i] * s.rolls.length, 0);
+    let ok = 0, sum = 0;
+    for (let t = 0; t < T; t++) {
+      const c = E.simulateCounts({ init: pr.init, guarantee: 2, locked: lock });
+      let v = 0, cnt = 0;
+      c.forEach((n, i) => { cnt += w[i] * (n - 1); for (let j = 1; j < n; j++) v += w[i] * E.RATIO[Math.floor(Math.random() * 4)]; });
+      if (v > up0 && (mode !== 'count' || cnt > now)) { ok++; sum += v - up0; }
     }
-    check(`魈 ${k} 重塑變好機率 蒙地卡羅比對`, ok / 100000, r.pUp, 0.006);
+    return { p: ok / T, exp: sum / T / E.UNIT };
+  };
+  // 每件、兩個模式都跟蒙地卡羅比對
+  for (const k of Object.keys(xiao)) {
+    for (const [mode, label] of [['tier', '追提升'], ['count', '減少歪']]) {
+      const pr = xiao[k], r = E.reshapeValue(pr, W, 2, mode), m = mc(pr, W, r.lock, mode, 100000);
+      check(`魈 ${k} ${label} 重塑變好機率 蒙地卡羅比對`, m.p, r.pUp, 0.006);
+      check(`魈 ${k} ${label} 每次平均多幾個 蒙地卡羅比對`, m.exp, r.exp, 0.006);
+      check(`魈 ${k} ${label} 變好機率 × 變好時平均多 = 每次平均多`, r.pUp * r.gain, r.exp, 1e-12);
+    }
   }
+  // 有次要詞條的也比對一次 (主要雙暴、次要攻擊%)
+  {
+    const W2 = { cr: 2, cd: 2, atkp: 1 };
+    for (const mode of ['tier', 'count']) {
+      const r = E.reshapeValue(xiao.生之花, W2, 2, mode), m = mc(xiao.生之花, W2, r.lock, mode, 200000);
+      check(`魈 生之花 主要雙暴次要攻擊% ${mode} 變好機率 蒙地卡羅比對`, m.p, r.pUp, 0.004);
+      check(`魈 生之花 主要雙暴次要攻擊% ${mode} 每次平均多幾個 蒙地卡羅比對`, m.exp, r.exp, 0.004);
+    }
+  }
+  // 追提升不設門檻：死之羽升級跳全在主要詞條但檔位偏低 (80、70、80、90，平均 85)，4 次裡面比 320 高的機率 = 190/256
+  const feather = E.reshapeValue(xiao.死之羽, W, 2, 'tier');
+  check('追提升 魈 死之羽 沒歪但檔位偏低，變好機率 190/256', feather.pUp, 190 / 256);
+  check('追提升 魈 死之羽 每次平均多 0.2610 個', feather.exp, 0.26103, 1e-5);
   // 使用者的例子：主要詞條雙暴，A (暴擊 1、暴傷 4，升級跳全在主要) 重塑不會變好，B (暴擊 2、暴傷 1、次要 1、沒用 1) 會
   const A = { ok: true, init: 4, level: 20, subs: [{ stat: 'cr', initTier: 3, rolls: [3] }, { stat: 'cd', initTier: 3, rolls: [3, 3, 3, 3] }, { stat: 'hp', initTier: 3, rolls: [] }, { stat: 'def', initTier: 3, rolls: [] }] };
   const B = { ok: true, init: 4, level: 20, subs: [{ stat: 'cr', initTier: 3, rolls: [3, 3] }, { stat: 'cd', initTier: 3, rolls: [3] }, { stat: 'atkp', initTier: 3, rolls: [3] }, { stat: 'hp', initTier: 3, rolls: [3] }] };
   const WA = { cr: 2, cd: 2, atkp: 1 };
-  eq('例子 A 主要詞條全滿而且都是最高檔，重塑不會變好', E.reshapeValue(A, WA, 2).pUp, 0);
-  eq('例子 B 重塑有機會變好', E.reshapeValue(B, WA, 2).pUp > 0, true);
+  for (const mode of ['tier', 'count']) {
+    const a = E.reshapeValue(A, WA, 2, mode);
+    eq(`例子 A 主要詞條全滿而且都是最高檔，重塑不會變好 (${mode})`, [a.pUp, a.gain, a.exp, a.tries].join(), '0,0,0,Infinity');
+    eq(`例子 B 重塑有機會變好 (${mode})`, E.reshapeValue(B, WA, 2, mode).pUp > 0, true);
+  }
   eq('沒有主要或次要詞條', E.reshapeValue(xiao.生之花, { em: 2 }, 2).reason, 'none');
 }
 
-// 14. 不歪模式 (只看次數) 與重塑進度保底
+// 14. 減少歪模式、提升空間與重塑進度保底
 {
   const W = { cr: 2, cd: 2, er: 2, atkp: 2 };
   const P = ids => E.parseRelic(ids, 21);
-  eq('減少歪 魈 死之羽 升級跳全在主要詞條 → 0', E.reshapeValue(P([501224, 501202, 501234, 501061, 501222, 501202, 501203, 501221]), W, 2, 'count').pUp, 0);
+  eq('減少歪 魈 死之羽 升級跳全在主要詞條 → 0 (沒有歪)', E.reshapeValue(P([501224, 501202, 501234, 501061, 501222, 501202, 501203, 501221]), W, 2, 'count').pUp, 0);
+  // 空之杯：攻擊歪一次，其他 4 次的檔位合計 360。5 次都不落在攻擊 (25%) 而且 5 次的檔位合計超過 360 (只有 350 和 360 不算，6/1024)
   const cup = E.reshapeValue(P([501202, 501222, 501234, 501053, 501221, 501204, 501224, 501054, 501203]), W, 2, 'count');
-  check('減少歪 魈 空之杯 (攻擊歪一次) 變好 = 5 次都不落在攻擊', cup.pUp, 0.25);
+  check('減少歪 魈 空之杯 (攻擊歪一次) 變好 = 5 次都不落在攻擊，而且數值比原本高', cup.pUp, 0.25 * (1 - 6 / 1024));
+  check('減少歪 魈 空之杯 變好時平均多 0.769 個', cup.gain, 0.7693, 1e-4);
   check('減少歪 魈 空之杯 有效詞條數 (照平均一跳算：暴擊 2.7 + 暴傷 2.5 + 充能 1.0 倍最高檔，÷ 0.85)', cup.total, 6.2 / 0.85, 1e-9);
   check('暴傷最高檔 7.77% 約 1.18 個詞條', E.byId.cd.tiers[3] / E.avgRoll('cd'), 1.176, 0.001);
+  // 提升空間照數值算：同樣歪 1 次 (變好機率差不多)，其他 4 次全最低檔的拿回來之後多很多，全最高檔的只多一點
+  const one = t => ({ ok: true, init: 4, level: 20, subs: [{ stat: 'cr', initTier: 2, rolls: [t, t] }, { stat: 'cd', initTier: 2, rolls: [t, t] }, { stat: 'atkp', initTier: 2, rolls: [] }, { stat: 'hp', initTier: 2, rolls: [t] }] });
+  const W3 = { cr: 2, cd: 2, atkp: 2 };
+  const lo = E.reshapeValue(one(0), W3, 2, 'count'), hi = E.reshapeValue(one(3), W3, 2, 'count');
+  check('歪 1 次、其他 4 次全最低檔：變好機率 25%', lo.pUp, 0.25);
+  check('歪 1 次、其他 4 次全最低檔：變好時平均多 (5 × 85 − 4 × 70) ÷ 85 個', lo.gain, (5 * 85 - 4 * 70) / 85, 1e-9);
+  // 5 次的檔位合計要超過 400：每次比最低檔多 0 到 3 格，5 次合計至少 6 格的組合有 802/1024
+  check('歪 1 次、其他 4 次全最高檔：變好機率 25% × 802/1024', hi.pUp, 0.25 * 802 / 1024);
+  check('歪 1 次、其他 4 次全最高檔：變好時平均多 0.406 個', hi.gain, 0.4056, 1e-4);
+  eq('提升空間：全最低檔的那件每次平均多得比較多', lo.exp > hi.exp * 5, true);
+  // 歪越多提升空間越大：升級跳 5 次全歪的每次平均多，比歪 4 次的多 (以前兩件都是 100%、分不出來)
+  const off = (a, b) => ({ ok: true, init: 4, level: 20, subs: [{ stat: 'cr', initTier: 2, rolls: Array(a).fill(1) }, { stat: 'cd', initTier: 2, rolls: Array(b).fill(2) }, { stat: 'hp', initTier: 2, rolls: Array(Math.min(3, 5 - a - b)).fill(1) }, { stat: 'def', initTier: 2, rolls: Array(Math.max(0, 2 - a - b)).fill(1) }] });
+  const WC = { cr: 2, cd: 2 };
+  const off5 = E.reshapeValue(off(0, 0), WC, 2, 'count'), off4 = E.reshapeValue(off(1, 0), WC, 2, 'count');
+  check('升級跳 5 次全歪：一定變好', off5.pUp, 1);
+  check('升級跳歪 4 次：一定變好', off4.pUp, 1);
+  eq('升級跳 5 次全歪的提升空間比歪 4 次的大', off5.exp > off4.exp + 0.8, true);
   const seq = cost => { const st = { pts: 0, highs: 0 }, out = []; for (let i = 0; i < 18 / cost; i++) out.push(E.pityStep(st, cost)); return out.join(''); };
   eq('進度保底 每次 1 個：第 6、12 個高階，第 18 個諭告', seq(1), '222223222223222224');
   eq('進度保底 每次 2 個：第 3、6 次高階，第 9 次諭告', seq(2), '223223224');
