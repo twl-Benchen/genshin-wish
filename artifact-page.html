@@ -1618,7 +1618,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     const none = `<span class="muted">${SC.planMode === 'count' ? '沒有歪' : '已經最好'}</span>`;
     const tries = t => (!isFinite(t) ? none : t < 1.05 ? '1 次' : `約 ${t < 10 ? num(t) : Math.round(t).toLocaleString('en-US')} 次`);
     // 變好時平均多幾個有效詞條 (提升空間)，不到 0.05 個的寫「不到 0.1」
-    const gain = v => (!(v.pUp > 0) ? '<span class="muted">-</span>' : v.gain < 0.05 ? '不到 0.1 個' : `${v.gain.toFixed(1)} 個`);
+    const gain = v => (!(v.pUp > 0) ? '<span class="muted">-</span>' : v.gain < 0.05 ? '不到 0.1 詞' : `${v.gain.toFixed(1)} 詞`);
     out.innerHTML = `<div class="tbl-wrap"><table class="gtable plan-tbl">
       <tr><th>部位</th><th>有效<wbr>詞條數</th><th>重塑變好<wbr>機率</th><th>變好時<wbr>平均多</th><th class="pt-wide">大約需要幾次</th></tr>
       ${rows.map(x => `<tr data-r="${x.i}" class="${x === best ? 'best' : ''}${SC.relic === x.i ? ' sel' : ''}" title="點一下看這件的詞條明細">
