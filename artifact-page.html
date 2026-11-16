@@ -239,11 +239,11 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .sc-mid { position: relative; z-index: 1; padding: 22px 16px; display: flex; flex-direction: column; gap: 14px; }
 .sc-mid .sc-stats { flex: 1; align-content: space-evenly; }
 .sc-weapon { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; align-items: center; }
-/* 武器在立繪左下角，半透明底加輕微模糊，淺色立繪上也看得清楚 */
-.sc-art .sc-weapon { position: absolute; z-index: 1; left: 54px; bottom: 14px; max-width: calc(100% - 68px); padding: 8px 12px 8px 6px; }
+/* 武器在立繪左下角，底色用卡片的元素深色 (半透明) 加輕微模糊，跟整張卡融在一起 */
+.sc-art .sc-weapon { position: absolute; z-index: 1; left: 40px; bottom: 14px; max-width: calc(100% - 54px); padding: 8px 12px 8px 6px; }
 /* 底色和模糊放在 ::before，四周 (左、右、上) 用 mask 漸層淡出，跟立繪之間沒有硬邊；字和圖示不受影響 */
 .sc-art .sc-weapon::before { content: ""; position: absolute; z-index: -1; inset: -26px -28px -14px -40px; pointer-events: none;
-  background: rgba(0, 0, 0, .24); -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
+  background: color-mix(in srgb, var(--el1) 62%, transparent); -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 34px), transparent), linear-gradient(180deg, transparent, #000 34px);
   -webkit-mask-composite: source-in; mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 34px), transparent), linear-gradient(180deg, transparent, #000 34px);
   mask-composite: intersect; }
