@@ -277,7 +277,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .sc-set { display: flex; justify-content: space-between; align-items: center; background: rgba(0, 0, 0, .25); border-radius: 6px; padding: 7px 12px; font-size: .88rem; color: #b8f0a8; }
 .sc-set b { font-family: var(--f-num); background: rgba(0, 0, 0, .35); color: #fff; border-radius: 4px; padding: 0 7px; }
 .sc-set.muted { color: rgba(255, 255, 255, .6); }
-.sc-relics { position: relative; z-index: 1; padding: 14px 14px 14px 0; display: grid; gap: 8px; align-content: start; }
+/* 中間欄比較高時，五件聖遺物第一件貼頂、最後一件貼底，多出來的高度平均分到中間的間距 */
+.sc-relics { position: relative; z-index: 1; padding: 14px 14px 14px 0; display: grid; gap: 8px; align-content: space-between; }
 .sc-relic { font: inherit; color: inherit; text-align: left; cursor: pointer; display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 8px; padding: 8px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, .14); background: rgba(0, 0, 0, .2); transition: background .15s, border-color .15s; }
 .sc-relic:hover { background: rgba(0, 0, 0, .3); }
 .sc-relic.on { border-color: var(--el3); background: rgba(0, 0, 0, .34); box-shadow: inset 0 0 0 1px var(--el3); }
@@ -935,6 +936,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   let curTab = 'calc';
   function showTab(name) {
     curTab = name;
+    try { sessionStorage.setItem('artcalc-tab', name); } catch (e) {}
     TABS.forEach(([n, b, p]) => { $(p).hidden = n !== name; $(b).setAttribute('aria-selected', n === name ? 'true' : 'false'); });
     $('resultImgBtn').hidden = name === 'show';
     const hash = name === 'rules' ? '#rules' : name === 'show' ? (SC.uid ? '#uid-' + SC.uid : '#showcase') : '';
@@ -1415,7 +1417,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     if (!/^\d{9,10}$/.test(uid)) { scMsg('UID 是 9 或 10 位數字，請再確認一次。', true); return; }
     if (SC.busy) return;
     SC.uid = uid; SC.sel = 0; SC.relic = 0; SC.pickBest = true;
-    try { localStorage.setItem(UIDKEY, uid); } catch (e) {}
+    try { localStorage.setItem(UIDKEY, uid); sessionStorage.setItem('artcalc-showuid', uid); } catch (e) {}
     try { history.replaceState(null, '', '#uid-' + uid); } catch (e) {}
     const hit = cacheGet(uid);
     if (hit) { SC.data = hit; SC.list = rosterMerge(uid, hit.avatarInfoList || [], false); renderShow(); return; }
@@ -1849,8 +1851,13 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 
   try { const u = localStorage.getItem(UIDKEY); if (u) setUid(u); } catch (e) {}
   const hm = location.hash.match(/^#uid-(\d{9,10})$/);
+  // 重新載入時網址的 #uid 可能不見 (例如手機瀏覽器切換成電腦版網站)：同一個分頁剛才在看角色聖遺物，就自動再查一次 (ttl 內直接用快取，不會再向 Enka 查)
+  let lastTab = null, lastUid = null;
+  try { lastTab = sessionStorage.getItem('artcalc-tab'); lastUid = sessionStorage.getItem('artcalc-showuid'); } catch (e) {}
   if (hm) loadUid(hm[1]);
+  else if ((location.hash === '#showcase' || !location.hash) && lastTab === 'show' && lastUid) loadUid(lastUid);
   else if (location.hash === '#showcase') showTab('show');
   else if (location.hash === '#rules') showTab('rules');
+  else if (lastTab === 'show' || lastTab === 'rules') showTab(lastTab);
 })();
 </script>
