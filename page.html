@@ -306,7 +306,12 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .hist-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
 .hist-actions .gbtn { min-width: 130px; }
 /* 匯入祈願紀錄 */
-.imp-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.imp-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+/* 內容在內側細線裡面捲動，捲動時細線不會壓到文字 */
+.imp-in { display: flex; flex-direction: column; overflow: hidden; }
+.imp-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: grid; gap: 12px; padding: 2px 3px; }
+.imp-url:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold-soft); }
+.imp-os { margin-top: 8px; }
 .imp-url { width: 100%; box-sizing: border-box; font: .82rem/1.45 var(--f-num, monospace); color: var(--ink); background: var(--sunken); border: 1px solid var(--frame-soft); border-radius: 6px; padding: 8px 10px; resize: vertical; word-break: break-all; }
 .imp-help { font-size: .86rem; border: 1px solid var(--frame-soft); border-radius: 6px; padding: 8px 12px; }
 .imp-help summary { cursor: pointer; font-weight: 700; }
@@ -457,8 +462,10 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     <form class="panel frame" id="form" autocomplete="off">
       <div class="imp-row">
         <button type="button" class="gbtn small" id="impOpen"><span class="ic">⇩</span>匯入祈願紀錄</button>
-        <span class="note">貼上祈願紀錄網址，自動填好兩個卡池的墊抽與保底</span>
       </div>
+
+      <hr>
+
       <fieldset>
         <legend><span class="dot c"></span>角色活動祈願</legend>
         <div class="field">
@@ -859,27 +866,46 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
 </dialog>
 
 <dialog class="hist" id="impDlg" aria-labelledby="impTitle">
-  <form method="dialog" class="hist-in frame" id="impForm">
+  <form method="dialog" class="hist-in frame imp-in" id="impForm">
     <div class="hist-head">
       <h2 id="impTitle"><span>✦</span>匯入祈願紀錄</h2>
       <button type="submit" class="hist-x" value="cancel" aria-label="關閉">✕</button>
     </div>
+    <div class="imp-body">
     <label class="lab" for="impUrl">祈願紀錄網址</label>
-    <textarea id="impUrl" class="imp-url" rows="3" spellcheck="false" autocomplete="off" placeholder="https://gs.hoyoverse.com/genshin/event/e20190909gacha-v3/index.html?...#/log"></textarea>
-    <p class="note">網址裡有 authkey，可以讀取你的祈願紀錄，不要截圖或分享給別人。網址只用在這次讀取，不會存起來；24 小時後就會失效。</p>
+    <textarea id="impUrl" class="imp-url" rows="3" spellcheck="false" autocomplete="off" placeholder="https://gs.hoyoverse.com/genshin/event/...#/log"></textarea>
+    <p class="note">網址只用來讀取這次的祈願紀錄，推算都在你的瀏覽器裡完成，不會存起來。網址 24 小時後就會失效，也不要分享給別人。</p>
     <details class="imp-help">
-      <summary>怎麼拿到網址 (安卓手機)</summary>
-      <ol>
-        <li>電腦下載 <a href="https://developer.android.com/tools/releases/platform-tools" target="_blank" rel="noopener noreferrer">platform-tools</a> 並解壓縮；手機在「設定 > 關於手機 > 軟體資訊」連點「版本號碼」7 次，打開開發者選項。</li>
-        <li>手機打開「USB 偵錯」(Samsung 要先關掉「設定 > 安全性與隱私權 > 自動封鎖程式」)，用傳輸線接上電腦。</li>
-        <li>在 platform-tools 資料夾按右鍵「在終端機中開啟」，先執行 <code>.\adb.exe devices</code>，手機跳出授權視窗時按「允許」。</li>
-        <li>執行下面這行，再到遊戲裡打開祈願紀錄，畫面會印出一串 <code>https://gs.hoyoverse.com/...#/log</code>，整串複製貼到上面。
-          <pre class="imp-cmd" id="impCmd">.\adb.exe logcat -T 1 -m 1 -e "OnGetWebViewPageFinish,message[:]https" | Select-String -Pattern "https://\S+#/log" | ForEach-Object { $_.Matches[0].Value }</pre>
-          <button type="button" class="gbtn small light" id="impCmdCopy"><span class="ic">⧉</span>複製指令</button> <span class="note" id="impCmdMsg" role="status"></span>
+      <summary>怎麼拿到網址</summary>
+      <div class="seg full imp-os" id="impOs" role="group" aria-label="裝置">
+        <button type="button" data-v="pc">電腦</button>
+        <button type="button" data-v="android">安卓</button>
+        <button type="button" data-v="ios">iOS</button>
+      </div>
+      <ol data-os="pc">
+        <li>在電腦開啟原神 (用多組帳號的話先重新啟動遊戲)，打開祈願紀錄等它載入。</li>
+        <li>按鍵盤的開始鍵搜尋並開啟 Windows PowerShell，貼上下面的指令按 Enter，網址會自動複製到剪貼簿。
+          <pre class="imp-cmd" id="impCmdPc">Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex "&amp;{$((New-Object System.Net.WebClient).DownloadString('https://gist.github.com/MadeBaruna/1d75c1d37d19eca71591ec8a31178235/raw/getlink.ps1'))} global"</pre>
+          <button type="button" class="gbtn small light" data-copy="impCmdPc"><span class="ic">⧉</span>複製指令</button>
         </li>
-        <li>用完記得關掉 USB 偵錯、撤銷 USB 偵錯授權，再把自動封鎖程式打開回去。</li>
       </ol>
-      <p class="note">電腦版與 iOS 的取得方式可以參考 <a href="https://paimon.moe/wish/import" target="_blank" rel="noopener noreferrer">paimon.moe 的匯入說明</a>。</p>
+      <ol data-os="android" hidden>
+        <li>電腦下載 <a href="https://developer.android.com/tools/releases/platform-tools" target="_blank" rel="noopener noreferrer">platform-tools</a> 並解壓縮；手機在「設定 > 關於手機 > 軟體資訊」連點「版本號碼」7 次，打開開發者選項。</li>
+        <li>手機打開「USB 偵錯」(Samsung 要先關掉「設定 > 安全性與隱私權 > 自動封鎖程式」)，接上電腦，在 platform-tools 資料夾按右鍵「在終端機中開啟」，執行 <code>.\adb.exe devices</code> 並在手機上按「允許」。</li>
+        <li>執行下面的指令，再到遊戲裡打開祈願紀錄，畫面會印出網址，整串複製下來。
+          <pre class="imp-cmd" id="impCmdAd">.\adb.exe logcat -T 1 -m 1 -e "OnGetWebViewPageFinish,message[:]https" | Select-String -Pattern "https://\S+#/log" | ForEach-Object { $_.Matches[0].Value }</pre>
+          <button type="button" class="gbtn small light" data-copy="impCmdAd"><span class="ic">⧉</span>複製指令</button>
+        </li>
+        <li>用完關掉 USB 偵錯、撤銷 USB 偵錯授權，再把自動封鎖程式打開回去。</li>
+      </ol>
+      <ol data-os="ios" hidden>
+        <li>在 App Store 下載 <a href="https://apps.apple.com/app/stream/id1312141691" target="_blank" rel="noopener noreferrer">Stream</a>，開啟後到「設定 > 一般 > VPN 與裝置管理」同意 VPN。</li>
+        <li>在 Stream 點「開始抓包」並同意，選「安裝 CA」下載憑證，再到「設定 > 一般 > VPN 與裝置管理」安裝 Stream Generated CA。</li>
+        <li>開啟原神停在祈願畫面，回到 Stream 點「信任」再按「開始抓包」。</li>
+        <li>回到原神打開祈願歷史紀錄，等頁面載入後回到 Stream 按「停止抓包」。</li>
+        <li>到「抓包歷史」選一筆 .json 結尾的紀錄 (開頭像 <code>https://hk4e-api-os.mihoyo.com/</code>)，在「請求」分頁複製連結貼到上面。</li>
+      </ol>
+      <p class="note">方法整理自 <a href="https://paimon.moe/wish/import" target="_blank" rel="noopener noreferrer">paimon.moe 的匯入說明</a>。<span id="impCmdMsg" role="status"></span></p>
     </details>
     <div class="hist-actions">
       <button type="button" class="gbtn" id="impGo"><span class="ic">⇩</span>讀取紀錄</button>
@@ -903,13 +929,13 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
             <button type="button" data-v="before">之前的卡池</button>
           </div>
         </div>
-        <p class="note" id="impWpNote"></p>
       </div>
       <p class="note">遊戲的祈願紀錄大約延遲 1 小時，剛抽完的幾抽要自己加上。</p>
       <div class="hist-actions">
         <button type="submit" class="gbtn light" value="cancel"><span class="ic">✕</span>取消</button>
         <button type="submit" class="gbtn" value="apply" id="impApply"><span class="ic">○</span>套用</button>
       </div>
+    </div>
     </div>
   </form>
 </dialog>
@@ -1435,7 +1461,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const GACHA_ERR = { '-101': '網址已經過期 (24 小時有效)，請重新取得一次網址。', '-100': '網址裡的 authkey 不正確，請確認有整串複製。' };
 
-  async function fetchPool(base, type, label, stopAtFive, token) {
+  async function fetchPool(base, type, label, enough, token) {
     const all = [];
     let endId = '0';
     for (let page = 1; page <= 100; page++) {
@@ -1458,7 +1484,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       const list = (data.data && data.data.list) || [];
       all.push(...list);
       $('impMsg').textContent = `讀取${label}… 第 ${page} 頁，共 ${all.length} 筆`;
-      if (list.length < 20 || (stopAtFive && list.some((x) => String(x.rank_type) === '5'))) break;
+      if (list.length < 20 || enough(all)) break;
       endId = list[list.length - 1].id;
       await sleep(250);
     }
@@ -1485,12 +1511,13 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     h += w.guaranteed == null ? '<div>大保底：紀錄裡看不出來，維持原本的設定</div>' : `<div>大保底：<b>${w.guaranteed ? '有' : '沒有'}</b>${w.guaranteed ? ' (上次歪了常駐武器)' : ''}</div>`;
     $('impWeap').innerHTML = h;
 
-    $('impWpOpts').hidden = !w.last;
-    if (w.last) {
+    // 超過 21 天 (一期的長度) 一定是之前的卡池，命定值已歸 0，不用再問
+    const old = w.daysAgo == null || w.daysAgo > 21;
+    $('impWpOpts').hidden = !w.last || old;
+    if (w.last && !old) {
       $('impWhatBox').hidden = w.last.std;
       $('impWhat').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === imp.what ? 'true' : 'false'));
       $('impWhen').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === imp.when ? 'true' : 'false'));
-      $('impWpNote').textContent = '紀錄裡沒有寫你定軌哪一把，請自己選。' + HIST.weapon.note(w.last.std ? 'std' : imp.what, imp.when) + '。';
     }
   }
 
@@ -1504,15 +1531,21 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     imp.busy = true; $('impGo').disabled = true;
     const token = ++imp.token;
     try {
-      const ch = await fetchPool(base, '301', '角色池', false, token);
+      // 只讀到需要的地方就停：角色池讀到常駐角色 (知道上次歪在哪) 或明光計數已經確定；武器池讀到第一把五星
+      const isFive = (x) => String(x.rank_type) === '5';
+      const ch = await fetchPool(base, '301', '角色池', (all) => {
+        if (all.some((x) => isFive(x) && E.STANDARD_5.includes(x.name))) return true;
+        const c = E.analyzeGachaLog(all, null).char;
+        return c.fiveCount > 0 && c.radianceSure;
+      }, token);
       if (!ch) return;
-      const wp = await fetchPool(base, '302', '武器池', true, token);
+      const wp = await fetchPool(base, '302', '武器池', (all) => all.some(isFive), token);
       if (!wp) return;
       imp.res = E.analyzeGachaLog(ch, wp);
       const wr = imp.res.weapon, wl = wr.last;
       imp.what = wl && wl.std ? 'std' : 'course';
-      imp.when = wr.daysAgo != null && wr.daysAgo <= 21 ? 'now' : 'before'; // 一期約 3 週，超過就預設是之前的卡池
-      msg.textContent = `讀取完成：角色池 ${ch.length} 筆，武器池 ${wp.length} 筆。確認下面的結果後按「套用」。`;
+      imp.when = wr.daysAgo != null && wr.daysAgo <= 21 ? 'now' : 'before'; // 一期 21 天，超過一定是之前的卡池
+      msg.textContent = '讀取完成，確認下面的結果後按「套用」。';
       paintImport();
       $('impRes').hidden = false;
     } catch (e) {
@@ -1531,10 +1564,16 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   $('impGo').addEventListener('click', runImport);
   $('impWhat').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { imp.what = b.dataset.v; paintImport(); } });
   $('impWhen').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { imp.when = b.dataset.v; paintImport(); } });
-  $('impCmdCopy').addEventListener('click', () => {
-    const done = (ok) => { $('impCmdMsg').textContent = ok ? '已複製' : '請手動選取指令複製'; };
-    try { navigator.clipboard.writeText($('impCmd').textContent).then(() => done(true), () => done(false)); } catch (e) { done(false); }
-  });
+  $('impDlg').querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', () => {
+    const done = (ok) => { $('impCmdMsg').textContent = ok ? ' 指令已複製。' : ' 請手動選取指令複製。'; };
+    try { navigator.clipboard.writeText($(b.dataset.copy).textContent).then(() => done(true), () => done(false)); } catch (e) { done(false); }
+  }));
+  function paintOs(os) {
+    $('impOs').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === os ? 'true' : 'false'));
+    $('impDlg').querySelectorAll('ol[data-os]').forEach((ol) => { ol.hidden = ol.dataset.os !== os; });
+  }
+  paintOs(/Android/i.test(navigator.userAgent) ? 'android' : /iPhone|iPad/i.test(navigator.userAgent) ? 'ios' : 'pc');
+  $('impOs').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { paintOs(b.dataset.v); $('impCmdMsg').textContent = ''; } });
   $('impDlg').addEventListener('close', () => {
     const r = imp.res;
     if ($('impDlg').returnValue === 'apply' && r) {
