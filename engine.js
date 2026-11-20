@@ -331,6 +331,88 @@
   // 四星組成：角色池 50% UP 角色 + 50% 常駐 (角色/武器約各半)；武器池 75% UP 武器 + 25% 常駐
   const FOUR_CHAR_SHARE = { char: 0.75, weapon: 0.125 };
   const STANDARD_5 = ['提納里', '夢見月瑞希', '琴', '莫娜', '刻晴', '迪希雅', '迪盧克', '七七'];
+  // 武器活動祈願歪掉時的常駐五星武器 (祈願紀錄用 lang=zh-tw 查詢時的名稱)
+  const STANDARD_5_WEAPONS = ['天空之刃', '風鷹劍', '天空之傲', '狼的末路', '天空之脊', '和璞鳶', '天空之卷', '四風原典', '天空之翼', '阿莫斯之弓'];
+
+  // ---- 匯入祈願紀錄：從遊戲的祈願紀錄推算墊抽、大保底、明光計數 ----
+  // char、weapon 是 getGachaLog 回傳的 list (新到舊，每筆有 name、rank_type、time)，角色池用 gacha_type 301 查詢會連同 400 一起回來
+  // 明光計數 (5.0 起) 照計數器模型從舊到新重播：大保底 c 不變；小保底時計數 3 必定觸發回到 1，歪了加 1，沒歪減 1。
+  // 沒歪的時候看不出是正常中還是明光觸發；計數 2 兩種都是回到 1，計數 0、1 觸發機率只有 0.036%，所以一律當成正常中。
+  // 紀錄開頭的計數與大保底不知道，四種計數 × 有無大保底全部重播一次 (跟紀錄矛盾的起點丟掉)，結果都一樣就是確定值，不一樣就用長期分布加權取最可能的值。
+  const RADIANCE_START = '2024-08-28'; // 5.0 上線
+  function replayRadiance(fives, c0, g0) {
+    let c = c0, g = g0;
+    for (const f of fives) {
+      if (f.time < RADIANCE_START) continue;
+      // 大保底或計數 3 時不可能出常駐角色，出了代表這個起點不成立 (回傳 -1)
+      if (g) { if (f.std) return -1; g = false; continue; } // 大保底：必定 UP，計數不變
+      if (c === 3) { if (f.std) return -1; c = 1; continue; } // 必定觸發捕獲明光
+      if (f.std) { c = Math.min(3, c + 1); g = true; } else c = Math.max(0, c - 1);
+    }
+    return c;
+  }
+  function analyzeGachaLog(char, weapon, opt) {
+    opt = opt || {};
+    const today = opt.today || new Date().toISOString().slice(0, 10);
+    const out = {};
+    if (char) {
+      const i = char.findIndex((r) => String(r.rank_type) === '5');
+      const res = { total: char.length, pity: i < 0 ? char.length : i, last: null, guaranteed: null, radiance: null, radianceSure: false, radianceRange: null };
+      const fives = char.filter((r) => String(r.rank_type) === '5').reverse()
+        .map((r) => ({ name: r.name, time: String(r.time || ''), std: STANDARD_5.includes(r.name) }));
+      if (fives.length) {
+        const last = fives[fives.length - 1];
+        res.last = { name: last.name, time: last.time, std: last.std };
+        // 常駐角色只會在小保底歪的時候出現，所以最後一顆是常駐就是大保底
+        res.guaranteed = last.std;
+      }
+      // 起點 (c0, g0) 的權重：計數器模型長期分布約 4:4:2:1，大保底時計數至少 1
+      const starts = [];
+      for (let c0 = 0; c0 <= 3; c0++) for (const g0 of [false, true]) {
+        if (g0 && c0 === 0) continue;
+        starts.push({ c0, g0, w: [4, 4, 2, 1][c0] * (g0 ? 0.5 : 1) });
+      }
+      const score = [0, 0, 0, 0];
+      for (const s of starts) { const c = replayRadiance(fives, s.c0, s.g0); if (c >= 0) score[c] += s.w; }
+      if (!score.some((v) => v > 0)) for (const s of starts) score[replayRadiance(fives.map((f) => Object.assign({}, f, { std: false })), s.c0, s.g0)] += s.w; // 紀錄和模型對不上時退回不看常駐
+      const seen = score.map((v, c) => (v > 0 ? c : -1)).filter((c) => c >= 0);
+      res.radiance = score.indexOf(Math.max(...score));
+      res.radianceSure = seen.length === 1;
+      res.radianceRange = [seen[0], seen[seen.length - 1]];
+      if (res.guaranteed && res.radiance === 0) res.radiance = 1; // 歪了一定是大保底，計數至少 1
+      res.fiveCount = fives.length;
+      out.char = res;
+    }
+    if (weapon) {
+      const i = weapon.findIndex((r) => String(r.rank_type) === '5');
+      const res = { total: weapon.length, pity: i < 0 ? weapon.length : i, last: null, guaranteed: null, daysAgo: null };
+      if (i >= 0) {
+        const r = weapon[i], time = String(r.time || '');
+        res.last = { name: r.name, time, std: STANDARD_5_WEAPONS.includes(r.name) };
+        res.guaranteed = res.last.std;
+        const d = (Date.parse(today) - Date.parse(time.slice(0, 10))) / 864e5;
+        res.daysAgo = isFinite(d) ? Math.max(0, Math.round(d)) : null;
+      }
+      out.weapon = res;
+    }
+    return out;
+  }
+
+  // 從祈願紀錄網址取出查詢 getGachaLog 要用的參數 (網址可以是 gs.hoyoverse.com 的 #/log 網址，也可以已經是 getGachaLog 的網址)
+  function parseGachaUrl(text) {
+    const m = String(text || '').match(/https?:\/\/[^\s"'<>]+/);
+    if (!m) return null;
+    let u;
+    try { u = new URL(m[0].replace(/#.*$/, '')); } catch (e) { return null; }
+    const q = u.searchParams;
+    if (!q.get('authkey')) return null;
+    const keep = {};
+    for (const k of ['authkey', 'authkey_ver', 'sign_type', 'game_biz', 'region']) if (q.get(k)) keep[k] = q.get(k);
+    keep.authkey_ver = keep.authkey_ver || '1';
+    keep.sign_type = keep.sign_type || '2';
+    const cn = /hk4e_cn/.test(keep.game_biz || '') || /mihoyo\.com$/.test(u.hostname);
+    return { params: keep, cn };
+  }
 
   // 第 q 次獲得同一隻五星角色返還的星輝
   function copyGlitter5(q) { return q <= 1 ? 0 : q <= 7 ? 10 : 25; }
@@ -443,7 +525,7 @@
 
   const api = {
     charHazard, weaponHazard, WEAPON_HARD, nextFiveStar, conv, characterMilestones, weaponMilestones, characterMilestonesByMiss, weaponMilestonesByMiss,
-    stats, plan, normalizeOrder, CR_PRESETS, officialCr, STANDARD_5, FOUR_RATE, fourStarGlitterPerPull, lossGlitter, copyGlitter5,
+    stats, plan, normalizeOrder, CR_PRESETS, officialCr, STANDARD_5, STANDARD_5_WEAPONS, analyzeGachaLog, parseGachaUrl, FOUR_RATE, fourStarGlitterPerPull, lossGlitter, copyGlitter5,
     weaponOutcomes, weaponAfter, weaponDecide, weaponValue, weaponExpected, weaponAdvice, WEAPON_STRATEGIES,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
