@@ -233,6 +233,13 @@
 - 摘要卡：預算達成率那張底色不變、數字照達成率變色，外框改成 4px 金色 (`--star-on`，分享圖同步)。
 - 表單控制項同一行一律 40px 高 (`#form` 的 `--ctl`)：選單、輸入框、分段按鈕用 6px 圓角，「算抽數」「+ 另一個角色」這類會動作的按鈕用膠囊。寬度 600px 以下拿掉進度條、表頭可換行，目標名稱不斷行。
 - 墊抽旁的「算抽數」按鈕：開啟仿遊戲的祈願歷史紀錄視窗，選頁數再點上一顆五星在第幾列，換算墊抽 = (頁數 − 1) × 5 + (列 − 1)，同時可標記那顆是 UP 或常駐 (設定大保底)。武器池可標記定軌的武器、另一把 UP、常駐武器，以及是這一期還是之前的卡池抽到的：本期非定軌 → 命定值 1；常駐 → 大保底；之前的卡池 → 命定值 0。使用者確認遊戲裡一頁固定 5 筆 (部分舊攻略寫 6 筆，已不適用)。頁數用拉桿選，可以拖動、點刻度或點左右箭頭，打開時預設停在角色池第 16 頁、武器池第 14 頁 (目前墊抽所在的頁碼會用橘色標出)，角色池最多 18 頁 (墊 89 抽)，武器池 16 頁 (墊 79 抽)。使用者說如果拉桿效果不好可能改回輸入框。
+- 表單最上面的「匯入祈願紀錄」按鈕：貼上遊戲的祈願紀錄網址 (`https://gs.hoyoverse.com/...#/log`)，自動填好兩個卡池的墊抽、大保底、明光計數、命定值。
+  - 讀取：`E.parseGachaUrl()` 從網址取出 authkey、authkey_ver、sign_type、game_biz、region，經過 Worker 的 `/gacha` 轉發到 `public-operation-hk4e-sg.hoyoverse.com/gacha_info/api/getGachaLog` (國服 `game_biz=hk4e_cn` 時 `cn=1` 改打 `public-operation-hk4e.mihoyo.com`)。參數 `lang=zh-tw`、`size=20`，用 `end_id` 一頁一頁往回翻，每頁間隔 250ms，遇到 retcode -110 (查太快) 等一下重試。角色池 (301，會連同 400 一起回來) 讀完全部紀錄 (最多 100 頁) 用來推明光計數；武器池 (302) 讀到第一把五星就停。做法參考 paimon.moe (它用自己後端的 `/corsproxy` 轉發，因為 API 沒開 CORS)。
+  - 推算：`E.analyzeGachaLog(char, weapon)`。墊抽是最新一顆五星之前的筆數 (沒有五星就是全部筆數)；大保底看最新一顆五星是不是常駐 (`STANDARD_5`、`STANDARD_5_WEAPONS`，用繁中名稱比對，常駐池擴充時要更新)；明光計數從 5.0 (2024-08-28) 之後的五星，用計數器模型從舊到新重播。紀錄開頭的計數和大保底不知道，所以 7 種起點全部重播 (跟紀錄矛盾的起點丟掉，例如大保底或計數 3 時出常駐)，結果都一樣顯示確定值，不一樣用長期分布 4:4:2:1 加權取最可能的值並顯示可能範圍。沒歪時看不出是正常中還是明光，一律當正常中 (計數 2 兩者都回到 1，計數 0、1 明光只有 0.036%)。
+  - 命定值：紀錄裡沒有定軌是哪一把，視窗讓使用者選「定軌的武器 / 另一把 UP」與「這一期 / 之前的卡池」(最新一把五星在 21 天內預設這一期)，套用時沿用 `weaponFromHist()`。最新一把是常駐武器時只問哪一期。
+  - 隱私：網址只在記憶體，關閉視窗就清掉，不存 localStorage；Worker 的 `/gacha` 只轉發白名單參數、回應 `Cache-Control: no-store`、只接受自己網站的 Origin。視窗裡有安卓用 adb 取得網址的步驟與可複製的 logcat 指令，電腦版與 iOS 連到 paimon.moe 的說明。
+  - Worker 沒更新時 `/gacha` 會回 400，網頁顯示「讀取伺服器還不支援匯入 (Worker 需要更新)」。`worker/enka-proxy.js` 改完要貼到 Cloudflare 後台重新 Deploy。
+  - test.js 最後一段驗證匯入推算 (墊抽、大保底、連歪三輪計數必為 3、計數 3 後回到 1、網址解析)。
 - 手上的資源下方的「星輝返還」摺疊區 (預設勾選；`ui.rfDefaultOn` 讓以前存過沒勾的人也套用一次預設)：四星滿命比例、8 位常駐五星命座 (星星點選)，開啟後摘要、曲線、里程碑都改用實付抽數，摘要卡下方一行小字「已扣掉抽卡過程拿回的星輝 (約 N 抽)」，摺疊標題顯示「已計入 · 約 N 抽」。這些設定都存在 localStorage。
 - 手上的資源下方的「課金試算」摺疊區：課幾單 (每次 ±0.5 單，0.5 單是換算值)，一單是 NT$3,290 那一檔，平常實拿 8,080 創世結晶 (6,480 + 贈送 1,600)，勾「第一單是首儲雙倍」時第一單算 12,960。逐項填寫時原石和課金先相加再除 160；直接輸入總抽數時加上 floor(課金創世結晶 / 160)。「可抽」那格維持只顯示免費資源。摘要卡的預算達成率、里程碑表最後一欄、圖表預算線都用含課金的總抽數，圖表另外用虛線標課金前，課金買到的區段塗深色；預算超出 x 軸時在右邊界標「預算 N 抽 →」。有課金時摘要卡下方顯示一半、九成機率至少要課幾單 (點單數直接套用)。預算不影響 `E.plan()`，所以 render 會快取 plan 結果，只有其他設定改變才重算。課金單數與首儲勾選存在 localStorage。
 - 外觀改成仿遊戲 UI：天空漸層背景、羊皮紙視窗配金色雙線框與四角括號、棕褐色表頭的格線表、深石板色膠囊按鈕、期望抽數用五星物品卡的橙金底。深色模式是夜空配深色視窗。
@@ -415,6 +422,7 @@
 - [HoYoverse 客服：重複獲得接近或已滿命角色的獎勵 (第 2~7 次、第 8 次起的星輝)](https://support.hoyoverse.com/hc/en-us/articles/52089402385945-What-rewards-do-I-get-for-obtaining-a-duplicate-character-near-or-at-C6)
 - [HoYoverse 客服：星塵只來自三星武器](https://support.hoyoverse.com/hc/en-us/articles/50333952836121-Why-didn-t-I-receive-Masterless-Stardust-from-my-Wish)
 - [GGRecon：星輝數量表與星輝兌換糾纏之緣](https://ggrecon.com/guides/genshin-impact-masterless-starglitter-how-to-get)
+- [paimon.moe 原始碼 (MadeBaruna/paimon-moe)：src/routes/wish/import.svelte](https://github.com/MadeBaruna/paimon-moe/blob/main/src/routes/wish/import.svelte)：getGachaLog 的網址、參數、end_id 翻頁與 CORS 轉發做法
 - [Sportskeeda：查祈願紀錄算墊抽 (每頁筆數)](https://sportskeeda.com/esports/how-check-genshin-impact-banner-history-count-character-weapon-banner-pity-beginner-s-guide)
 - 使用者提供的祈願歷史紀錄截圖 (2026-05，一頁 5 筆並經使用者確認，可查最近 1 年，約延遲 1 小時)
 - [一棵平衡樹：原神武器池重大概率漏洞，5.0 後最優抽卡策略解析 (B 站影片)](https://www.bilibili.com/video/BV1UQzBYFEut)：武器實際 77 抽保底、兩把 UP 的最佳定軌策略與期望值

@@ -305,6 +305,20 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .hist-result b { font-family: var(--f-num); color: var(--gold); font-size: 1.1rem; }
 .hist-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
 .hist-actions .gbtn { min-width: 130px; }
+/* 匯入祈願紀錄 */
+.imp-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.imp-url { width: 100%; box-sizing: border-box; font: .82rem/1.45 var(--f-num, monospace); color: var(--ink); background: var(--sunken); border: 1px solid var(--frame-soft); border-radius: 6px; padding: 8px 10px; resize: vertical; word-break: break-all; }
+.imp-help { font-size: .86rem; border: 1px solid var(--frame-soft); border-radius: 6px; padding: 8px 12px; }
+.imp-help summary { cursor: pointer; font-weight: 700; }
+.imp-help a { color: var(--gold); }
+.imp-help ol { margin: 8px 0; padding-left: 1.3em; display: grid; gap: 6px; }
+.imp-help code, .imp-cmd { font-family: ui-monospace, Consolas, monospace; font-size: .78rem; background: var(--sunken); border-radius: 4px; padding: 1px 4px; word-break: break-all; }
+.imp-cmd { display: block; white-space: pre-wrap; padding: 8px; margin: 6px 0; }
+.imp-res { display: grid; gap: 12px; }
+.imp-pool { background: var(--sunken); border-radius: 6px; padding: 9px 12px; font-size: .9rem; display: grid; gap: 3px; }
+.imp-pool h3 { margin: 0 0 2px; font-size: .95rem; }
+.imp-pool b { font-family: var(--f-num); color: var(--gold); }
+.imp-pool .est { color: var(--muted); font-size: .8rem; }
 /* 小拉桿 (明光計數、命定值)，沿用頁數拉桿的樣式 */
 .page-slide.mini { --thumb: 20px; padding-inline: 2px; }
 .page-slide.mini input[type=range] { height: 24px; }
@@ -441,6 +455,10 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
 
   <div class="layout" id="tabCalc" role="tabpanel" aria-labelledby="tabBtnCalc">
     <form class="panel frame" id="form" autocomplete="off">
+      <div class="imp-row">
+        <button type="button" class="gbtn small" id="impOpen"><span class="ic">⇩</span>匯入祈願紀錄</button>
+        <span class="note">貼上祈願紀錄網址，自動填好兩個卡池的墊抽與保底</span>
+      </div>
       <fieldset>
         <legend><span class="dot c"></span>角色活動祈願</legend>
         <div class="field">
@@ -836,6 +854,62 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     <div class="hist-actions">
       <button type="submit" class="gbtn light" value="cancel"><span class="ic">✕</span>取消</button>
       <button type="submit" class="gbtn" value="apply" id="histApply"><span class="ic">○</span>套用</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="hist" id="impDlg" aria-labelledby="impTitle">
+  <form method="dialog" class="hist-in frame" id="impForm">
+    <div class="hist-head">
+      <h2 id="impTitle"><span>✦</span>匯入祈願紀錄</h2>
+      <button type="submit" class="hist-x" value="cancel" aria-label="關閉">✕</button>
+    </div>
+    <label class="lab" for="impUrl">祈願紀錄網址</label>
+    <textarea id="impUrl" class="imp-url" rows="3" spellcheck="false" autocomplete="off" placeholder="https://gs.hoyoverse.com/genshin/event/e20190909gacha-v3/index.html?...#/log"></textarea>
+    <p class="note">網址裡有 authkey，可以讀取你的祈願紀錄，不要截圖或分享給別人。網址只用在這次讀取，不會存起來；24 小時後就會失效。</p>
+    <details class="imp-help">
+      <summary>怎麼拿到網址 (安卓手機)</summary>
+      <ol>
+        <li>電腦下載 <a href="https://developer.android.com/tools/releases/platform-tools" target="_blank" rel="noopener noreferrer">platform-tools</a> 並解壓縮；手機在「設定 > 關於手機 > 軟體資訊」連點「版本號碼」7 次，打開開發者選項。</li>
+        <li>手機打開「USB 偵錯」(Samsung 要先關掉「設定 > 安全性與隱私權 > 自動封鎖程式」)，用傳輸線接上電腦。</li>
+        <li>在 platform-tools 資料夾按右鍵「在終端機中開啟」，先執行 <code>.\adb.exe devices</code>，手機跳出授權視窗時按「允許」。</li>
+        <li>執行下面這行，再到遊戲裡打開祈願紀錄，畫面會印出一串 <code>https://gs.hoyoverse.com/...#/log</code>，整串複製貼到上面。
+          <pre class="imp-cmd" id="impCmd">.\adb.exe logcat -T 1 -m 1 -e "OnGetWebViewPageFinish,message[:]https" | Select-String -Pattern "https://\S+#/log" | ForEach-Object { $_.Matches[0].Value }</pre>
+          <button type="button" class="gbtn small light" id="impCmdCopy"><span class="ic">⧉</span>複製指令</button> <span class="note" id="impCmdMsg" role="status"></span>
+        </li>
+        <li>用完記得關掉 USB 偵錯、撤銷 USB 偵錯授權，再把自動封鎖程式打開回去。</li>
+      </ol>
+      <p class="note">電腦版與 iOS 的取得方式可以參考 <a href="https://paimon.moe/wish/import" target="_blank" rel="noopener noreferrer">paimon.moe 的匯入說明</a>。</p>
+    </details>
+    <div class="hist-actions">
+      <button type="button" class="gbtn" id="impGo"><span class="ic">⇩</span>讀取紀錄</button>
+    </div>
+    <p class="hist-result" id="impMsg" role="status" style="margin: 0" hidden></p>
+    <div id="impRes" class="imp-res" hidden>
+      <div class="imp-pool" id="impChar"></div>
+      <div class="imp-pool" id="impWeap"></div>
+      <div class="hist-opts" id="impWpOpts" hidden>
+        <div id="impWhatBox">
+          <span class="lab" id="impWhatLab">上一把五星武器是</span>
+          <div class="seg full" id="impWhat" role="group" aria-labelledby="impWhatLab">
+            <button type="button" data-v="course">定軌的武器</button>
+            <button type="button" data-v="other">另一把 UP</button>
+          </div>
+        </div>
+        <div>
+          <span class="lab" id="impWhenLab">在哪一期抽到的</span>
+          <div class="seg full" id="impWhen" role="group" aria-labelledby="impWhenLab">
+            <button type="button" data-v="now">這一期 (命定值還在)</button>
+            <button type="button" data-v="before">之前的卡池</button>
+          </div>
+        </div>
+        <p class="note" id="impWpNote"></p>
+      </div>
+      <p class="note">遊戲的祈願紀錄大約延遲 1 小時，剛抽完的幾抽要自己加上。</p>
+      <div class="hist-actions">
+        <button type="submit" class="gbtn light" value="cancel"><span class="ic">✕</span>取消</button>
+        <button type="submit" class="gbtn" value="apply" id="impApply"><span class="ic">○</span>套用</button>
+      </div>
     </div>
   </form>
 </dialog>
@@ -1352,6 +1426,132 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       $('wpPity').value = pity; $('wpF').value = String(s.fate); $('wpG').checked = s.guaranteed; paintMini('wpF');
     }
     schedule();
+  });
+
+  // ---- 匯入祈願紀錄：貼上遊戲的祈願紀錄網址，經過自己的 Cloudflare Worker 讀取 getGachaLog，推算墊抽、大保底、明光計數 ----
+  // 網址 (含 authkey) 只放在記憶體，不存 localStorage；視窗關閉就清掉
+  const PROXY = 'https://enka-proxy.twl-benchen.workers.dev';
+  const imp = { busy: false, res: null, what: 'course', when: 'now', token: 0 };
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const GACHA_ERR = { '-101': '網址已經過期 (24 小時有效)，請重新取得一次網址。', '-100': '網址裡的 authkey 不正確，請確認有整串複製。' };
+
+  async function fetchPool(base, type, label, stopAtFive, token) {
+    const all = [];
+    let endId = '0';
+    for (let page = 1; page <= 100; page++) {
+      const q = new URLSearchParams(Object.assign({}, base.params, {
+        auth_appid: 'webview_gacha', init_type: '301', lang: 'zh-tw', gacha_type: type, page: String(page), size: '20', end_id: endId,
+      }));
+      if (base.cn) q.set('cn', '1');
+      let data = null;
+      for (let tryN = 0; tryN < 4; tryN++) {
+        let r;
+        try { r = await fetch(`${PROXY}/gacha?${q}`, { cache: 'no-store' }); } catch (e) { throw new Error('連不上讀取伺服器，請檢查網路後再試一次。'); }
+        if (r.status === 400 || r.status === 404) throw new Error('讀取伺服器還不支援匯入 (Worker 需要更新)。');
+        if (!r.ok) throw new Error(`讀取失敗 (HTTP ${r.status})，請稍後再試。`);
+        data = await r.json();
+        if (data.retcode === -110) { await sleep(1500 * (tryN + 1)); continue; } // 查得太快，等一下再試
+        break;
+      }
+      if (token !== imp.token) return null;
+      if (!data || data.retcode !== 0) throw new Error(GACHA_ERR[String(data && data.retcode)] || `遊戲伺服器回傳錯誤：${(data && data.message) || '未知'}`);
+      const list = (data.data && data.data.list) || [];
+      all.push(...list);
+      $('impMsg').textContent = `讀取${label}… 第 ${page} 頁，共 ${all.length} 筆`;
+      if (list.length < 20 || (stopAtFive && list.some((x) => String(x.rank_type) === '5'))) break;
+      endId = list[list.length - 1].id;
+      await sleep(250);
+    }
+    return all;
+  }
+
+  const shortDate = (t) => String(t || '').slice(0, 10);
+  function paintImport() {
+    const r = imp.res;
+    if (!r) return;
+    const c = r.char, w = r.weapon;
+    let h = '<h3>角色活動祈願</h3>';
+    h += `<div>已墊 <b>${Math.min(c.pity, 89)}</b> 抽` + (c.last ? `，上一顆五星是 ${c.last.name} (${shortDate(c.last.time)})` : '，紀錄裡沒有五星') + '</div>';
+    h += c.guaranteed == null ? '<div>大保底：紀錄裡看不出來，維持原本的設定</div>' : `<div>大保底：<b>${c.guaranteed ? '有' : '沒有'}</b>${c.guaranteed ? ' (上次歪了常駐角色)' : ''}</div>`;
+    if (c.fiveCount) {
+      h += `<div>明光計數：<b>${c.radiance}</b></div>`;
+      h += c.radianceSure ? '<div class="est">依紀錄重播計數器模型推算，套用後仍可以自己修改。</div>'
+        : `<div class="est">紀錄的開頭不知道當時的計數，可能是 ${c.radianceRange[0]}~${c.radianceRange[1]}，這裡填最可能的值，可以自己修改。</div>`;
+    } else h += '<div>明光計數：紀錄裡沒有五星，維持原本的設定</div>';
+    $('impChar').innerHTML = h;
+
+    h = '<h3>武器活動祈願</h3>';
+    h += `<div>已墊 <b>${Math.min(w.pity, 76)}</b> 抽` + (w.last ? `，上一把五星是 ${w.last.name} (${shortDate(w.last.time)}${w.daysAgo != null ? `，${w.daysAgo} 天前` : ''})` : '，紀錄裡沒有五星') + '</div>';
+    h += w.guaranteed == null ? '<div>大保底：紀錄裡看不出來，維持原本的設定</div>' : `<div>大保底：<b>${w.guaranteed ? '有' : '沒有'}</b>${w.guaranteed ? ' (上次歪了常駐武器)' : ''}</div>`;
+    $('impWeap').innerHTML = h;
+
+    $('impWpOpts').hidden = !w.last;
+    if (w.last) {
+      $('impWhatBox').hidden = w.last.std;
+      $('impWhat').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === imp.what ? 'true' : 'false'));
+      $('impWhen').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === imp.when ? 'true' : 'false'));
+      $('impWpNote').textContent = '紀錄裡沒有寫你定軌哪一把，請自己選。' + HIST.weapon.note(w.last.std ? 'std' : imp.what, imp.when) + '。';
+    }
+  }
+
+  async function runImport() {
+    if (imp.busy) return;
+    const base = E.parseGachaUrl($('impUrl').value);
+    const msg = $('impMsg');
+    msg.hidden = false;
+    $('impRes').hidden = true;
+    if (!base) { msg.textContent = '找不到網址裡的 authkey，請貼上整串 https://gs.hoyoverse.com/...#/log 網址。'; return; }
+    imp.busy = true; $('impGo').disabled = true;
+    const token = ++imp.token;
+    try {
+      const ch = await fetchPool(base, '301', '角色池', false, token);
+      if (!ch) return;
+      const wp = await fetchPool(base, '302', '武器池', true, token);
+      if (!wp) return;
+      imp.res = E.analyzeGachaLog(ch, wp);
+      const wr = imp.res.weapon, wl = wr.last;
+      imp.what = wl && wl.std ? 'std' : 'course';
+      imp.when = wr.daysAgo != null && wr.daysAgo <= 21 ? 'now' : 'before'; // 一期約 3 週，超過就預設是之前的卡池
+      msg.textContent = `讀取完成：角色池 ${ch.length} 筆，武器池 ${wp.length} 筆。確認下面的結果後按「套用」。`;
+      paintImport();
+      $('impRes').hidden = false;
+    } catch (e) {
+      if (token === imp.token) msg.textContent = e.message;
+    } finally {
+      if (token === imp.token) { imp.busy = false; $('impGo').disabled = false; }
+    }
+  }
+
+  $('impOpen').addEventListener('click', () => {
+    const dlg = $('impDlg');
+    dlg.returnValue = '';
+    if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+    $('impUrl').focus();
+  });
+  $('impGo').addEventListener('click', runImport);
+  $('impWhat').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { imp.what = b.dataset.v; paintImport(); } });
+  $('impWhen').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { imp.when = b.dataset.v; paintImport(); } });
+  $('impCmdCopy').addEventListener('click', () => {
+    const done = (ok) => { $('impCmdMsg').textContent = ok ? '已複製' : '請手動選取指令複製'; };
+    try { navigator.clipboard.writeText($('impCmd').textContent).then(() => done(true), () => done(false)); } catch (e) { done(false); }
+  });
+  $('impDlg').addEventListener('close', () => {
+    const r = imp.res;
+    if ($('impDlg').returnValue === 'apply' && r) {
+      const c = r.char, w = r.weapon;
+      $('chPity').value = Math.min(c.pity, 89);
+      if (c.guaranteed != null) $('chG').checked = c.guaranteed;
+      if (c.fiveCount) { $('chC').value = String(c.radiance); paintMini('chC'); }
+      $('wpPity').value = Math.min(w.pity, 76);
+      if (w.last) {
+        const s = weaponFromHist(w.last.std ? 'std' : imp.what, imp.when);
+        $('wpF').value = String(s.fate); $('wpG').checked = s.guaranteed; paintMini('wpF');
+      }
+      schedule();
+    }
+    // 不留下 authkey：清掉網址與結果
+    imp.token++; imp.busy = false; imp.res = null;
+    $('impUrl').value = ''; $('impMsg').hidden = true; $('impMsg').textContent = ''; $('impRes').hidden = true; $('impGo').disabled = false;
   });
 
   // ---- 里程碑拖動排序 ----

@@ -228,3 +228,43 @@ for (const cs of refundCases) {
   const b = E.plan({ character: { target: 3, pity: 30, radiance: 1 }, weapon: { target: 0 } });
   console.log('角色 2+1 vs 3 隻', E.stats(a.total).mean.toFixed(4), E.stats(b.total).mean.toFixed(4), '列', a.rows.map((r) => r.who + r.n).join(' '));
 }
+
+// ---- 匯入祈願紀錄：墊抽、大保底、明光計數推算 ----
+{
+  const assert = require('assert');
+  const row = (name, rank, time) => ({ name, rank_type: String(rank), time });
+  const fill = (n, time) => Array.from({ length: n }, () => row('黎明神劍', 3, time));
+  // 新到舊：最新 12 抽沒出金，再來是歪了的琴
+  const char = [...fill(12, '2026-11-20 10:00:00'), row('琴', 5, '2026-11-01 10:00:00'), ...fill(50, '2026-10-01 10:00:00'),
+    row('芙寧娜', 5, '2026-09-01 10:00:00'), ...fill(70, '2026-08-01 10:00:00'), row('那維萊特', 5, '2026-07-01 10:00:00'),
+    ...fill(5, '2026-06-01 10:00:00'), row('迪盧克', 5, '2026-05-01 10:00:00')];
+  // 舊到新：迪盧克 (歪)、那維萊特 (大保底)、芙寧娜、琴 (歪)
+  const r = E.analyzeGachaLog(char, null).char;
+  assert.strictEqual(r.pity, 12);
+  assert.strictEqual(r.guaranteed, true);
+  assert.deepStrictEqual([r.radianceSure, r.radianceRange], [false, [1, 2]]);
+  // 連歪三次 (中間都是大保底) 之後，第三次歪完計數一定是 3，不受起點影響
+  // 舊到新：歪 → 大保底 UP，重複三輪，計數一定到 3
+  const lose3 = [];
+  for (let k = 1; k <= 3; k++) lose3.push(row('琴', 5, `2026-0${k}-01 10:00:00`), row('芙寧娜', 5, `2026-0${k}-15 10:00:00`));
+  lose3.reverse();
+  const r3 = E.analyzeGachaLog(lose3, null).char;
+  console.log('匯入 連歪', r3.radiance, r3.radianceSure, r3.radianceRange);
+  assert.strictEqual(r3.radiance, 3);
+  assert.strictEqual(r3.radianceSure, true);
+  // 再多一顆 UP：計數 3 必定觸發，回到 1
+  const r4 = E.analyzeGachaLog([row('芙寧娜', 5, '2026-06-01 10:00:00'), ...lose3], null).char;
+  assert.deepStrictEqual([r4.radiance, r4.radianceSure, r4.guaranteed], [1, true, false]);
+  // 武器：最新一把是常駐 → 大保底
+  const wp = [...fill(7, '2026-11-20 10:00:00'), row('天空之刃', 5, '2026-11-10 10:00:00'), ...fill(3, '2026-11-01 10:00:00')];
+  const w = E.analyzeGachaLog(null, wp, { today: '2026-11-21' }).weapon;
+  assert.deepStrictEqual([w.pity, w.guaranteed, w.daysAgo], [7, true, 11]);
+  // 沒有五星：墊抽就是全部筆數
+  assert.strictEqual(E.analyzeGachaLog(fill(33, '2026-11-01'), null).char.pity, 33);
+  // 網址解析
+  const p = E.parseGachaUrl('複製 https://gs.hoyoverse.com/genshin/event/e20190909gacha-v3/index.html?win_mode=fullscreen&authkey_ver=1&sign_type=2&auth_appid=webview_gacha&init_type=301&gacha_id=x&lang=zh-tw&region=os_cht&authkey=ab%2Bc%3D&game_biz=hk4e_global#/log 結束');
+  assert.deepStrictEqual(p.params, { authkey: 'ab+c=', authkey_ver: '1', sign_type: '2', game_biz: 'hk4e_global', region: 'os_cht' });
+  assert.strictEqual(p.cn, false);
+  assert.strictEqual(E.parseGachaUrl('https://example.com/?a=1'), null);
+  console.log('匯入祈願紀錄 測試通過', r.pity, r.guaranteed, r.radiance, r.radianceSure);
+}
