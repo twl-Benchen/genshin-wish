@@ -266,5 +266,12 @@ for (const cs of refundCases) {
   assert.deepStrictEqual(p.params, { authkey: 'ab+c=', authkey_ver: '1', sign_type: '2', game_biz: 'hk4e_global', region: 'os_cht' });
   assert.strictEqual(p.cn, false);
   assert.strictEqual(E.parseGachaUrl('https://example.com/?a=1'), null);
+  // 防呆：多複製一行、前面有別的網址、網址被換行切斷、iOS 的國際服網址
+  const good = 'https://gs.hoyoverse.com/genshin/event/e20190909gacha-v3/index.html?authkey_ver=1&sign_type=2&authkey=ab%2Bc%3D&game_biz=hk4e_global#/log';
+  assert.strictEqual(E.parseGachaUrl('Link copied to clipboard, paste it back to https://paimon.moe/wish/import\r\n' + good + '\r\n').params.authkey, 'ab+c=');
+  assert.strictEqual(E.parseGachaUrl(good.slice(0, 60) + '\n' + good.slice(60)).params.authkey, 'ab+c=');
+  assert.strictEqual(E.parseGachaUrl('  ' + good + 'PS C:\\Users\\x>').params.game_biz, 'hk4e_global');
+  assert.strictEqual(E.parseGachaUrl('https://hk4e-api-os.mihoyo.com/event/gacha_info/api/getGachaLog?authkey=x&lang=en').cn, false);
+  assert.strictEqual(E.parseGachaUrl('https://public-operation-hk4e.mihoyo.com/gacha_info/api/getGachaLog?authkey=x').cn, true);
   console.log('匯入祈願紀錄 測試通過', r.pity, r.guaranteed, r.radiance, r.radianceSure);
 }

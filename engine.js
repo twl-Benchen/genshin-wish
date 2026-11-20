@@ -399,18 +399,27 @@
   }
 
   // 從祈願紀錄網址取出查詢 getGachaLog 要用的參數 (網址可以是 gs.hoyoverse.com 的 #/log 網址，也可以已經是 getGachaLog 的網址)
+  // 防呆：貼上的文字可能多了其他行 (PowerShell 的提示、別的網址)，或網址被換行切斷，所以找出所有網址，挑有 authkey 的那個；找不到再把換行和空白去掉重找一次
   function parseGachaUrl(text) {
-    const m = String(text || '').match(/https?:\/\/[^\s"'<>]+/);
-    if (!m) return null;
-    let u;
-    try { u = new URL(m[0].replace(/#.*$/, '')); } catch (e) { return null; }
+    const pick = (t) => {
+      for (const m of String(t || '').match(/https?:\/\/[^\s"'<>]+/g) || []) {
+        try {
+          const u = new URL(m.replace(/#.*$/, ''));
+          if (u.searchParams.get('authkey')) return u;
+        } catch (e) {}
+      }
+      return null;
+    };
+    const u = pick(text) || pick(String(text || '').replace(/\s+/g, ''));
+    if (!u) return null;
     const q = u.searchParams;
     if (!q.get('authkey')) return null;
     const keep = {};
     for (const k of ['authkey', 'authkey_ver', 'sign_type', 'game_biz', 'region']) if (q.get(k)) keep[k] = q.get(k);
     keep.authkey_ver = keep.authkey_ver || '1';
     keep.sign_type = keep.sign_type || '2';
-    const cn = /hk4e_cn/.test(keep.game_biz || '') || /mihoyo\.com$/.test(u.hostname);
+    // 國服：game_biz=hk4e_cn，或米哈遊網域但不是 -os (iOS 抓到的國際服網址是 hk4e-api-os.mihoyo.com)
+    const cn = /hk4e_cn/.test(keep.game_biz || '') || (!keep.game_biz && /mihoyo\.com$/.test(u.hostname) && !/-os\b/.test(u.hostname));
     return { params: keep, cn };
   }
 
