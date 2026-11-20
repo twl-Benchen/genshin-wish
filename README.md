@@ -9,7 +9,7 @@
 
 --------------------------------------------------------------------
 ## 原神期望抽數
-<img width="1299" height="1552" alt="twl-benchen github io_genshin-wish_ (1)" src="https://github.com/user-attachments/assets/c399a4bb-3bc3-4dcc-8292-21a17aec5edd" />
+<img width="1299" height="1552" alt="twl-benchen github io_genshin-wish_ (1)" src="docs/twl-benchen.github.io_genshin-wish_ 1.png" />
 
 **網址：https://twl-benchen.github.io/genshin-wish/**
 
