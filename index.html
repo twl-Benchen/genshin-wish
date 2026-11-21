@@ -1566,7 +1566,9 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     }
     lines(box, t);
     const on = pressed(box);
-    if (!on || !on.offsetWidth) { t.style.opacity = '0'; return; }
+    // 還看不到 (例如在收起的區塊或別的分頁裡)：先藏起來，等看得到時 (ResizeObserver) 再當成第一次放好
+    if (!on || !on.offsetWidth) { t.style.opacity = '0'; t.classList.add('no-anim'); t.dataset.wait = '1'; return; }
+    if (t.dataset.wait) { delete t.dataset.wait; set0(t, on); return; }
     const pos = { x: on.offsetLeft, y: on.offsetTop, w: on.offsetWidth, h: on.offsetHeight };
     const key = keyOf(box), prev = key && last.get(key);
     const set = (p) => { t.style.transform = `translate(${p.x}px, ${p.y}px)`; t.style.width = p.w + 'px'; t.style.height = p.h + 'px'; };
@@ -1591,6 +1593,17 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     while (ls.length < btns.length - 1) { const l = document.createElement('span'); l.className = 'seg-line'; l.setAttribute('aria-hidden', 'true'); box.insertBefore(l, t); ls.push(l); }
     while (ls.length > Math.max(0, btns.length - 1)) ls.pop().remove();
     ls.forEach((l, k) => { const b = btns[k + 1]; l.style.transform = `translateX(${b.offsetLeft}px)`; l.style.top = b.offsetTop + 'px'; l.style.height = b.offsetHeight + 'px'; });
+  }
+
+  // 直接放到選中的位置 (不播動畫)，下一次切換才開始有動畫
+  function set0(t, on) {
+    t.classList.add('no-anim');
+    t.style.transform = `translate(${on.offsetLeft}px, ${on.offsetTop}px)`; t.style.width = on.offsetWidth + 'px'; t.style.height = on.offsetHeight + 'px';
+    t.style.opacity = '1';
+    void t.offsetWidth;
+    t.classList.remove('no-anim');
+    const key = keyOf(t.parentNode);
+    if (key) last.set(key, { x: on.offsetLeft, y: on.offsetTop, w: on.offsetWidth, h: on.offsetHeight });
   }
 
   const queue = new Set();
