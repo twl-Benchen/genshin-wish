@@ -14,6 +14,17 @@ img { max-width: 100%; }
 </style>"""
 
 
+# 內容安全政策：只允許自己網站、Google Fonts、Enka 圖片與自己的 Worker，萬一有內容被注入，也載不到外部腳本、送不出資料
+CSP = ('<meta http-equiv="Content-Security-Policy" content="'
+       "default-src 'self'; "
+       "script-src 'self' 'unsafe-inline'; "
+       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+       "font-src 'self' https://fonts.gstatic.com data:; "
+       "img-src 'self' data: blob: https://enka.network https://enka-proxy.twl-benchen.workers.dev; "
+       "connect-src https://enka-proxy.twl-benchen.workers.dev; "
+       "object-src 'none'; base-uri 'none'\">")
+
+
 def wrap(page: str) -> str:
     # <title>、字型連結與 <style> 放進 <head>，其餘放進 <body>
     cut = page.index("</style>") + len("</style>")
@@ -23,6 +34,7 @@ def wrap(page: str) -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+{CSP}
 {RESET}
 {head.strip()}
 </head>

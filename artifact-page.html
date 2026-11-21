@@ -1174,7 +1174,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   }
   async function relicIcon() {
     if (!fromRelic() || !S.src.icon) return null;
-    return (await loadImg(`https://enka.network/ui/${S.src.icon}.png`)) || (await loadImg(`${PROXY}/ui/${S.src.icon}.png`));
+    const ic = iconName(S.src.icon);
+    return (await loadImg(`https://enka.network/ui/${ic}.png`)) || (await loadImg(`${PROXY}/ui/${ic}.png`));
   }
 
   // 一顆聖遺物卡 (分享圖用)
@@ -1351,7 +1352,9 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 
   /* ---------- 角色展示：用 UID 讀取遊戲內角色展示 (Enka.Network，經過自己的 Cloudflare Worker 中繼) ---------- */
   const PROXY = 'https://enka-proxy.twl-benchen.workers.dev';
-  const UI = n => `https://enka.network/ui/${n}.png`;
+  // 圖示名稱來自 Enka 回應或 localStorage，只留英數字和底線，避免被塞進 HTML 屬性或網址
+  const iconName = n => String(n == null ? '' : n).replace(/[^A-Za-z0-9_]/g, '');
+  const UI = n => `https://enka.network/ui/${iconName(n)}.png`;
   const D = window.EnkaData;
   const UIDKEY = 'artcalc-uid';
   const SC = { uid: '', data: null, list: [], sel: 0, relic: -1, cache: new Map(), busy: false };
