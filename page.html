@@ -1505,10 +1505,12 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   }
 
   const shortDate = (t) => String(t || '').slice(0, 10);
+  // 紀錄裡的名稱來自外部 API，放進 innerHTML 前一律跳脫
+  const escHtml = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
   function paintChar() {
     const c = imp.res.char;
     let h = '<h3>角色活動祈願</h3>';
-    h += `<div>已墊 <b>${Math.min(c.pity, 89)}</b> 抽` + (c.last ? `，上一顆五星是 ${c.last.name} (${shortDate(c.last.time)})` : '，紀錄裡沒有五星') + '</div>';
+    h += `<div>已墊 <b>${Math.min(c.pity, 89)}</b> 抽` + (c.last ? `，上一顆五星是 ${escHtml(c.last.name)} (${escHtml(shortDate(c.last.time))})` : '，紀錄裡沒有五星') + '</div>';
     h += c.guaranteed == null ? '<div>大保底：紀錄裡看不出來，維持原本的設定</div>' : `<div>大保底：<b>${c.guaranteed ? '有' : '沒有'}</b>${c.guaranteed ? ' (上次歪了常駐角色)' : ''}</div>`;
     const range = c.radianceRange ? `可能是 ${c.radianceRange[0]}~${c.radianceRange[1]}，先填最可能的值，套用後可以自己修改。` : '';
     if (!c.fiveCount) h += '<div>明光計數：紀錄裡沒有五星，維持原本的設定</div>';
@@ -1529,7 +1531,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     paintChar();
     const w = r.weapon;
     let h = '<h3>武器活動祈願</h3>';
-    h += `<div>已墊 <b>${Math.min(w.pity, 76)}</b> 抽` + (w.last ? `，上一把五星是 ${w.last.name} (${shortDate(w.last.time)}${w.daysAgo != null ? `，${w.daysAgo} 天前` : ''})` : '，紀錄裡沒有五星') + '</div>';
+    h += `<div>已墊 <b>${Math.min(w.pity, 76)}</b> 抽` + (w.last ? `，上一把五星是 ${escHtml(w.last.name)} (${escHtml(shortDate(w.last.time))}${w.daysAgo != null ? `，${w.daysAgo} 天前` : ''})` : '，紀錄裡沒有五星') + '</div>';
     h += w.guaranteed == null ? '<div>大保底：紀錄裡看不出來，維持原本的設定</div>' : `<div>大保底：<b>${w.guaranteed ? '有' : '沒有'}</b>${w.guaranteed ? ' (上次歪了常駐武器)' : ''}</div>`;
     $('impWeap').innerHTML = h;
 
