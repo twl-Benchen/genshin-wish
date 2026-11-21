@@ -233,7 +233,7 @@
   - 貼上防呆：`parseGachaUrl()` 找出文字裡所有網址，挑有 authkey 的那個 (多複製到 PowerShell 提示或別的網址也沒關係)；找不到就去掉所有換行和空白再找一次 (網址被換行切斷)。iOS 抓到的 `hk4e-api-os.mihoyo.com` 是國際服，只有 `game_biz=hk4e_cn` 或不含 -os 的米哈遊網域才當國服。
   - 推算：`E.analyzeGachaLog(char, weapon)`。墊抽是最新一顆五星之前的筆數 (沒有五星就是全部筆數)；大保底看最新一顆五星是不是常駐 (`STANDARD_5`、`STANDARD_5_WEAPONS`，用繁中名稱比對，常駐池擴充時要更新)；明光計數從 5.0 (2024-08-28) 之後的五星，用計數器模型從舊到新重播。紀錄開頭的計數和大保底不知道，所以 7 種起點全部重播 (跟紀錄矛盾的起點丟掉，例如大保底或計數 3 時出常駐)，結果都一樣顯示確定值，不一樣用長期分布 4:4:2:1 加權取最可能的值並顯示可能範圍。沒歪時看不出是正常中還是明光，一律當正常中 (計數 2 兩者都回到 1，計數 0、1 明光只有 0.036%)。
   - 命定值：紀錄裡沒有定軌是哪一把，視窗讓使用者選「定軌的武器 / 另一把 UP」與「這一期 / 之前的卡池」，套用時沿用 `weaponFromHist()`。最新一把五星超過 21 天 (一期的長度) 一定是之前的卡池，命定值已歸 0，整組選項不顯示；21 天內預設這一期。最新一把是常駐武器時只問哪一期。
-  - 隱私：網址只在記憶體，關閉視窗就清掉，不存 localStorage；Worker 的 `/gacha` 只轉發白名單參數、回應 `Cache-Control: no-store`、只接受自己網站的 Origin。視窗裡的「怎麼拿到網址」分電腦、安卓、iOS 三個分頁 (依裝置預設)，電腦用 paimon.moe 的 PowerShell 指令、安卓用 adb logcat、iOS 用 Stream 抓包，指令可以複製，步驟整理自 paimon.moe 的匯入說明。
+  - 隱私：網址只在記憶體，關閉視窗就清掉，不存 localStorage；Worker 的 `/gacha` 只轉發白名單參數、回應 `Cache-Control: no-store`、只接受自己網站的 Origin。視窗裡的「怎麼拿到網址」分電腦、安卓、iOS 三個分頁 (依裝置預設)，電腦用 paimon.moe 的 PowerShell 指令 (網址固定在 gist 的版本 `0a29016…`，不用會自動變成最新版的 `/raw/getlink.ps1`，避免腳本內容被換掉時使用者執行到新內容；這個版本只讀本機的 output_log.txt 與 webCaches 的 data_2、向官方 API 測試網址再複製到剪貼簿。要更新版本時先讀過新版內容，再換掉 page.html 裡的 commit hash)、安卓用 adb logcat、iOS 用 Stream 抓包，指令可以複製，步驟整理自 paimon.moe 的匯入說明。
   - 視窗內容放在 `.imp-body` 裡捲動 (`.imp-in` 本身不捲)，捲動時外框的內側細線才不會壓到文字。
   - Worker 沒更新時 `/gacha` 會回 400，網頁顯示「讀取伺服器還不支援匯入 (Worker 需要更新)」。`worker/enka-proxy.js` 改完要貼到 Cloudflare 後台重新 Deploy。
   - test.js 最後一段驗證匯入推算 (墊抽、大保底、連歪三輪計數必為 3、計數 3 後回到 1、網址解析)。
