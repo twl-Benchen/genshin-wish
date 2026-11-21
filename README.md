@@ -27,7 +27,7 @@
 
 #### 墊抽與保底狀態
 
-- **匯入祈願紀錄**：貼上遊戲的祈願紀錄網址，自動讀取紀錄，填好兩個卡池的墊抽、大保底、明光計數與命定值。視窗裡有安卓手機取得網址的步驟。網址只用在這次讀取，不會存起來。
+- **匯入祈願紀錄**：貼上遊戲的祈願紀錄網址，自動讀取紀錄，填好兩個卡池的墊抽、大保底、明光計數與命定值。視窗裡有電腦、安卓、iOS 取得網址的步驟。網址只用在這次讀取，不會存起來。
 - **已墊抽數**：可以直接輸入，也可以按「算抽數」從祈願歷史紀錄推算。
 - **明光計數** (0 到 3) 和**命定值** (0 到 1) 用分段按鈕選，手機上也點得準。
 - **大保底**：角色池是上次五星歪成常駐，武器池是上一把五星是常駐武器。勾角色池大保底時，明光計數會自動調成至少 1。
@@ -41,7 +41,7 @@
 
 #### 兩把 UP 武器的定軌建議
 
-- 武器欄下方會依目前的目標、命定值和大保底，告訴你現在該維持定軌、取消再重新定軌，還是改定軌另一把，以及三種抽法平均差幾抽。
+- 武器欄下方會依目前的目標、命定值和大保底，告訴你現在該維持定軌、取消再重新定軌，還是改定軌另一把。
 
 #### 手上的資源
 
@@ -138,16 +138,6 @@
 
 角色池和武器池的保底互不影響，所以兩邊各自算出分布再卷積。調整抽的順序只是重新組合，不用重算整條鏈。
 
-#### 調課金不重算機率
-
-預算不影響機率分布，只影響達成率和圖上的預算線。調整課金時直接沿用算好的分布，連按 + 也不會卡。
-
-#### 分享功能的小細節
-
-- 網站 QR code 直接寫在程式裡，不載入外部函式庫。
-- 分享按鈕的程式名稱刻意避開 `share` 這類字，因為廣告攔截套件會把它當成社群分享按鈕藏起來。
-- 產生圖片前會先等中文字型載完，最多等 3 秒，載不到就用備用字型。
-
 --------------------------------------------------------------------
 ## 聖遺物重塑計算
 <img width="1300" height="1380" alt="聖遺物重塑計算畫面" src="docs/artifact-preview.webp" />
@@ -162,7 +152,7 @@
 #### 設定目標
 
 - **初始詞條數**：初始 4 詞條升級跳 5 次，初始 3 詞條在 +4 新增第 4 個詞條，之後升級跳 4 次。
-- **選定詞條**：點卡片右邊的金色圓圈 (或卡片空白處) 選兩個，跟遊戲裡重塑時選的兩個副詞條一樣。
+- **選定詞條**：點卡片右邊的金色圓圈 (或卡片空白處) 選兩個，跟遊戲裡重塑時選的兩個副詞條一樣。不到兩個時停 2 秒會自動補選 (暴擊傷害、暴擊率優先)。
 - **目標種類**：右上角切換「次數」「數值」「逐條」。次數是每個詞條最多升級跳幾次 (選最大代表不限制)；數值是最後顯示的數值至少多少，可以指定初始那一檔；逐條是每個詞條各自選。
 - **重塑保底**：不重塑、重塑 (保底 2 次)、高階重塑 (3 次)、諭告重塑 (4 次)。也可以另外要求兩個選定詞條合計至少升級跳幾次。
 - 四張詞條卡片可以長按拖動調整順序。
@@ -179,7 +169,7 @@
 
 #### 角色聖遺物 (用 UID 查聖遺物)
 
-- 輸入 UID 讀取遊戲內角色展示的角色、武器、屬性和聖遺物 (資料來自 Enka.Network)。網址 `artifact.html#uid-你的UID` 可以直接查詢並分享。
+- 輸入 UID 讀取遊戲內角色展示的角色、武器、屬性和聖遺物 (資料來自 Enka.Network)。查過一次會記住 UID，之後切到這個分頁就自動查詢。網址 `artifact.html#uid-你的UID` 可以直接查詢並分享。
 - **重塑方案**：自動依角色的武器、沙杯冠主詞條和所有副詞條選好主要詞條，比較五件聖遺物哪件重塑最划算 (重塑變好機率、變好時平均多幾個詞條、大約需要幾次)，最划算的是每個啟聖之塵平均能多最多詞條的那件。可切換「減少歪」(拿回歪掉的升級跳才算變好) 或「追提升」(數值比現在高就算，沒歪但檔位偏低的也算)。
 - **詞條明細**：預設顯示最划算的那件，點聖遺物可以看其他件；列出每個詞條的初始數值和每次升級跳了多少。滑鼠停在聖遺物上也會顯示升級過程。
 - +20 的五星聖遺物可以按「帶入重塑計算」，把詞條、初始數值和目標帶到計算頁。
@@ -194,14 +184,12 @@
 ## 參考來源
 
 - [一棵平衡樹：原神武器池重大概率漏洞，5.0 後最優抽卡策略解析](https://www.bilibili.com/video/BV1UQzBYFEut)：武器 77 抽保底和兩把 UP 的最佳定軌策略
-- [gino8246/Gacha_Simulator](https://github.com/gino8246/Gacha_Simulator)：網站的靈感來源
 - [KQM Library：Gacha 機制](https://library.keqingmains.com/evidence/general-mechanics/gacha)、[搞趣網：原神抽卡機率遞增表](https://m.gao7.com/news/1089027.shtm)：逐抽機率與軟保底
 - [17173：捕獲明光機制介紹](https://news.17173.com/z/ys/content/05172025/103832464.shtml)、[騰訊新聞：原神公開捕獲明光機率 0.018%](https://news.qq.com/rain/a/20250214A0005500)、[esports.gg：5.0 捕獲明光與命定值改動](https://esports.gg/news/genshin-impact/genshin-impact-improves-50-50-weapon-gacha-systems/)
 - [Genshin Impact Wiki：Weapon Event Wish](https://genshin-impact.fandom.com/wiki/Weapon_Event_Wish)：武器池 UP 機率、命定值與大保底
 - [HoYoverse 客服：重複獲得角色的星輝獎勵](https://support.hoyoverse.com/hc/en-us/articles/52089402385945-What-rewards-do-I-get-for-obtaining-a-duplicate-character-near-or-at-C6)、[GGRecon：星輝數量表與兌換](https://ggrecon.com/guides/genshin-impact-masterless-starglitter-how-to-get)：星輝返還
-- [Sportskeeda：查祈願紀錄算墊抽](https://sportskeeda.com/esports/how-check-genshin-impact-banner-history-count-character-weapon-banner-pity-beginner-s-guide)
 - [Icy Veins：Dust of Enlightenment Guide](https://www.icy-veins.com/genshin-impact/artifact-rerolling)、[GameWith：Dust Of Enlightenment Guide](https://gamewith.net/genshin-impact/article/show/57477)：重塑保底機制
 - [17173：啟聖之塵強化機率模擬](https://news.17173.com/content/07012025/142101415.shtml)、[BWIKI：啟聖之塵](https://wiki.biligame.com/ys/%E5%90%AF%E5%9C%A3%E4%B9%8B%E5%B0%98)：重塑、高階重塑、諭告重塑與進度
 - [Enka.Network](https://enka.network/) 與 [Enka API docs](https://github.com/EnkaNetwork/API-docs)：角色聖遺物的資料、圖片與副詞條數值
 
-規則、計算方法與待辦見 [HANDOFF.md](HANDOFF.md)。
+規則、計算方法與驗證數值見 [HANDOFF.md](HANDOFF.md)。
