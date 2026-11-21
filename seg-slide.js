@@ -18,6 +18,7 @@
       box.prepend(t);
       box.classList.add('has-thumb');
     }
+    lines(box, t);
     const on = pressed(box);
     if (!on || !on.offsetWidth) { t.style.opacity = '0'; return; }
     const pos = { x: on.offsetLeft, y: on.offsetTop, w: on.offsetWidth, h: on.offsetHeight };
@@ -35,6 +36,15 @@
       set(pos);
     }
     if (key) last.set(key, pos);
+  }
+
+  // 按鈕之間的分隔線改成畫在底塊下面 (按鈕本身的 border-left 變透明)，底塊滑過去時會蓋住分隔線
+  function lines(box, t) {
+    const btns = [...box.querySelectorAll(':scope > button')];
+    let ls = [...box.querySelectorAll(':scope > .seg-line')];
+    while (ls.length < btns.length - 1) { const l = document.createElement('span'); l.className = 'seg-line'; l.setAttribute('aria-hidden', 'true'); box.insertBefore(l, t); ls.push(l); }
+    while (ls.length > Math.max(0, btns.length - 1)) ls.pop().remove();
+    ls.forEach((l, k) => { const b = btns[k + 1]; l.style.transform = `translateX(${b.offsetLeft}px)`; l.style.top = b.offsetTop + 'px'; l.style.height = b.offsetHeight + 'px'; });
   }
 
   const queue = new Set();
