@@ -561,6 +561,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 
 <script>
 /*ENGINE*/
+/*SEG-SLIDE*/
 </script>
 <script>
 /*ENKA-DATA*/
@@ -941,6 +942,17 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     $('resultImgBtn').hidden = name === 'show';
     const hash = name === 'rules' ? '#rules' : name === 'show' ? (SC.uid ? '#uid-' + SC.uid : '#showcase') : '';
     try { history.replaceState(null, '', hash || location.pathname + location.search); } catch (e) {}
+    armAutoLock();
+    if (name === 'show') autoLoadUid();
+  }
+  // 切到角色聖遺物時，這台裝置存過 UID 又還沒查過，就直接幫忙查 (ttl 內用快取，不會再向 Enka 查)；每次載入頁面只自動查一次，失敗不會一直重試
+  function autoLoadUid() {
+    if (SC.data || SC.busy || SC.autoTried) return;
+    let u = $('uidInput').value.trim();
+    try { u = u || localStorage.getItem(UIDKEY) || ''; } catch (e) {}
+    if (!/^\d{9,10}$/.test(u)) return;
+    SC.autoTried = true;
+    loadUid(u);
   }
   TABS.forEach(([n, b]) => $(b).addEventListener('click', () => showTab(n)));
   document.querySelector('.tabs').addEventListener('keydown', e => {
@@ -953,6 +965,24 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     renderSetup(); renderCalc();
     if (resetSim || !sim) { tally = { n: 0, ok: 0 }; batchHtml = ''; newSim(); }
     renderSim();
+    armAutoLock();
+  }
+
+  // 選定詞條不到兩個時，停在計算分頁超過 2 秒沒有再操作，就依優先順序自動補滿兩個 (第一次來的人不會卡住)
+  // 每次操作都重新計時，所以使用者還是可以先點掉一個再自己選別的
+  const AUTO_LOCK = ['cd', 'cr', 'er', 'em', 'atkp', 'hpp', 'defp', 'atk', 'hp', 'def'];
+  let autoLockTimer = 0;
+  function armAutoLock() {
+    clearTimeout(autoLockTimer);
+    if (locked().length >= 2 || curTab !== 'calc') return;
+    autoLockTimer = setTimeout(() => {
+      if (locked().length >= 2 || curTab !== 'calc') return;
+      const free = S.rows.map((r, i) => i).filter(i => !S.rows[i].lock)
+        .sort((a, b) => AUTO_LOCK.indexOf(S.rows[a].stat) - AUTO_LOCK.indexOf(S.rows[b].stat));
+      free.slice(0, 2 - locked().length).forEach(i => { S.rows[i].lock = true; });
+      if (S.g === 0) S.g = 2; // 跟手動選滿兩個一樣，重塑保底預設勾「重塑」
+      refresh(true);
+    }, 2000);
   }
 
   /* ---------- 分享結果：跟抽卡頁一樣，用 canvas 畫一張羊皮紙視窗的圖，可切換橫式/直式 ---------- */
@@ -1416,6 +1446,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     showTab('show');
     if (!/^\d{9,10}$/.test(uid)) { scMsg('UID 是 9 或 10 位數字，請再確認一次。', true); return; }
     if (SC.busy) return;
+    SC.autoTried = true;
     SC.uid = uid; SC.sel = 0; SC.relic = 0; SC.pickBest = true;
     try { localStorage.setItem(UIDKEY, uid); sessionStorage.setItem('artcalc-showuid', uid); } catch (e) {}
     try { history.replaceState(null, '', '#uid-' + uid); } catch (e) {}

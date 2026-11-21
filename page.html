@@ -103,6 +103,15 @@ h1 .star { color: var(--star-on); }
 .switch-link:focus-visible { outline: none; }
 .switch-link:focus-visible svg { border-radius: 50%; outline: 3px solid var(--focus); outline-offset: 2px; }
 .switch-link span { font-size: 11px; font-weight: 500; line-height: 1.2; white-space: nowrap; opacity: .85; }
+/* 只給螢幕閱讀器讀的文字 */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+/* 分段按鈕的滑動底色 (seg-slide.js)：底塊在按鈕下面滑動，選中的按鈕本身改成透明 */
+:is(.seg, .segs, .mini-segs, .num-seg) { position: relative; isolation: isolate; }
+.seg-thumb { position: absolute; left: 0; top: 0; z-index: 0; background: var(--btn); pointer-events: none; transition: transform .32s cubic-bezier(.3, .7, .2, 1), width .32s cubic-bezier(.3, .7, .2, 1), height .32s; }
+.seg-thumb.no-anim { transition: none; }
+:is(.seg, .segs, .mini-segs, .num-seg).has-thumb > button { position: relative; z-index: 1; transition: color .2s; }
+:is(.seg, .segs, .mini-segs, .num-seg).has-thumb > button[aria-pressed="true"], :is(.seg, .segs, .mini-segs, .num-seg).has-thumb > button.on { background: transparent; }
+@media (prefers-reduced-motion: reduce) { .seg-thumb { transition: none; } }
 /*SHARED-END*/
 
 /* 設定欄 */
@@ -310,7 +319,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .imp-skip { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
 /* 內容在內側細線裡面捲動，捲動時細線不會壓到文字 */
 .imp-in { display: flex; flex-direction: column; overflow: hidden; }
-.imp-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: grid; gap: 12px; padding: 2px 3px; }
+.imp-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: grid; grid-auto-rows: max-content; align-content: start; gap: 12px; padding: 2px 3px; }
+.imp-url { min-height: 5.2em; flex-shrink: 0; }
 .imp-url:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold-soft); }
 .imp-os { margin-top: 8px; }
 .imp-url { width: 100%; box-sizing: border-box; font: .82rem/1.45 var(--f-num, monospace); color: var(--ink); background: var(--sunken); border: 1px solid var(--frame-soft); border-radius: 6px; padding: 8px 10px; resize: vertical; word-break: break-all; }
@@ -319,6 +329,8 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
 .imp-help a { color: var(--gold); }
 .imp-help ol { margin: 8px 0; padding-left: 1.3em; display: grid; gap: 6px; }
 .imp-help code, .imp-cmd { font-family: ui-monospace, Consolas, monospace; font-size: .78rem; background: var(--sunken); border-radius: 4px; padding: 1px 4px; word-break: break-all; }
+#impCmdMsg:empty { display: none; }
+.imp-help code.nw { white-space: nowrap; word-break: normal; }
 .imp-cmd { display: block; white-space: pre-wrap; padding: 8px; margin: 6px 0; }
 .imp-res { display: grid; gap: 12px; }
 .imp-pool { background: var(--sunken); border-radius: 6px; padding: 9px 12px; font-size: .9rem; display: grid; gap: 3px; }
@@ -470,7 +482,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       <fieldset>
         <legend><span class="dot c"></span>角色活動祈願</legend>
         <div class="field">
-          <span class="lab-row"><label for="chT" id="chTLab">想抽到幾隻 UP 角色</label><span class="info-wrap" id="ch2Info" hidden><button type="button" class="info" aria-label="兩隻角色說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">「角色活動祈願」和「角色活動祈願-2」共享墊抽、大保底和明光計數。</span></span></span>
+          <span class="lab-row"><label for="chT" id="chTLab" class="sr-only">想抽到幾隻 UP 角色</label><span class="info-wrap" id="ch2Info" hidden><button type="button" class="info" aria-label="兩隻角色說明" aria-expanded="false">i</button><span class="info-pop" role="tooltip">「角色活動祈願」和「角色活動祈願-2」共享墊抽、大保底和明光計數。</span></span></span>
           <div class="pick" id="chPick">
             <div class="pk"><label class="sublab" for="chT" id="chSub1" hidden>角色一</label>
             <select id="chT">
@@ -522,7 +534,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       <fieldset>
         <legend><span class="dot w"></span>武器活動祈願</legend>
         <div class="field">
-          <label for="wpT" id="wpTLab">想抽到幾把定軌武器</label>
+          <label for="wpT" id="wpTLab" class="sr-only">想抽到幾把定軌武器</label>
           <div class="pick" id="wpPick">
             <div class="pk"><label class="sublab" for="wpT" id="wpSub1" hidden>定軌的那把</label>
             <select id="wpT">
@@ -599,12 +611,11 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
         </div>
         <div class="budget-total" id="budgetBox">
           <label for="bTotal">可抽</label>
-          <input type="number" id="bTotal" min="0" inputmode="numeric" aria-describedby="budgetHint">
+          <input type="number" id="bTotal" min="0" inputmode="numeric">
           <span>抽</span>
           <span class="eq" id="budgetEq"></span>
           <button type="button" class="linkbtn" id="bRevert" hidden>改回逐項填寫</button>
         </div>
-        <p class="hint" id="budgetHint">已經算好總抽數的話，直接改「可抽」那格就好。兩種填法都會記住。</p>
         <button type="button" class="toggle" id="tuToggle" aria-expanded="false" aria-controls="tuBox">
           <span>課金試算 <span class="st" id="tuState">未計入</span></span><span class="chev" aria-hidden="true">▾</span>
         </button>
@@ -884,7 +895,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
         <button type="button" data-v="ios">iOS</button>
       </div>
       <ol data-os="pc">
-        <li>在電腦開啟原神 (用多組帳號的話先重新啟動遊戲)，打開祈願紀錄等它載入。</li>
+        <li>在電腦開啟原神，打開祈願紀錄頁面。</li>
         <li>按鍵盤的開始鍵搜尋並開啟 Windows PowerShell，貼上下面的指令按 Enter，網址會自動複製到剪貼簿。
           <pre class="imp-cmd" id="impCmdPc">Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex "&amp;{$((New-Object System.Net.WebClient).DownloadString('https://gist.github.com/MadeBaruna/1d75c1d37d19eca71591ec8a31178235/raw/getlink.ps1'))} global"</pre>
           <button type="button" class="gbtn small light" data-copy="impCmdPc"><span class="ic">⧉</span>複製指令</button>
@@ -892,7 +903,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       </ol>
       <ol data-os="android" hidden>
         <li>電腦下載 <a href="https://developer.android.com/tools/releases/platform-tools" target="_blank" rel="noopener noreferrer">platform-tools</a> 並解壓縮；手機在「設定 > 關於手機 > 軟體資訊」連點「版本號碼」7 次，打開開發者選項。</li>
-        <li>手機打開「USB 偵錯」(Samsung 要先關掉「設定 > 安全性與隱私權 > 自動封鎖程式」)，接上電腦，在 platform-tools 資料夾按右鍵「在終端機中開啟」，執行 <code>.\adb.exe devices</code> 並在手機上按「允許」。</li>
+        <li>手機打開「USB 偵錯」(三星要先關掉「設定 > 安全性與隱私權 > 自動封鎖程式」)，接上電腦，在 platform-tools 資料夾按右鍵「在終端機中開啟」，執行 <code class="nw">.\adb.exe devices</code> 並在手機上按「允許」。</li>
         <li>執行下面的指令，再到遊戲裡打開祈願紀錄，畫面會印出網址，整串複製下來。
           <pre class="imp-cmd" id="impCmdAd">.\adb.exe logcat -T 1 -m 1 -e "OnGetWebViewPageFinish,message[:]https" | Select-String -Pattern "https://\S+#/log" | ForEach-Object { $_.Matches[0].Value }</pre>
           <button type="button" class="gbtn small light" data-copy="impCmdAd"><span class="ic">⧉</span>複製指令</button>
@@ -906,7 +917,8 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
         <li>回到原神打開祈願歷史紀錄，等頁面載入後回到 Stream 按「停止抓包」。</li>
         <li>到「抓包歷史」選一筆 .json 結尾的紀錄 (開頭像 <code>https://hk4e-api-os.mihoyo.com/</code>)，在「請求」分頁複製連結貼到上面。</li>
       </ol>
-      <p class="note">方法整理自 <a href="https://paimon.moe/wish/import" target="_blank" rel="noopener noreferrer">paimon.moe 的匯入說明</a>。<span id="impCmdMsg" role="status"></span></p>
+      <p class="note" id="impCredit">方法整理自 <a href="https://paimon.moe/wish/import" target="_blank" rel="noopener noreferrer">paimon.moe 的匯入說明</a>。</p>
+      <p class="note" id="impCmdMsg" role="status"></p>
     </details>
     <div class="hist-actions">
       <button type="button" class="gbtn" id="impGo"><span class="ic"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M5.5 1.5h5v6h3.2L8 14.5 2.3 7.5h3.2z" fill="currentColor"/></svg></span>讀取紀錄</button>
@@ -976,6 +988,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
 
 <script>
 /*ENGINE*/
+/*SEG-SLIDE*/
 </script>
 <script>
 (function () {
@@ -1246,12 +1259,6 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       html = '命定值 1，維持定軌，下一把五星必定是定軌的那把。';
     } else if (w.guaranteed) {
       html = '大保底：下一把五星必定是 UP，兩把各 50%，維持現在的定軌就好。';
-    }
-    if (a > 0 && b > 0) {
-      const ex = adv.expected;
-      const cmp = ['more', 'separate'].map((s) => [s, Math.round((ex[s] - ex.optimal) * per)]).filter(([, d]) => d >= 1)
-        .map(([s, d]) => `${STRAT_NAME[s]}多約 ${d} 抽`).join('、');
-      html += (html ? ' ' : '') + `兩把都要，最佳策略從現在起平均還要 ${ex.optimal.toFixed(2)} 把五星${cmp ? '，' + cmp : '，另外兩種抽法在這個狀態下一樣'}。`;
     }
     box.innerHTML = html;
     box.hidden = !html;
@@ -1594,12 +1601,13 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
   $('impWhat').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { imp.what = b.dataset.v; paintImport(); } });
   $('impWhen').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { imp.when = b.dataset.v; paintImport(); } });
   $('impDlg').querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', () => {
-    const done = (ok) => { $('impCmdMsg').textContent = ok ? ' 指令已複製。' : ' 請手動選取指令複製。'; };
+    const done = (ok) => { $('impCmdMsg').textContent = ok ? '指令已複製。' : '請手動選取指令複製。'; };
     try { navigator.clipboard.writeText($(b.dataset.copy).textContent).then(() => done(true), () => done(false)); } catch (e) { done(false); }
   }));
   function paintOs(os) {
     $('impOs').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === os ? 'true' : 'false'));
     $('impDlg').querySelectorAll('ol[data-os]').forEach((ol) => { ol.hidden = ol.dataset.os !== os; });
+    $('impCredit').hidden = os === 'android'; // 安卓的 adb 方法不是 paimon.moe 提供的
   }
   paintOs(/Android/i.test(navigator.userAgent) ? 'android' : /iPhone|iPad/i.test(navigator.userAgent) ? 'ios' : 'pc');
   $('impOs').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { paintOs(b.dataset.v); $('impCmdMsg').textContent = ''; } });

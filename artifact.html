@@ -112,6 +112,15 @@ h1 .star { color: var(--star-on); }
 .switch-link:focus-visible { outline: none; }
 .switch-link:focus-visible svg { border-radius: 50%; outline: 3px solid var(--focus); outline-offset: 2px; }
 .switch-link span { font-size: 11px; font-weight: 500; line-height: 1.2; white-space: nowrap; opacity: .85; }
+/* 只給螢幕閱讀器讀的文字 */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+/* 分段按鈕的滑動底色 (seg-slide.js)：底塊在按鈕下面滑動，選中的按鈕本身改成透明 */
+:is(.seg, .segs, .mini-segs, .num-seg) { position: relative; isolation: isolate; }
+.seg-thumb { position: absolute; left: 0; top: 0; z-index: 0; background: var(--btn); pointer-events: none; transition: transform .32s cubic-bezier(.3, .7, .2, 1), width .32s cubic-bezier(.3, .7, .2, 1), height .32s; }
+.seg-thumb.no-anim { transition: none; }
+:is(.seg, .segs, .mini-segs, .num-seg).has-thumb > button { position: relative; z-index: 1; transition: color .2s; }
+:is(.seg, .segs, .mini-segs, .num-seg).has-thumb > button[aria-pressed="true"], :is(.seg, .segs, .mini-segs, .num-seg).has-thumb > button.on { background: transparent; }
+@media (prefers-reduced-motion: reduce) { .seg-thumb { transition: none; } }
 
 /* 以下是聖遺物頁自己的樣式，主題色與外框沿用抽卡頁 (build.py 從 page.html 帶入) */
 .panel { padding: 22px; display: grid; gap: 20px; }
@@ -992,6 +1001,72 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
   else root.ArtifactEngine = api;
 })(typeof window !== 'undefined' ? window : this);
 
+// 分段按鈕的滑動底色：選中的格子換了，深色底塊會滑過去，不是瞬間跳過去
+// 兩個頁面共用 (build.py 把這個檔案帶入 page.html 與 artifact-page.html 的 /*SEG-SLIDE*/)
+// 適用 .seg、.segs、.mini-segs、.num-seg 裡面的按鈕，選中狀態用 aria-pressed="true" 或 .on 都可以
+// 聖遺物頁有些分段按鈕會整個重畫 (innerHTML)，所以記住每組上次的位置，新畫出來時從舊位置滑過去
+(function () {
+  const SEL = '.seg, .segs, .mini-segs, .num-seg';
+  const last = new Map(); // 每組按鈕上次底塊的位置
+  const keyOf = (box) => box.id || box.dataset.for || box.getAttribute('aria-label') || '';
+  const pressed = (box) => box.querySelector(':scope > button[aria-pressed="true"], :scope > button.on');
+
+  function place(box) {
+    let t = box.querySelector(':scope > .seg-thumb');
+    const fresh = !t;
+    if (fresh) {
+      t = document.createElement('span');
+      t.className = 'seg-thumb no-anim';
+      t.setAttribute('aria-hidden', 'true');
+      box.prepend(t);
+      box.classList.add('has-thumb');
+    }
+    const on = pressed(box);
+    if (!on || !on.offsetWidth) { t.style.opacity = '0'; return; }
+    const pos = { x: on.offsetLeft, y: on.offsetTop, w: on.offsetWidth, h: on.offsetHeight };
+    const key = keyOf(box), prev = key && last.get(key);
+    const set = (p) => { t.style.transform = `translate(${p.x}px, ${p.y}px)`; t.style.width = p.w + 'px'; t.style.height = p.h + 'px'; };
+    if (fresh) {
+      // 新的一組：有上次的位置就從那裡滑過去，沒有就直接放好
+      set(prev && prev.w ? prev : pos);
+      t.style.opacity = '1';
+      void t.offsetWidth;
+      t.classList.remove('no-anim');
+      if (prev && prev.w) set(pos);
+    } else {
+      t.style.opacity = '1';
+      set(pos);
+    }
+    if (key) last.set(key, pos);
+  }
+
+  const queue = new Set();
+  let raf = 0;
+  const schedule = (box) => {
+    if (!box) return;
+    queue.add(box);
+    if (!raf) raf = requestAnimationFrame(() => { raf = 0; const list = [...queue]; queue.clear(); list.forEach((b) => b.isConnected && place(b)); });
+  };
+
+  const ro = typeof ResizeObserver === 'function' ? new ResizeObserver((es) => es.forEach((e) => schedule(e.target))) : null;
+  const watch = (box) => { if (box.dataset.segWatch) return; box.dataset.segWatch = '1'; if (ro) ro.observe(box); schedule(box); };
+  const scan = (root) => {
+    if (root.nodeType !== 1) return;
+    if (root.matches(SEL)) watch(root);
+    root.querySelectorAll(SEL).forEach(watch);
+  };
+
+  new MutationObserver((ms) => {
+    for (const m of ms) {
+      if (m.type === 'childList') m.addedNodes.forEach(scan);
+      const box = m.target.nodeType === 1 && m.target.closest(SEL);
+      if (box) schedule(box);
+    }
+  }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['aria-pressed', 'class', 'hidden'] });
+  scan(document.body);
+  window.addEventListener('resize', () => document.querySelectorAll(SEL).forEach(schedule));
+})();
+
 </script>
 <script>
 /* Enka.Network 資料 (由 scripts/build_enka_data.py 產生，不要手改) */
@@ -1378,6 +1453,17 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     $('resultImgBtn').hidden = name === 'show';
     const hash = name === 'rules' ? '#rules' : name === 'show' ? (SC.uid ? '#uid-' + SC.uid : '#showcase') : '';
     try { history.replaceState(null, '', hash || location.pathname + location.search); } catch (e) {}
+    armAutoLock();
+    if (name === 'show') autoLoadUid();
+  }
+  // 切到角色聖遺物時，這台裝置存過 UID 又還沒查過，就直接幫忙查 (ttl 內用快取，不會再向 Enka 查)；每次載入頁面只自動查一次，失敗不會一直重試
+  function autoLoadUid() {
+    if (SC.data || SC.busy || SC.autoTried) return;
+    let u = $('uidInput').value.trim();
+    try { u = u || localStorage.getItem(UIDKEY) || ''; } catch (e) {}
+    if (!/^\d{9,10}$/.test(u)) return;
+    SC.autoTried = true;
+    loadUid(u);
   }
   TABS.forEach(([n, b]) => $(b).addEventListener('click', () => showTab(n)));
   document.querySelector('.tabs').addEventListener('keydown', e => {
@@ -1390,6 +1476,24 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     renderSetup(); renderCalc();
     if (resetSim || !sim) { tally = { n: 0, ok: 0 }; batchHtml = ''; newSim(); }
     renderSim();
+    armAutoLock();
+  }
+
+  // 選定詞條不到兩個時，停在計算分頁超過 2 秒沒有再操作，就依優先順序自動補滿兩個 (第一次來的人不會卡住)
+  // 每次操作都重新計時，所以使用者還是可以先點掉一個再自己選別的
+  const AUTO_LOCK = ['cd', 'cr', 'er', 'em', 'atkp', 'hpp', 'defp', 'atk', 'hp', 'def'];
+  let autoLockTimer = 0;
+  function armAutoLock() {
+    clearTimeout(autoLockTimer);
+    if (locked().length >= 2 || curTab !== 'calc') return;
+    autoLockTimer = setTimeout(() => {
+      if (locked().length >= 2 || curTab !== 'calc') return;
+      const free = S.rows.map((r, i) => i).filter(i => !S.rows[i].lock)
+        .sort((a, b) => AUTO_LOCK.indexOf(S.rows[a].stat) - AUTO_LOCK.indexOf(S.rows[b].stat));
+      free.slice(0, 2 - locked().length).forEach(i => { S.rows[i].lock = true; });
+      if (S.g === 0) S.g = 2; // 跟手動選滿兩個一樣，重塑保底預設勾「重塑」
+      refresh(true);
+    }, 2000);
   }
 
   /* ---------- 分享結果：跟抽卡頁一樣，用 canvas 畫一張羊皮紙視窗的圖，可切換橫式/直式 ---------- */
@@ -1853,6 +1957,7 @@ dialog.hist::backdrop { background: rgba(20, 28, 50, .55); }
     showTab('show');
     if (!/^\d{9,10}$/.test(uid)) { scMsg('UID 是 9 或 10 位數字，請再確認一次。', true); return; }
     if (SC.busy) return;
+    SC.autoTried = true;
     SC.uid = uid; SC.sel = 0; SC.relic = 0; SC.pickBest = true;
     try { localStorage.setItem(UIDKEY, uid); sessionStorage.setItem('artcalc-showuid', uid); } catch (e) {}
     try { history.replaceState(null, '', '#uid-' + uid); } catch (e) {}
