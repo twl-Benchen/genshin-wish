@@ -42,12 +42,14 @@ page = read("page.html")
 assert "/*ENGINE*/" in page, "page.html 裡找不到 /*ENGINE*/ 佔位符"
 a, b = page.index("/*SHARED-START*/"), page.index("/*SHARED-END*/")
 shared = page[a + len("/*SHARED-START*/"):b].strip()
-(here / "index.html").write_text(wrap(page.replace("/*ENGINE*/", read("engine.js"))), encoding="utf-8")
+seg = read("seg-slide.js")  # 兩頁共用的分段按鈕滑動動畫
+assert "/*SEG-SLIDE*/" in page, "page.html 裡找不到 /*SEG-SLIDE*/ 佔位符"
+(here / "index.html").write_text(wrap(page.replace("/*ENGINE*/", read("engine.js")).replace("/*SEG-SLIDE*/", seg)), encoding="utf-8")
 
 # 聖遺物重塑計算
 art = read("artifact-page.html")
-assert all(k in art for k in ("/*ENGINE*/", "/*SHARED*/", "/*ENKA-DATA*/")), "artifact-page.html 缺少佔位符"
-art = art.replace("/*SHARED*/", shared).replace("/*ENGINE*/", read("artifact-engine.js")).replace("/*ENKA-DATA*/", read("enka-data.js"))
+assert all(k in art for k in ("/*ENGINE*/", "/*SHARED*/", "/*ENKA-DATA*/", "/*SEG-SLIDE*/")), "artifact-page.html 缺少佔位符"
+art = art.replace("/*SHARED*/", shared).replace("/*ENGINE*/", read("artifact-engine.js")).replace("/*ENKA-DATA*/", read("enka-data.js")).replace("/*SEG-SLIDE*/", seg)
 (here / "artifact.html").write_text(wrap(art), encoding="utf-8")
 
 print("built index.html, artifact.html")

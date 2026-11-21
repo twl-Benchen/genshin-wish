@@ -5,6 +5,7 @@
 ## 工作流程
 
 - 只改 `engine.js`、`page.html` (抽卡) 與 `artifact-engine.js`、`artifact-page.html` (聖遺物)，`index.html` 和 `artifact.html` 是建置產物，不要手改。
+- `seg-slide.js` 是兩頁共用的分段按鈕滑動動畫 (.seg、.segs、.mini-segs、.num-seg 選中的底色會滑過去)，由 build.py 帶入兩頁的 `/*SEG-SLIDE*/`；新增分段按鈕沿用這幾個 class，選中用 `aria-pressed="true"` 或 `.on`，就會自動有動畫。
 - `enka-data.js` 由 `scripts/build_enka_data.py` 從 Enka 官方 API-docs 產生，不要手改；遊戲改版有新角色時重新產生。
 - 改完執行 `python3 build.py` 重新產生兩個頁面。兩頁共用的樣式 (主題色、外框、左上角切換鈕) 寫在 `page.html` 的 `/*SHARED-START*/` 到 `/*SHARED-END*/` 之間，聖遺物頁透過 `/*SHARED*/` 帶入。
 - 動到聖遺物計算時執行 `node test-artifact.js`，驗證案例全部要通過。
