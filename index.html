@@ -121,6 +121,8 @@ h1 .star { color: var(--star-on); }
 .seg-thumb { position: absolute; left: 0; top: 0; z-index: 0; background: var(--btn); pointer-events: none; transition: transform .32s cubic-bezier(.3, .7, .2, 1), width .32s cubic-bezier(.3, .7, .2, 1), height .32s; }
 .seg-thumb.no-anim { transition: none; }
 :is(.seg, .segs, .mini-segs, .num-seg).has-thumb > button { position: relative; z-index: 1; transition: color .2s; }
+:is(.seg, .segs, .mini-segs, .num-seg).has-thumb > button + button { border-left-color: transparent; }
+.seg-line { position: absolute; left: 0; top: 0; z-index: 0; width: 1px; background: var(--frame-soft); pointer-events: none; }
 :is(.seg, .segs, .mini-segs, .num-seg).has-thumb > button[aria-pressed="true"], :is(.seg, .segs, .mini-segs, .num-seg).has-thumb > button.on { background: transparent; }
 @media (prefers-reduced-motion: reduce) { .seg-thumb { transition: none; } }
 /*SHARED-END*/
@@ -1562,6 +1564,7 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       box.prepend(t);
       box.classList.add('has-thumb');
     }
+    lines(box, t);
     const on = pressed(box);
     if (!on || !on.offsetWidth) { t.style.opacity = '0'; return; }
     const pos = { x: on.offsetLeft, y: on.offsetTop, w: on.offsetWidth, h: on.offsetHeight };
@@ -1579,6 +1582,15 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
       set(pos);
     }
     if (key) last.set(key, pos);
+  }
+
+  // 按鈕之間的分隔線改成畫在底塊下面 (按鈕本身的 border-left 變透明)，底塊滑過去時會蓋住分隔線
+  function lines(box, t) {
+    const btns = [...box.querySelectorAll(':scope > button')];
+    let ls = [...box.querySelectorAll(':scope > .seg-line')];
+    while (ls.length < btns.length - 1) { const l = document.createElement('span'); l.className = 'seg-line'; l.setAttribute('aria-hidden', 'true'); box.insertBefore(l, t); ls.push(l); }
+    while (ls.length > Math.max(0, btns.length - 1)) ls.pop().remove();
+    ls.forEach((l, k) => { const b = btns[k + 1]; l.style.transform = `translateX(${b.offsetLeft}px)`; l.style.top = b.offsetTop + 'px'; l.style.height = b.offsetHeight + 'px'; });
   }
 
   const queue = new Set();
